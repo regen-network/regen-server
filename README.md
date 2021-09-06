@@ -53,8 +53,7 @@ TODO: Use a separate testing database instead and set up new migration command.
 
 ## SHACL Graphs
 
-The `schema` folder contains [SHACL](https://www.w3.org/TR/shacl/) graphs for validating data (for example, project related data), using [Turtle](https://www.w3.org/TR/turtle/) or [JSON-LD](https://json-ld.org/).
-Eventually, we could move them to their own repo if needed.
+[SHACL](https://www.w3.org/TR/shacl/) schemas have been migrated to https://github.com/regen-network/regen-registry-standards
 
 These graphs can be stored too in the PostGres database in the `schacl_graph` table in order to be queried using GraphQL and used for client-side validation.
 The `schacl_graph` table has an `uri` as primary key and a jsonb column `graph` where a SCHACL graph is encoded as JSON-LD.
