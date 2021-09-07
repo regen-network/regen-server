@@ -65,10 +65,10 @@ set metadata = metadata ||
       'http://schema.org/url', 'https://verra.org/project/ccb-program/'
     )
   ) ||
-  jsonb_build_object('http://regen.network/externalProjectUrl', project.metadata -> 'externalProjectPageLink')
+  jsonb_build_object('http://regen.network/externalProjectUrl', project.metadata -> 'http://regen.network/externalProjectPageLink')
 where handle='kasigau';
 
-update project set metadata = metadata - 'externalProjectPageLink';
+update project set metadata = metadata - 'http://regen.network/externalProjectPageLink';
 update project set metadata = jsonb_set(metadata, '{@type}',
   jsonb_build_array(project.metadata -> '@type', 'http://regen.network/Project')
 );
