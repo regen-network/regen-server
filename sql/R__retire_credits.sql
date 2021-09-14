@@ -1,9 +1,10 @@
+drop function if exists retire_credits;
 create or replace function retire_credits(
   vintage_id uuid,
   buyer_wallet_id uuid,
   address_id uuid,
   units numeric,
-  metadata jsonb
+  metadata jsonb default '{}'
 ) returns retirement as $$
 declare
   v_retirement retirement;
