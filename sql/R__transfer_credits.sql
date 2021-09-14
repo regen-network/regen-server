@@ -199,7 +199,7 @@ begin
 
   -- retire credits if auto_retire true
   if auto_retire = true then
-    perform retire_credits(vintage_id, buyer_wallet_id, address_id, units);
+    perform retire_credits(vintage_id, buyer_wallet_id, address_id, units, default);
   end if;
 
   if send_confirmation = true then
