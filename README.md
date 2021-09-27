@@ -49,7 +49,7 @@ TODO: see if we can use Docker for this. See Issue #527
 yarn migrate
 ```
 
-For more tips related to migrations, refer to [sql/migrations.md](sql/migrations.md).
+For more tips related to migrations, refer to [sql/README.md](sql/README.md).
 
 ### Seeding
 
