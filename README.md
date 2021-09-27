@@ -49,7 +49,7 @@ TODO: see if we can use Docker for this. See Issue #527
 yarn migrate
 ```
 
-For more tips on adding migrations, refer to [TODO](sql/migrations.md).
+For more tips related to migrations, refer to [sql/migrations.md](sql/migrations.md).
 
 ### Seeding
 
@@ -70,6 +70,10 @@ After entering the password, this might take a few seconds before data is export
 ```sh
 psql postgresql://postgres:postgres@localhost:5432/regen_registry -f dump.sql
 ```
+
+### Dropping database
+
+TODO
 
 ## Tests
 
