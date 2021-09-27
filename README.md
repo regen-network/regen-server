@@ -15,11 +15,17 @@ of NodeJS for this project.
 1. Install [docker-compose](https://docs.docker.com/compose/install/)
 2. Run `cd server && docker-compose up`
 
+The database can then be accessed using:
+```sh
+psql postgresql://postgres:postgres@localhost:5432/regen_registry
+```
+
 ### Environment variables
 
 Based on `.env.example`, create some `.env` file with appropriate values.
 
 ## Caching
+
 [Redis](https://redis.io//) is used for caching.
 You will need to have Redis running locally. Install and run
 ```
@@ -30,8 +36,8 @@ TODO: see if we can use Docker for this. See Issue #527
 
 ## Starting a development server
 
-1. Install all dependencies with `yarn`
-2. Start a development server with `yarn dev`
+1. Install all dependencies with `yarn`.
+2. Start a development server with `yarn dev`. This runs in parallel the node `server` and watches/builds code in the `worker` (used for sending emails at the moment).
 3. Start coding!!
 
 ## Database migrations
@@ -56,8 +62,8 @@ TODO: Use a separate testing database instead and set up new migration command.
 [SHACL](https://www.w3.org/TR/shacl/) schemas have been migrated to https://github.com/regen-network/regen-registry-standards
 
 These graphs can be stored too in the PostGres database in the `schacl_graph` table in order to be queried using GraphQL and used for client-side validation.
-The `schacl_graph` table has an `uri` as primary key and a jsonb column `graph` where a SCHACL graph is encoded as JSON-LD.
-For instance, an entry with `http://regen.network/ProjectPlanShape` as URI can be created to store the SHACL graph to validate a [project plan](./schema/project-plan.ttl).
+The `schacl_graph` table has an `uri` as primary key and a jsonb column `graph` where a SHACL graph is encoded as JSON-LD.
+For instance, an entry with `http://regen.network/ProjectPlanShape` as URI can be created to store the SHACL graph to validate a project plan.
 
 
 
