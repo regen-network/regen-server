@@ -40,11 +40,35 @@ TODO: see if we can use Docker for this. See Issue #527
 2. Start a development server with `yarn dev`. This runs in parallel the node `server` and watches/builds code in the `worker` (used for sending emails at the moment).
 3. Start coding!!
 
-## Database migrations
+## Database
+
+### Migrations
 
 [Flyway](https://flywaydb.org) is used to run migrations:
 ```sh
 yarn migrate
+```
+
+For more tips on adding migrations, refer to [TODO](sql/migrations.md).
+
+### Seeding
+
+The following section describes how to seed your local database with production data in order to facilitate local feature development and testing.
+
+0. Make sure the production database and your local database are in sync with regards to migrations by verifying the latest migration version number on `master` and on your local branch in `sql` folder. Otherwise that may cause unexpected behavior when trying to seed your local database with production data.
+You can also run `yarn dbinfo` locally to check your local migrations status in more details.
+It's also recommended to start from a local database without any data, otherwise existing data might conflict with production data which could lead to constraint errors (e.g. unique constraint error in the case of multiple `user`s with the same email).
+
+1. Export data from the production database using `pg_dump`:
+```sh
+pg_dump -d postgres -h registryproduction.cna6zybeqdns.us-east-1.rds.amazonaws.com -p 5432 -U postgres --file dump.sql --data-only
+```
+You'll be asked for the database password, if you don't know where to find it, please contact one of the contributors of this repository.
+After entering the password, this might take a few seconds before data is exported into `dump.sql`.
+
+2. Import production data to your local database using:
+```sh
+psql postgresql://postgres:postgres@localhost:5432/regen_registry -f dump.sql
 ```
 
 ## Tests
