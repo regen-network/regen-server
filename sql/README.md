@@ -22,7 +22,8 @@ WHERE  p.proname = '{function_name}'
 AND n.nspname = 'public' -- schema name (optional)
 ORDER  BY 1;
 ```
-Finally, just run the `DROP FUNCTION` statement on the function that needs to be deleted.
+
+Finally, just run one of the displayed `DROP FUNCTION` statements on the function that needs to be deleted.
 
 ### Versioned migrations
 
@@ -40,5 +41,23 @@ In case of mistakes, it's always possible to create a new migration that reverts
 
 *Dev tip*:
 There is some hacky way of undoing Flyway migrations without the Teams plan.
-TODO
+Flyway keeps a record of all the migrations as part of the `flyway_schema_history` table:
 
+```sql
+regen_registry=# \d flyway_schema_history;
+                     Table "public.flyway_schema_history"
+     Column     |            Type             | Collation | Nullable | Default 
+----------------+-----------------------------+-----------+----------+---------
+ installed_rank | integer                     |           | not null | 
+ version        | character varying(50)       |           |          | 
+ description    | character varying(200)      |           | not null | 
+ type           | character varying(20)       |           | not null | 
+ script         | character varying(1000)     |           | not null | 
+ checksum       | integer                     |           |          | 
+ installed_by   | character varying(100)      |           | not null | 
+ installed_on   | timestamp without time zone |           | not null | now()
+ execution_time | integer                     |           | not null | 
+ success        | boolean                     |           | not null | 
+```
+
+You could delete an entry from this table given its `version` and then manually revert all the sql statements that were part of this migration.
