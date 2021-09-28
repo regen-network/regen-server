@@ -4,7 +4,7 @@ Flyway has two types of migrations: [repeatable](https://flywaydb.org/documentat
 
 ### Repeatable migrations
 
-Repeatable migrations are re-run everytime they change and are mostly used for (re)creating functions here, which is why we need to use `CREATE OR REPLACE` clause. In addition to that, if we want to change an existing function parameters, `DROP FUNCTION IF EXISTS {function_name};` is needed. Indeed, if the function isn't dropped, postgres will just create another function with the same name but different parameters (this would be an issue for PostGraphile which won't be able to resolve the function into a single GraphQL mutation).
+Repeatable migrations are re-run everytime they change and are mostly used for (re)creating functions here, which is why we need to use `CREATE OR REPLACE` clause. In addition to that, if we want to change an existing function parameters, `DROP FUNCTION IF EXISTS function_name;` is needed. Indeed, if the function isn't dropped, postgres will just create another function with the same name but different parameters (this would be an issue for PostGraphile which won't be able to resolve the function into a single GraphQL mutation).
 
 *Dev tip*:
 
@@ -18,7 +18,7 @@ SELECT format('DROP FUNCTION %I.%I(%s);'
              ) AS stmt
 FROM pg_catalog.pg_proc p
   JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-WHERE  p.proname = '{function_name}'
+WHERE  p.proname = 'function_name'
 AND n.nspname = 'public' -- schema name (optional)
 ORDER  BY 1;
 ```

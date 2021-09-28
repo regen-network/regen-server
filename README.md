@@ -28,11 +28,11 @@ Based on `.env.example`, create some `.env` file with appropriate values.
 
 [Redis](https://redis.io//) is used for caching.
 You will need to have Redis running locally. Install and run
-```
+```sh
 redis-server
 ```
 then set your REDIS_URL env variable (default is redis://localhost:6379).
-TODO: see if we can use Docker for this. See Issue #527
+TODO: see if we can use Docker for this. See https://github.com/regen-network/regen-web/issues/527
 
 ## Starting a development server
 
@@ -71,9 +71,18 @@ After entering the password, this might take a few seconds before data is export
 psql postgresql://postgres:postgres@localhost:5432/regen_registry -f dump.sql
 ```
 
-### Dropping database
+### Dropping local database
 
-TODO
+If for some reasons, your database is in a messy state and it's best to just restart from scratch, you may want to drop the database and recreate it.
+
+After connecting to postgres (`psql postgresql://postgres:postgres@localhost:5432`, make sure your [postgres Docker container is running](#starting-postgresql-locally)), run sequentially:
+```sql
+DROP DATABASE regen_registry;
+CREATE DATABASE regen_registry;
+DROP ROLE app_user;
+```
+
+Then [run the migrations](#migrations) and you're ready to go again!
 
 ## Tests
 
