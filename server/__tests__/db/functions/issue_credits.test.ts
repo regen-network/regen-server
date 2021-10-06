@@ -103,7 +103,7 @@ it('issues credits', () =>
     expect(vintages[0].project_id).toEqual(project.id);
     expect(vintages[0].tokenizer_id).toEqual(party.wallet_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
-    expect(vintages[0].initial_distribution).toEqual(distribution);
+    expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
 
     // account balances created
     const { rows: balances } = await client.query(
@@ -187,7 +187,7 @@ it('issues 3rd party credits with reseller and initial issuer', () =>
     expect(vintages[0].reseller_id).toEqual(party.wallet_id);
     expect(vintages[0].issuer_id).toEqual(thirdPartyOrg.party_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
-    expect(vintages[0].initial_distribution).toEqual(distribution);
+    expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
 
     // account balances created
     const { rows: balances } = await client.query(
@@ -258,7 +258,7 @@ it('issues 3rd party credits with reseller, initial issuer and metadata', () =>
     expect(vintages[0].reseller_id).toEqual(party.wallet_id);
     expect(vintages[0].issuer_id).toEqual(thirdPartyOrg.party_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
-    expect(vintages[0].initial_distribution).toEqual(distribution);
+    expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
     expect(vintages[0].metadata).toEqual(metadata);
     
     // account balances created
@@ -337,7 +337,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(vintages[0].project_id).toEqual(project.id);
     expect(vintages[0].tokenizer_id).toEqual(party.wallet_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
-    expect(vintages[0].initial_distribution).toEqual(distribution);
+    expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
     expect(vintages[0].metadata).toEqual(metadata);
 
     // account balances created

@@ -91,7 +91,7 @@ begin
     -- update project's stakeholders' account balances and create corresponding transactions
     for v_key, v_value in
     select *
-    from jsonb_each_text(v_initial_distribution)
+    from jsonb_each_text(v_initial_distribution - '@type') -- removing @type field to get only numeric fields
       loop
         if v_value != 0 then
           if v_key = 'http://regen.network/projectDeveloperDistribution' then
@@ -199,7 +199,7 @@ begin
 
   -- retire credits if auto_retire true
   if auto_retire = true then
-    perform retire_credits(vintage_id, buyer_wallet_id, address_id, units);
+    perform retire_credits(vintage_id, buyer_wallet_id, address_id, units, '{}'::jsonb);
   end if;
 
   if send_confirmation = true then
