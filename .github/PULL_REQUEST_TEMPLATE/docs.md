@@ -17,6 +17,7 @@ I have...
 - [ ] targeted `dev` branch
 - [ ] provided a link to the relevant issue or specification
 - [ ] reviewed "Files changed" and left comments if necessary
+- [ ] submit a PR against `master` branch after this one gets merged
 
 ### Reviewers Checklist
 

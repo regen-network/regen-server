@@ -18,6 +18,7 @@ I have...
 - [ ] provided a link to the relevant issue or specification
 - [ ] reviewed "Files changed" and left comments if necessary
 - [ ] confirmed all tests passed
+- [ ] submit a PR against `master` branch after this one (and other PRs depending on this one, e.g. on regen-network/regen-web, if applicable) get merged
 
 ### Reviewers Checklist
 
