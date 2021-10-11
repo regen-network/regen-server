@@ -1,8 +1,10 @@
+drop function if exists retire_credits;
 create or replace function retire_credits(
   vintage_id uuid,
   buyer_wallet_id uuid,
   address_id uuid,
-  units numeric
+  units numeric,
+  metadata jsonb default '{}'
 ) returns retirement as $$
 declare
   v_retirement retirement;
@@ -14,9 +16,9 @@ begin
 
   -- Create new entry in retirement table
   insert into retirement
-    (wallet_id, address_id, credit_vintage_id, units)
+    (wallet_id, address_id, credit_vintage_id, units, metadata)
   values
-    (buyer_wallet_id, address_id, vintage_id, units)
+    (buyer_wallet_id, address_id, vintage_id, units, metadata)
   returning * into v_retirement;
 
   return v_retirement;
