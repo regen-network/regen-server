@@ -59,7 +59,7 @@ it('issues credits', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
 
     await becomeUser(client, user.auth0_sub);
@@ -142,7 +142,7 @@ it('issues 3rd party credits with reseller and initial issuer', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
     const thirdPartyOrg = await createUserOrganisation(client, 'third-party@gmail.com', '3rd party person', '3rd party image', '3rd party org', '', null, {});
     expect(thirdPartyOrg).not.toBeNull();
@@ -214,7 +214,7 @@ it('issues 3rd party credits with reseller, initial issuer and metadata', () =>
     };
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
     const thirdPartyOrg = await createUserOrganisation(client, 'third-party@gmail.com', '3rd party person', '3rd party image', '3rd party org', '', null, {});
     
@@ -286,7 +286,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
     await setupPools(client, project.credit_class_id);
 
@@ -402,7 +402,7 @@ it('fails if sum of initial distribution not equal to 100%', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
 
     await becomeUser(client, user.auth0_sub);
@@ -433,7 +433,7 @@ it('fails if current user does not exist', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
 
     const promise = issueCredits(
@@ -463,7 +463,7 @@ it('fails if current user is not an admin', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
     await client.query(
       'delete from admin where auth0_sub=$1',
@@ -497,7 +497,7 @@ it('fails if current user does not belong to an organization', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
     await client.query(
       'delete from organization_member where member_id=$1',
@@ -532,7 +532,7 @@ it('fails if current user is not credit class issuer', () =>
     const units: number = 1000;
 
     await becomeRoot(client);
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', null);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, null);
     expect(project).not.toBeNull();
 
     await becomeUser(client, user.auth0_sub);
