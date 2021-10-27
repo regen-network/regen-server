@@ -159,7 +159,6 @@ export async function createUserOrganisation(
 
 export async function createProject(
   client: PoolClient,
-  name: string,
   issuerWalletId: string | null,
 ) {
   const methodologyDeveloper = await createUserOrganisation(client, 'methodology@test.com', 'methodology dev user', '', 'methodology dev org', 'methodology wallet address', null, { 'some': 'address' });
@@ -170,20 +169,16 @@ export async function createProject(
   } = await client.query(
     `
       select * from private.really_create_project(
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+        $1, $2, $3, $4, $5, $6, $7
       )
       `,
     [
       methodologyDeveloper.party_id,
       projectDeveloper.party_id,
       landSteward.party_id,
-      name,
       new Date(),
       new Date(),
       new Date(),
-      'image',
-      100,
-      'hectares',
       'active',
     ]
   );
