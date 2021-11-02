@@ -406,7 +406,7 @@ async function setup(
     const addressId: string = parties[0].address_id;
 
     // Create project
-    const { project, creditClassVersion, methodologyVersion } = await createProject(client, 'project name', party.wallet_id);
+    const { project, creditClassVersion, methodologyVersion } = await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
 
     if (pools) {

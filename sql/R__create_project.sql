@@ -51,20 +51,15 @@ $$ language plpgsql volatile
 set search_path
 = pg_catalog, public, pg_temp;
 
--- TODO: Update to use address table instead of location
+drop function if exists private.really_create_project;
 create or replace function private.really_create_project
 (
   methodology_developer_id uuid,
   project_developer_id uuid,
   land_steward_id uuid,
-  name text,
   application_date timestamptz,
   start_date timestamptz,
   end_date timestamptz,
-  image text,
-  area integer,
-  area_unit char
-(10),
   state project_state
 ) returns project as $$
 declare
@@ -88,9 +83,9 @@ returning * into v_credit_class;
 
 -- Insert new project with this credit class
 insert into project
-  (developer_id, steward_id, credit_class_id, name, application_date, start_date, end_date, image, area, area_unit, state)
+  (developer_id, steward_id, credit_class_id, application_date, start_date, end_date, state)
 values
-  (project_developer_id, land_steward_id, v_credit_class.id, name, application_date, start_date, end_date, image, area, area_unit, state)
+  (project_developer_id, land_steward_id, v_credit_class.id, application_date, start_date, end_date, state)
 returning * into v_project;
 
 return v_project;
