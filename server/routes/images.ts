@@ -24,8 +24,6 @@ interface MulterRequest extends express.Request {
 router.post('/images', bodyParser.json(), (request, response: express.Response) => {
   const image  = (request as MulterRequest).files.image;
   const key  = request.body.filePath;
-
-  // // Configure the file stream and obtain the upload parameters
   const fileStream = Readable.from(image.data);
 
   const uploadParams = {
@@ -44,20 +42,17 @@ router.post('/images', bodyParser.json(), (request, response: express.Response) 
       console.log("s3 Error", err);
       response.status(500).send({Error: err});
     } if (data) {
-      console.log("Upload Success", data);
-      response.set('imageUrl', data.Location);
       response.send({imageUrl: data.Location})
     }
   });
 });
 
 router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: express.Response) => {
-  console.log(request.params)
   const projectId = request.params.projectId;
   const key = request.params.key;
 
   const deleteParams = {
-    Bucket: `regen-registry/${projectId}`,
+    Bucket: `${bucketName}/projects/${projectId}`,
     Key: key,
   };
 
@@ -67,8 +62,7 @@ router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: 
       console.log("s3 Error", err);
       response.status(500).send(err);
     } if (data) {
-      console.log("Delete Success", data);
-      response.send({deleted: data})
+      response.send('File succesfully deleted')
     }
   });
 });
