@@ -7,7 +7,6 @@
     "compare-func": "^2.0.0",
     "dot-prop": "^5.3.0",
     "lerna": "^3.22.1",
-    "multer": "^1.4.3",
     "node-flywaydb": "^3.0.0",
     "shx": "^0.3.2"
   },

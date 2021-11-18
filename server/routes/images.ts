@@ -16,13 +16,17 @@ const s3 = new S3({
 
 const router = express.Router();
 
-interface MulterRequest extends express.Request {
-  files: any;
-  file: any;
+interface FilesRequest extends express.Request {
+  files: {
+    image: {
+      data: File,
+      name: string,
+    }
+  };
 }
 
 router.post('/images', bodyParser.json(), (request, response: express.Response) => {
-  const image  = (request as MulterRequest).files.image;
+  const image  = (request as FilesRequest).files.image;
   const key  = request.body.filePath;
   const fileStream = Readable.from(image.data);
 
