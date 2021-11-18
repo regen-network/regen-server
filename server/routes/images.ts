@@ -40,7 +40,6 @@ router.post('/images', bodyParser.json(), (request, response: express.Response) 
     console.log('File Error: ', err);
   });
 
-  // call S3 to retrieve upload file to specified bucket
   s3.upload(uploadParams, function (err, data) {
     if (err) {
       console.log("s3 Error", err);
@@ -60,7 +59,6 @@ router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: 
     Key: key,
   };
 
-  // call S3 to retrieve upload file to specified bucket
   s3.deleteObject(deleteParams, function (err, data) {
     if (err) {
       console.log("s3 Error", err);
