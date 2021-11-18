@@ -42,7 +42,7 @@ router.post('/images', bodyParser.json(), (request, response: express.Response) 
 
   s3.upload(uploadParams, function (err, data) {
     if (err) {
-      console.log("s3 Error", err);
+      console.log('s3 Error', err);
       response.status(500).send({Error: err});
     } if (data) {
       response.send({imageUrl: data.Location})
@@ -61,7 +61,7 @@ router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: 
 
   s3.deleteObject(deleteParams, function (err, data) {
     if (err) {
-      console.log("s3 Error", err);
+      console.log('s3 Error', err);
       response.status(500).send(err);
     } if (data) {
       response.send('File succesfully deleted')
