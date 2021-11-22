@@ -93,3 +93,42 @@ end;
 $$ language plpgsql volatile
 set search_path
 = pg_catalog, public, pg_temp;
+
+create or replace function private.create_project_stakeholder(
+  metadata jsonb
+) returns uuid as $$
+declare
+  v_user "user";
+  v_org organization;
+begin
+  if metadata is not null then
+    if (metadata->'@type')::jsonb ? 'http://regen.network/Organization' then
+      v_user := really_create_user_if_needed(
+        metadata->>'http://schema.org/email',
+        metadata->>'http://regen.network/responsiblePerson', null, null, null, null, null, false, null,
+        metadata->>'http://schema.org/telephone'
+      );
+      v_org := really_create_organization_if_needed(
+        metadata->>'http://schema.org/legalName',
+        metadata->>'http://schema.org/name', '', 'c0bcb70a-935f-11ea-86d1-0ab192efaa7b',
+        metadata->'http://schema.org/logo'->>'@value',
+        metadata->>'http://schema.org/description', null,
+        (metadata->'http://schema.org/location')::jsonb
+      );
+      return v_org.party_id;
+    end if;
+    if (metadata->'@type')::jsonb ? 'http://regen.network/Individual' then
+      v_user := really_create_user_if_needed(
+        metadata->>'http://schema.org/email',
+        metadata->>'http://regen.network/name',
+        metadata->'http://schema.org/image'->>'@value', null, null, null, null, false,
+        metadata->>'http://schema.org/description',
+        metadata->>'http://schema.org/telephone'
+      );
+      return v_user.party_id;
+    end if;
+  end if;
+end;
+$$ language plpgsql strict volatile
+set search_path
+to pg_catalog, public, pg_temp;
