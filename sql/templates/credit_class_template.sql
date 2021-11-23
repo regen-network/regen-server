@@ -1,6 +1,6 @@
 DO $$ 
 DECLARE
-  -- Variables to provide
+  -- Variables to provide values for
   -- Replace "TODO"s in the various metadata with appropriate values
   v_methodology_author_id uuid := ''; -- methodology author party id
   v_methodology_version text := '';

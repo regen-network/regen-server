@@ -1,9 +1,10 @@
 DO $$ 
 DECLARE
-  -- Variables to provide
+  -- Variables to provide values for
   -- Replace "TODO"s in v_metadata with appropriate values
   v_handle text := '';
   v_creator_id uuid := ''; -- your user id
+  v_registry_id uuid := '';
   v_broker_id uuid; -- optional broker party id (e.g. party id of Regen Network Development, Inc)
   v_reseller_id uuid; -- optional reseller party id (e.g. party id of Regen Network Development, Inc)
   v_metadata jsonb := '{
@@ -125,11 +126,12 @@ BEGIN
   end if;
 
   insert into project
-    (handle, creator_id, credit_class_id, address_id, metadata)
+    (handle, creator_id, credit_class_id, registry_id, address_id, metadata)
   values (
     v_handle,
     v_creator_id,
     v_credit_class_id,
+    v_registry_id,
     v_address_id,
     v_metadata
   );
