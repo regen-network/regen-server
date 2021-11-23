@@ -25,7 +25,7 @@ interface FilesRequest extends express.Request {
   };
 }
 
-router.post('/images', bodyParser.json(), (request, response: express.Response) => {
+router.post('/file', bodyParser.json(), (request, response: express.Response) => {
   const image  = (request as FilesRequest).files.image;
   const key  = request.body.filePath;
   const fileStream = Readable.from(image.data);
@@ -64,7 +64,7 @@ router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: 
       console.log('s3 Error', err);
       response.status(500).send(err);
     } if (data) {
-      response.send('File succesfully deleted')
+      response.send('File successfully deleted')
     }
   });
 });
