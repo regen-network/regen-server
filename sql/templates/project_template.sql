@@ -33,6 +33,10 @@ DECLARE
     },
     "TODO": "use https://docs.mapbox.com/playground/geocoding/ to get the geojson data response for the address"
   },
+  "http://regen.network/boundaries": {
+    "@type": "http://schema.org/URL",
+    "@value": "TODO"
+  },
   "http://regen.network/size": {
     "http://qudt.org/1.1/schema/qudt#unit": {
       "@type": "http://qudt.org/1.1/schema/qudt#unit",
