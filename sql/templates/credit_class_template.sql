@@ -13,9 +13,10 @@ DECLARE
       "@value": "TODO"
     }
   }'::jsonb;
-  v_credit_class_uri text := '';
+  v_credit_class_uri text := 'http://regen.network/TestCreditClass';
   v_credit_class_standard boolean := true; -- is external standard
   v_credit_class_name text := '';
+  v_credit_class_version text := '';
   v_credit_class_image text := '';
   v_credit_class_date_developed timestamptz := '';
   v_credit_class_metadata jsonb := '{
@@ -68,8 +69,9 @@ BEGIN
   values (v_methodology_id, v_methodology_version, v_methodology_name, v_methodology_date_developed, v_methodology_metadata);
 
   insert into credit_class (methodology_id, uri, standard)
-  values (v_methodology_id, v_credit_class_uri, v_credit_class_standard);
+  values (v_methodology_id, v_credit_class_uri, v_credit_class_standard)
+  returning id into v_credit_class_id;
 
-  insert into credit_class_version (credit_class_id, name, date_developed, image, metadata)
-  values (v_credit_class_id, v_credit_class_name, v_credit_class_date_developed, v_credit_class_image, v_credit_class_metadata);
+  insert into credit_class_version (id, version, name, date_developed, image, metadata)
+  values (v_credit_class_id, v_credit_class_version, v_credit_class_name, v_credit_class_date_developed, v_credit_class_image, v_credit_class_metadata);
 END $$;
