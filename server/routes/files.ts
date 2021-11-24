@@ -25,7 +25,7 @@ interface FilesRequest extends express.Request {
   };
 }
 
-router.post('/file', bodyParser.json(), (request, response: express.Response) => {
+router.post('/files', bodyParser.json(), (request, response: express.Response) => {
   const image  = (request as FilesRequest).files.image;
   const key  = request.body.filePath;
   const fileStream = Readable.from(image.data);
@@ -50,7 +50,7 @@ router.post('/file', bodyParser.json(), (request, response: express.Response) =>
   });
 });
 
-router.delete('/images/:projectId/:key', bodyParser.json(), (request, response: express.Response) => {
+router.delete('/files/:projectId/:key', bodyParser.json(), (request, response: express.Response) => {
   const projectId = request.params.projectId;
   const key = request.params.key;
 
