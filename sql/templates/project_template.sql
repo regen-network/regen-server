@@ -4,7 +4,7 @@ DECLARE
   -- Replace "TODO"s in v_metadata with appropriate values
   v_handle text := '';
   v_creator_id uuid := ''; -- your user id
-  v_registry_id uuid := '';
+  v_registry_id uuid := ''; -- existing party id of the registry the project belongs to
   v_broker_id uuid; -- optional broker party id (e.g. party id of Regen Network Development, Inc)
   v_reseller_id uuid; -- optional reseller party id (e.g. party id of Regen Network Development, Inc)
   v_metadata jsonb := '{

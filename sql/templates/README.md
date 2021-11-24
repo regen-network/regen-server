@@ -7,11 +7,11 @@ This requires an existing `party` for setting the `v_methodology_author_id` (you
 
 Once all the values are provided, just run:
 ```sh
-psql {database_connection_info} credit_class_template_copy.sql
+psql {database_connection_info} -f credit_class_template_copy.sql
 ```
 e.g. for your local database:
 ```sh
-psql postgresql://postgres:postgres@localhost:5432/regen_registry credit_class_template_copy.sql
+psql postgresql://postgres:postgres@localhost:5432/regen_registry -f credit_class_template_copy.sql
 ```
 
 1. Once you have a credit class, you can create a new `project` for this credit class using `project_template.sql`. Same as in 1., duplicate and edit its copy to provide project data. This requires an existing `party` for setting the `v_registry_id` (you can use `really_create_user_if_needed` and/or `really_create_organization_if_needed` functions to do that or just use an existing `party`).
@@ -19,9 +19,9 @@ In particular, the project metadata should contain at least a `http://regen.netw
 
 Once all the values are provided, just run:
 ```sh
-psql {database_connection_info} project_template_copy.sql
+psql {database_connection_info} -f project_template_copy.sql
 ```
 e.g. for your local database:
 ```sh
-psql postgresql://postgres:postgres@localhost:5432/regen_registry project_template_copy.sql
+psql postgresql://postgres:postgres@localhost:5432/regen_registry -f project_template_copy.sql
 ```

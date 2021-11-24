@@ -4,8 +4,8 @@ DECLARE
   -- Replace "TODO"s in the various metadata with appropriate values
   v_methodology_author_id uuid := ''; -- methodology author party id
   v_methodology_version text := '';
-  v_methodology_name text := '';
-  v_methodology_date_developed timestamptz := '';
+  v_methodology_name text := 'Test';
+  v_methodology_date_developed timestamptz := '2021-01-01';
   v_methodology_metadata jsonb := '{
     "@type": "http://regen.network/Methodology",
     "http://schema.org/url": {
