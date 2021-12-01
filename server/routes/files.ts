@@ -1,20 +1,19 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-const S3 = require('aws-sdk/clients/s3')
+const S3 = require('aws-sdk/clients/s3');
 const { Readable } = require('stream');
+const router = express.Router();
 
-const bucketName = process.env.AWS_S3_BUCKET
-const region = process.env.AWS_BUCKET_REGION
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+const bucketName = process.env.AWS_S3_BUCKET;
+const region = process.env.AWS_BUCKET_REGION;
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
 const s3 = new S3({
   region,
   accessKeyId,
   secretAccessKey
-})
-
-const router = express.Router();
+});
 
 interface FilesRequest extends express.Request {
   files: {
@@ -45,7 +44,7 @@ router.post('/files', bodyParser.json(), (request, response: express.Response) =
       console.log('s3 Error', err);
       response.status(500).send({Error: err});
     } if (data) {
-      response.send({imageUrl: data.Location})
+      response.send({imageUrl: data.Location});
     }
   });
 });
@@ -64,7 +63,7 @@ router.delete('/files/:projectId/:key', bodyParser.json(), (request, response: e
       console.log('s3 Error', err);
       response.status(500).send(err);
     } if (data) {
-      response.send('File successfully deleted')
+      response.send('File successfully deleted');
     }
   });
 });
