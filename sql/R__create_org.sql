@@ -11,7 +11,7 @@ create or replace function public.really_create_organization_if_needed
   org_address jsonb default null
 ) returns organization as $$
 declare
-  v_org party;
+  v_org organization;
   v_party party;
   v_wallet wallet;
   v_address address;
@@ -25,8 +25,7 @@ begin
     select * from organization into v_org where party_id = v_party.id;
     return v_org;
   else
-    select * from public.really_create_organization(legal_name, display_name, wallet_addr, owner_id, image, description, roles, org_address)
-    into v_org;
+    v_org := public.really_create_organization(legal_name, display_name, wallet_addr, owner_id, image, description, roles, org_address);
     return v_org;
   end if;
 end;
@@ -51,6 +50,7 @@ declare
   v_wallet wallet;
   v_address address;
 begin
+
   -- Insert the new organization's wallet
   insert into wallet
     (addr)

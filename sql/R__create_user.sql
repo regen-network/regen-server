@@ -7,7 +7,9 @@ create or replace function public.really_create_user_if_needed(
   roles text[] default null,
   address jsonb default null,
   wallet_addr text default null,
-  updates boolean default false
+  updates boolean default false,
+  description text default null,
+  phone_number text default null
 ) returns "user" as $$
 declare
   v_user "user";
@@ -19,7 +21,7 @@ begin
   if v_user.id is not null then 
     return v_user;
   else
-    select * from public.really_create_user(user_email, name, image, auth0_sub, roles, address, wallet_addr, updates)
+    select * from public.really_create_user(user_email, name, image, auth0_sub, roles, address, wallet_addr, updates, description, phone_number)
     into v_user;
     return v_user;
   end if;
