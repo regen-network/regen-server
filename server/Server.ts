@@ -55,6 +55,11 @@ app.use('/ledger', createProxyMiddleware({
   pathRewrite: { '^/ledger': '/'},
 }));
 
+app.use('/ledger-rest', createProxyMiddleware({
+  target: process.env.LEDGER_REST_ENDPOINT,
+  pathRewrite: { '^/ledger-rest': '/'},
+}));
+
 app.use(postgraphile(pgPool, 'public', {
   graphiql: true,
   watchPg: true,
