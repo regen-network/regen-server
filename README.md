@@ -10,29 +10,30 @@ of NodeJS for this project.
 
 ## Setup
 
-### Starting PostgreSQL Locally
+### Starting PostgreSQL and Redis Locally
 
 1. Install [docker-compose](https://docs.docker.com/compose/install/)
 2. Run `cd server && docker-compose up`
+
+#### Postgres info
 
 The database can then be accessed using:
 ```sh
 psql postgresql://postgres:postgres@localhost:5432/regen_registry
 ```
 
+#### Redis info
+
+[Redis](https://redis.io//) is used for caching. See `REDIS_URL` in `.env.example`.
+You can connect to redis using the `redis-cli`:
+
+```
+cd server && docker-compose exec redis redis-cli
+```
+
 ### Environment variables
 
 Based on `.env.example`, create some `.env` file with appropriate values.
-
-## Caching
-
-[Redis](https://redis.io//) is used for caching.
-You will need to have Redis running locally. Install and run
-```sh
-redis-server
-```
-then set your REDIS_URL env variable (default is redis://localhost:6379).
-TODO: see if we can use Docker for this. See https://github.com/regen-network/regen-web/issues/527
 
 ## Starting a development server
 
