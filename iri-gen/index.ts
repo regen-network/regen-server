@@ -1,7 +1,7 @@
 import * as jsonld from 'jsonld';
 import * as blake from 'blakejs';
 
-const { binary_to_base58 } = require('base58-js')
+const { binary_to_base58 } = require('base58-js');
 
 // TODO get doc from input file
 const myDoc = {
@@ -55,8 +55,8 @@ async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
 
     // Generate BLAKE2b with 256 bits (32 bytes) length hash
     const hash = blake.blake2b(canonized, null, 32);
-    console.log(blake.blake2bHex(canonized, null, 32));
 
+    // Get IRI from hash
     const iri = toIRI(hash);
     console.log(iri);
     return iri;
