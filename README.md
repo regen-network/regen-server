@@ -2,11 +2,30 @@
 
 ## Prerequisites
 
-Make sure [NodeJS](https://nodejs.org/en/) v8.9.x, [Yarn](https://yarnpkg.com/en/), and [Docker](https://www.docker.com).
+- [NodeJS](https://nodejs.org/en/)
+- [Yarn](https://yarnpkg.com/en/)
+- [Docker](https://www.docker.com).
 
-[NVM](https://github.com/creationix/nvm) is recommended for managing NodeJS installations and we
-are intending to stick to the [LTS](https://github.com/creationix/nvm#long-term-support) releases
-of NodeJS for this project.
+[NVM](https://github.com/nvm-sh/nvm) is recommended for managing NodeJS
+installations and we are intending to stick to the
+[LTS](https://github.com/nvm-sh/nvm#long-term-support) releases of NodeJS for
+this project.
+
+After installing `nvm`, this sequence of commands will provide you with an LTS
+version of nodejs and access to `yarn`:
+
+```
+$ nvm install --lts
+$ nvm use --lts
+$ corepack enable
+$ yarn --help
+```
+
+At present the application is known to be compatible with
+nodejs versions 10.x, 14.x and 16.x. For information about
+which version is deployed on Heroku for the staging and production
+server, see the `engines` section in `package.json`. Read here for
+[more info](https://devcenter.heroku.com/articles/nodejs-support#specifying-a-node-js-version).
 
 ## Setup
 
@@ -24,7 +43,7 @@ psql postgresql://postgres:postgres@localhost:5432/regen_registry
 
 #### Redis info
 
-[Redis](https://redis.io//) is used for caching. See `REDIS_URL` in `.env.example`.
+[Redis](https://redis.io//) is used for caching. See `REDIS_URL` in `server/.env.example`.
 You can connect to redis using the `redis-cli`:
 
 ```
@@ -33,7 +52,7 @@ cd server && docker-compose exec redis redis-cli
 
 ### Environment variables
 
-Based on `.env.example`, create some `.env` file with appropriate values.
+Based on `server/.env.example`, create some `server/.env` file with appropriate values.
 
 ## Starting a development server
 
