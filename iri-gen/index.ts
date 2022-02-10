@@ -33,6 +33,7 @@ function toIRI(hash: Uint8Array): string {
 	bz[1] = GraphCanonicalizationAlgorithmURDNA2015;
 	bz[2] = GraphMerkleTreeUnspecified;
 	bz[3] = DigestAlgorithmBLAKE2b256;
+  // TODO append checksum
   const hashStr = binary_to_base58([iriVersion0, ...bz, ...hash]);
 
 	return `regen:${hashStr}.rdf`
@@ -55,7 +56,8 @@ async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
 
     // Generate BLAKE2b with 256 bits (32 bytes) length hash
     const hash = blake.blake2b(canonized, null, 32);
-
+    console.log(hash);
+    
     // Get IRI from hash
     const iri = toIRI(hash);
     console.log(iri);
