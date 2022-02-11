@@ -1,10 +1,23 @@
+import * as fs from 'fs';
 import { generateIRI } from './iri-gen';
 
-// TODO get doc from input file
-const myDoc = {
-  "http://schema.org/name": [{"@value": "Manu Sporny"}],
-  "http://schema.org/url": [{"@id": "http://manu.sporny.org/"}],
-  "http://schema.org/image": [{"@id": "http://manu.sporny.org/images/manu.png"}]
-};
+// Make sure we got a filename on the command line.
+if (process.argv.length < 3) {
+  console.log('You should provide the path to a JSON file');
+  process.exit(1);
+}
 
-generateIRI(myDoc);
+async function readFileAndGenerateIRI() {
+  try {
+    const path = process.argv[2];
+    const rawdata = fs.readFileSync(path);
+    const doc = JSON.parse(rawdata.toString());
+
+    const iri = await generateIRI(doc);
+    if (iri) console.log(`The IRI for ${path} is: ${iri}`);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+readFileAndGenerateIRI();

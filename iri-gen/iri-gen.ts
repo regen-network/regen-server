@@ -78,15 +78,12 @@ export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
       algorithm: 'URDNA2015',
       format: 'application/n-quads'
     });
-    console.log(canonized);
 
     // Generate BLAKE2b with 256 bits (32 bytes) length hash
     const hash = blake.blake2b(canonized, null, 32);
-    console.log(hash);
 
     // Get IRI from hash
     const iri = toIRI(hash);
-    console.log(iri);
     return iri;
   } catch (e) {
     console.error(e);
