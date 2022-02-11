@@ -8,7 +8,8 @@ const IriPrefixGraph = 1;
 const GraphCanonicalizationAlgorithmURDNA2015 = 1;
 const GraphMerkleTreeUnspecified = 0;
 const DigestAlgorithmBLAKE2b256 = 1;
-const iriVersion0 = 0;
+// const iriVersion0 = 0;
+const iriVersion0 = 300;
 
 /**
  * toIRI converts a hash to an IRI (internationalized URI) based on the following
@@ -47,6 +48,7 @@ function checkEncode(input: Uint8Array, version: number): string {
   if (version > 255) {
     throw 'version is greater than 255';
   }
+  console.log('CONTINUE')
   const b = Uint8Array.from([version, ...input]);
   const cksum = checksum(b);
   
