@@ -110,7 +110,5 @@ IRIs can be generated based on JSON-LD data using the following command:
 cd iri-gen && yarn gen json_file_path
 ```
 
-Ref: 
-
 
 
