@@ -102,5 +102,15 @@ These graphs can be stored too in the PostGres database in the `schacl_graph` ta
 The `schacl_graph` table has an `uri` as primary key and a jsonb column `graph` where a SHACL graph is encoded as JSON-LD.
 For instance, an entry with `http://regen.network/ProjectPlanShape` as URI can be created to store the SHACL graph to validate a project plan.
 
+## IRI Generation for JSON-LD data
+
+IRIs can be generated based on JSON-LD data using the following command:
+
+```sh
+cd iri-gen && yarn gen json_file_path
+```
+
+Ref: 
+
 
 
