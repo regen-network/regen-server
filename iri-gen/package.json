@@ -14,7 +14,8 @@
     "sha256-uint8array": "^0.10.3"
   },
   "scripts": {
-    "gen": "ts-node index.ts"
+    "gen": "ts-node index.ts",
+    "test": "jest"
   },
   "devDependencies": {
     "@types/jsonld": "^1.5.6"

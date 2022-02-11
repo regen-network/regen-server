@@ -50,10 +50,5 @@
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "yarn remove-dist && tsc --watch",
     "test": "jest"
-  },
-  "devDependencies": {
-    "@types/jest": "^26.0.19",
-    "jest": "^26.6.3",
-    "ts-jest": "^26.4.4"
   }
 }
