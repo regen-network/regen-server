@@ -55,7 +55,7 @@ function checkEncode(input: Uint8Array, version: number): string {
 
 /**
  * checksum returns the first four bytes of sha256^2
- *  * This is based on CheckEncode function from github.com/btcsuite/btcutil/base58
+ * This is based on checksum function from github.com/btcsuite/btcutil/base58
  * @param  {Uint8Array} input
  * @returns Uint8Array
  */
