@@ -1,7 +1,6 @@
 import * as express from 'express';
 import * as path from 'path';
 import { postgraphile } from 'postgraphile';
-import * as PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import * as fileUpload from 'express-fileupload';
 import * as cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -10,6 +9,7 @@ import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
 
+const PgManyToManyPlugin = require('@graphile-contrib/pg-many-to-many');
 const url = require('url');
 const { pgPool } = require('./pool');
 
