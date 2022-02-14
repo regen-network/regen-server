@@ -38,7 +38,7 @@ function toIRI(hash: Uint8Array): string {
 /**
  * checkEncode prepends a version byte and appends a four byte checksum,
  * returns a base58 string
- * This is based on CheckEncode function from github.com/btcsuite/btcutil/base58
+ * This is based on CheckEncode function from github.com/btcsuite/btcd/tree/master/btcutil/base58
  * @param  {Uint8Array} input
  * @param  {number} version
  * @returns string
