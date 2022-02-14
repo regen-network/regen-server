@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "noEmit": false,
+    "lib": ["es2018", "esnext.asynciterable", "DOM"],
+    "target": "es2018",
+    "module": "commonjs"
+  },
+}

@@ -1,15 +1,10 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "incremental": true,
-    "noEmit": false,
     "rootDir": "worker/tasks",
     "outDir": "worker/dist",
     "tsBuildInfoFile": "worker/dist/tsconfig.tsbuildinfo",
     "declarationDir": "worker/dist",
-    "lib": ["es2018", "esnext.asynciterable", "DOM"],
-    "target": "es2018",
-    "module": "commonjs"
   },
   "include": ["worker/tasks"]
 }

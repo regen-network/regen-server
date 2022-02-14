@@ -1,0 +1,23 @@
+{
+  "name": "iri-gen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Script for generating an IRI from JSON-LD data",
+  "main": "app.ts",
+  "repository": "https://github.com/regen-network/registry-server",
+  "author": "blushi",
+  "license": "MIT",
+  "dependencies": {
+    "base58-js": "^1.0.0",
+    "blakejs": "^1.1.1",
+    "jsonld": "^5.2.0",
+    "sha256-uint8array": "^0.10.3"
+  },
+  "scripts": {
+    "gen": "ts-node index.ts",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/jsonld": "^1.5.6"
+  }
+}
