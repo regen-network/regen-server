@@ -10,16 +10,16 @@ router.get('/metadata-graph/:iri', async (req, res) => {
   let client;
   try {
     if (!iri_re.test(iri)) {
-      res.status(400).send("Invalid IRI, it must of the form regen:<iri-hash>.rdf");
+      res.status(400).send("Invalid IRI, it must be of the form regen:<iri-hash>.rdf");
     } else {
       client = await pgPool.connect();
       try {
          const { rows } = await client.query(
            'select metadata from metadata_graph where iri=$1',
            [iri]
-         )
+         );
          if (!rows.length) {
-           res.status(404).send(`metadata_graph with the iri ${iri} not found`)
+           res.status(404).send(`metadata_graph with the iri ${iri} not found`);
          } else {
            res.json(rows[0]);
          }
@@ -36,6 +36,6 @@ router.get('/metadata-graph/:iri', async (req, res) => {
       client.release();
     }
   }
-})
+});
 
 module.exports = router;
