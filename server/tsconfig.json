@@ -5,9 +5,6 @@
     "outDir": "worker/dist",
     "tsBuildInfoFile": "worker/dist/tsconfig.tsbuildinfo",
     "declarationDir": "worker/dist",
-    "lib": ["es2018", "esnext.asynciterable", "DOM"],
-    "target": "es2018",
-    "module": "commonjs"
   },
   "include": ["worker/tasks"]
 }
