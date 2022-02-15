@@ -28,12 +28,15 @@ const corsOptions = (req, callback) => {
     options = { origin: true };
   } else {
     const originURL = req.header('Origin') && url.parse(req.header('Origin'));
+    console.log('originURL', originURL);
     if (originURL && (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
       originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
       originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
       originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))) {
+      console.log('ENABLE');
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
     } else {
+      console.log('DISABLE');
       options = { origin: false }; // disable CORS for this request
     }
   }
