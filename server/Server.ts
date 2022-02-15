@@ -85,6 +85,7 @@ app.use(require('./routes/stripe'));
 app.use(require('./routes/auth'));
 app.use(require('./routes/recaptcha'));
 app.use(require('./routes/files'));
+app.use(require('./routes/metadata-graph'));
 
 const port = process.env.PORT || 5000;
 
