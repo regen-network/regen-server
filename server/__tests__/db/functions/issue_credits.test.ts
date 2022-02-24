@@ -27,13 +27,14 @@ export async function issueCredits(
   metadata: Metadata | null,
   issuerId: string | null,
   resellerId: string | null,
+  batchDenom: string | null,
 ) {
   const {
     rows: [row],
   } = await client.query(
     `
       select * from public.issue_credits(
-        $1, $2, $3, $4, $5, $6, $7, now(), now(), $8, $9, $10
+        $1, $2, $3, $4, $5, $6, $7, now(), now(), $8, $9, $10, $11
 
       )
       `,
@@ -48,6 +49,7 @@ export async function issueCredits(
       metadata || {},
       issuerId || '00000000-0000-0000-0000-000000000000',
       resellerId || '00000000-0000-0000-0000-000000000000',
+      batchDenom || null,
     ],
   );
   return row;
@@ -72,6 +74,7 @@ it('issues credits', () =>
       methodologyVersion.created_at,
       units,
       distribution,
+      null,
       null,
       null,
       null,
@@ -160,6 +163,7 @@ it('issues 3rd party credits with reseller and initial issuer', () =>
       null,
       thirdPartyOrg.party_id,
       party.wallet_id,
+      null,
     );
 
     expect(result).not.toBeNull();
@@ -231,6 +235,7 @@ it('issues 3rd party credits with reseller, initial issuer and metadata', () =>
       metadata,
       thirdPartyOrg.party_id,
       party.wallet_id,
+      null,
     );
 
     expect(result).not.toBeNull();
@@ -301,6 +306,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
       units,
       distribution,
       metadata,
+      null,
       null,
       null,
     );
@@ -418,6 +424,7 @@ it('fails if sum of initial distribution not equal to 100%', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -445,6 +452,7 @@ it('fails if current user does not exist', () =>
       methodologyVersion.created_at,
       units,
       distribution,
+      null,
       null,
       null,
       null,
@@ -483,6 +491,7 @@ it('fails if current user is not an admin', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -517,6 +526,7 @@ it('fails if current user does not belong to an organization', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -545,6 +555,7 @@ it('fails if current user is not credit class issuer', () =>
       methodologyVersion.created_at,
       units,
       distribution,
+      null,
       null,
       null,
       null,
