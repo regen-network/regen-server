@@ -31,7 +31,7 @@ create or replace function issue_credits(
   metadata jsonb default '{}',
   initial_issuer_id uuid default uuid_nil(), -- optional party id of the initial issuer in case of 3rd party credits
   reseller_id uuid default uuid_nil(), -- optional wallet id of the reseller, credits gets issued to the reseller in case of 3rd party credits
-  batch_denom default ''
+  batch_denom text default null
 ) returns jsonb as $$
 declare
   v_tokenizer "user";
