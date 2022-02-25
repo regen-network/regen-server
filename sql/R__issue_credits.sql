@@ -216,6 +216,6 @@ begin
     'accountBalances', v_account_balances
   );
 end;
-$$ language plpgsql strict volatile
+$$ language plpgsql volatile
 set search_path
 to pg_catalog, public, pg_temp;
