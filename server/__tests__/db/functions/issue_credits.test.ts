@@ -344,6 +344,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(parseInt(vintages[0].units)).toEqual(units);
     expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
     expect(vintages[0].metadata).toEqual(metadata);
+    expect(vintages[0].batch_denom).toBeNull();
 
     // account balances created
     const { rows: balances } = await client.query(
