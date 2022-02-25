@@ -27,7 +27,7 @@ export async function issueCredits(
   metadata: Metadata | null,
   issuerId: string | null,
   resellerId: string | null,
-  batchDenom: string | null,
+  batchDenom: string | null = null,
 ) {
   const {
     rows: [row],
@@ -74,7 +74,6 @@ it('issues credits', () =>
       methodologyVersion.created_at,
       units,
       distribution,
-      null,
       null,
       null,
       null,
