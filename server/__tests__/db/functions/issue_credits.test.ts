@@ -49,7 +49,7 @@ export async function issueCredits(
       metadata || {},
       issuerId || '00000000-0000-0000-0000-000000000000',
       resellerId || '00000000-0000-0000-0000-000000000000',
-      batchDenom || null,
+      batchDenom,
     ],
   );
   return row;
@@ -77,6 +77,7 @@ it('issues credits', () =>
       null,
       null,
       null,
+      'C01-20190101-20200101-001',
     );
 
     expect(result).not.toBeNull();
@@ -106,6 +107,7 @@ it('issues credits', () =>
     expect(vintages[0].tokenizer_id).toEqual(party.wallet_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
     expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
+    expect(vintages[0].batch_denom).toEqual('C01-20190101-20200101-001');
 
     // account balances created
     const { rows: balances } = await client.query(
