@@ -27,13 +27,14 @@ export async function issueCredits(
   metadata: Metadata | null,
   issuerId: string | null,
   resellerId: string | null,
+  batchDenom: string | null = null,
 ) {
   const {
     rows: [row],
   } = await client.query(
     `
       select * from public.issue_credits(
-        $1, $2, $3, $4, $5, $6, $7, now(), now(), $8, $9, $10
+        $1, $2, $3, $4, $5, $6, $7, now(), now(), $8, $9, $10, $11
 
       )
       `,
@@ -48,6 +49,7 @@ export async function issueCredits(
       metadata || {},
       issuerId || '00000000-0000-0000-0000-000000000000',
       resellerId || '00000000-0000-0000-0000-000000000000',
+      batchDenom,
     ],
   );
   return row;
@@ -75,6 +77,7 @@ it('issues credits', () =>
       null,
       null,
       null,
+      'C01-20190101-20200101-001',
     );
 
     expect(result).not.toBeNull();
@@ -104,6 +107,7 @@ it('issues credits', () =>
     expect(vintages[0].tokenizer_id).toEqual(party.wallet_id);
     expect(parseInt(vintages[0].units)).toEqual(units);
     expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
+    expect(vintages[0].batch_denom).toEqual('C01-20190101-20200101-001');
 
     // account balances created
     const { rows: balances } = await client.query(
@@ -160,6 +164,7 @@ it('issues 3rd party credits with reseller and initial issuer', () =>
       null,
       thirdPartyOrg.party_id,
       party.wallet_id,
+      null,
     );
 
     expect(result).not.toBeNull();
@@ -231,6 +236,7 @@ it('issues 3rd party credits with reseller, initial issuer and metadata', () =>
       metadata,
       thirdPartyOrg.party_id,
       party.wallet_id,
+      null,
     );
 
     expect(result).not.toBeNull();
@@ -303,6 +309,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
       metadata,
       null,
       null,
+      null,
     );
 
     expect(result).not.toBeNull();
@@ -339,6 +346,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(parseInt(vintages[0].units)).toEqual(units);
     expect(vintages[0].initial_distribution).toEqual({ '@type': 'http://regen.network/CreditVintage', ...distribution });
     expect(vintages[0].metadata).toEqual(metadata);
+    expect(vintages[0].batch_denom).toBeNull();
 
     // account balances created
     const { rows: balances } = await client.query(
@@ -418,6 +426,7 @@ it('fails if sum of initial distribution not equal to 100%', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -445,6 +454,7 @@ it('fails if current user does not exist', () =>
       methodologyVersion.created_at,
       units,
       distribution,
+      null,
       null,
       null,
       null,
@@ -483,6 +493,7 @@ it('fails if current user is not an admin', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -517,6 +528,7 @@ it('fails if current user does not belong to an organization', () =>
       null,
       null,
       null,
+      null,
     );
 
     await expect(promise).rejects.toMatchInlineSnapshot(
@@ -545,6 +557,7 @@ it('fails if current user is not credit class issuer', () =>
       methodologyVersion.created_at,
       units,
       distribution,
+      null,
       null,
       null,
       null,

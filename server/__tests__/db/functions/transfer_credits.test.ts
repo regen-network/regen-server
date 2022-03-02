@@ -434,6 +434,7 @@ async function setup(
       withPools ? metadata : null,
       issuerId || '00000000-0000-0000-0000-000000000000',
       resellerId || '00000000-0000-0000-0000-000000000000',
+      null,
     );
     expect(issueResult).not.toBeNull();
     expect(issueResult.issue_credits).not.toBeNull();
