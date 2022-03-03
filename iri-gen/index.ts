@@ -57,7 +57,7 @@ async function main() {
       process.exit(0);
     } catch(err) {
       console.error(err);
-      process.exit(1);
+      process.exit(0);
     } finally {
       // Make sure to release the client before any error handling,
       // just in case the error handling itself throws an error.
