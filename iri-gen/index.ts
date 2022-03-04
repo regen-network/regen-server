@@ -43,12 +43,7 @@ async function main() {
     console.log(`The IRI for ${path} is: ${iri}`)
   }
   if (insert_flag) {
-    try {
-      var pool = setupPgPool();
-    } catch (err) {
-      console.error(err);
-      process.exit(1);
-    }
+    const pool = setupPgPool();
     try {
       var client = await pool.connect();
       console.log('Inserting IRI, and metadata into metadata_graph table.');
