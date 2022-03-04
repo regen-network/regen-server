@@ -114,6 +114,28 @@ yarn test
 Right now, it's using the development database.
 TODO: Use a separate testing database instead and set up new migration command.
 
+## Linting and code formatting 
+
+This repo is configured to run prettier with eslint, in addition to some other
+common plugin rules for eslint and eslint typescript. The setup was created by
+following [the eslint getting started][1] as well as [the prettier docs for
+integrating with linters][2].
+
+To run the linter for the whole project:
+```sh
+yarn run eslint .
+```
+
+To run the linter for a specific file:
+```sh
+yarn run eslint <path-to-file>
+```
+
+To run the linter for a specific file and apply fixes where possible:
+```sh
+yarn run eslint <path-to-file> --fix
+```
+
 ## SHACL Graphs
 
 [SHACL](https://www.w3.org/TR/shacl/) schemas have been migrated to https://github.com/regen-network/regen-registry-standards
@@ -130,5 +152,5 @@ IRIs can be generated based on JSON-LD data using the following command:
 cd iri-gen && yarn gen json_file_path
 ```
 
-
-
+[1]: https://eslint.org/docs/user-guide/getting-started
+[2]: https://prettier.io/docs/en/integrating-with-linters.html 
