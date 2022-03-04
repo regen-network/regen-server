@@ -131,8 +131,8 @@ cd iri-gen && yarn gen json_file_path
 ```
 
 IRIs can be generated and inserted to the database using the `--insert`
-flag.Note: You need to create an `iri-gen/.env` when using this flag. See
-`iri-gen/.env-example`.
+flag. Note: You need to create an `iri-gen/.env` when using this flag for
+the staging or production environment. See `iri-gen/.env-example`.
 
 ```sh
 cd iri-gen && yarn gen --insert json_file_path
