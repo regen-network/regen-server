@@ -49,7 +49,7 @@ async function main() {
       console.log('Inserting IRI, and metadata into metadata_graph table.');
       const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
       console.log('IRI and metadata inserted successfully.');
-    } catch(err) {
+    } catch (err) {
       console.error(err);
     } finally {
       // Make sure to release the client before any error handling,
