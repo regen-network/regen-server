@@ -121,17 +121,17 @@ common plugin rules for eslint and eslint typescript. The setup was created by
 following [the eslint getting started][1] as well as [the prettier docs for
 integrating with linters][2].
 
-To run the linter for the whole project:
+To run the linter and formatter for the whole project:
 ```sh
 yarn run eslint .
 ```
 
-To run the linter for a specific file:
+To run the linter and formatter for a specific file:
 ```sh
 yarn run eslint <path-to-file>
 ```
 
-To run the linter for a specific file and apply fixes where possible:
+To automatically apply fixes where possible use `--fix`:
 ```sh
 yarn run eslint <path-to-file> --fix
 ```
