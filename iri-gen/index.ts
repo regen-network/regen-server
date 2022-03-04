@@ -42,7 +42,7 @@ async function main() {
   if (iri) {
     console.log(`The IRI for ${path} is: ${iri}`)
   }
-  if (insert_flag) {
+  if (iri && insert_flag) {
     const pool = setupPgPool();
     try {
       var client = await pool.connect();
