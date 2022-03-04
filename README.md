@@ -117,7 +117,7 @@ TODO: Use a separate testing database instead and set up new migration command.
 ## Linting and code formatting 
 
 This repo is configured to run prettier with eslint, in addition to some other
-common plugin rules for eslint and eslint typescript. The setup was created by
+common linting rules for eslint and eslint typescript. The setup was created by
 following [the eslint getting started][1] as well as [the prettier docs for
 integrating with linters][2].
 
