@@ -26,18 +26,15 @@ async function readFileAndGenerateIRI(path) {
 }
 
 async function main() {
+  const parseArgs = require('minimist');
+  const argv = parseArgs(process.argv.slice(2), {'boolean': true});
   // Make sure we got a filename on the command line.
-  if (process.argv.length < 3) {
+  if (argv._.length < 1) {
     console.log('You should provide the path to a JSON file');
     process.exit(1);
   }
-  const insert_flag = process.argv.includes('--insert');
-  if (insert_flag) {
-    // remove --insert flag if it was specified
-    const idx = process.argv.indexOf('--insert');
-    process.argv.splice(idx, 1);
-  }
-  const path = process.argv[2];
+  const insert_flag = argv.insert;
+  const path = argv._[0];
   const {iri, doc} = await readFileAndGenerateIRI(path);
   if (iri) {
     console.log(`The IRI for ${path} is: ${iri}`)
