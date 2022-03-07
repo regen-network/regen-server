@@ -33,27 +33,27 @@ async function main() {
     console.log('You should provide the path to a JSON file');
     process.exit(1);
   }
-  const insert_flag = argv.insert;
+  const insertFlag = argv.insert;
   const path = argv._[0];
   const {iri, doc} = await readFileAndGenerateIRI(path);
   if (iri) {
     console.log(`The IRI for ${path} is: ${iri}`)
-  }
-  if (iri && insert_flag) {
-    const pool = setupPgPool();
-    try {
-      var client = await pool.connect();
-      console.log('Inserting IRI, and metadata into metadata_graph table.');
-      const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
-      console.log('IRI and metadata inserted successfully.');
-    } catch (err) {
-      console.error(err);
-    } finally {
-      // Make sure to release the client before any error handling,
-      // just in case the error handling itself throws an error.
-      client.release();
+    if (insertFlag) {
+      const pool = setupPgPool();
+      try {
+        var client = await pool.connect();
+        console.log('Inserting IRI, and metadata into metadata_graph table.');
+        const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
+        console.log('IRI and metadata inserted successfully.');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+      }
+      process.exit(0);
     }
-    process.exit(0);
   }
 }
 
