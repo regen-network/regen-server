@@ -7,7 +7,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pgPoolConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/regen_registry',
+  connectionString:
+    process.env.DATABASE_URL ||
+    'postgres://postgres:postgres@localhost:5432/regen_registry',
 };
 
 if (process.env.NODE_ENV === 'production') {
@@ -20,10 +22,10 @@ const pgPool = new Pool(pgPoolConfig);
 
 const runnerPromise = new Promise((resolve, reject) => {
   workerMain(pgPool)
-    .then((res) => {
+    .then(res => {
       resolve(res);
     })
-    .catch((err) => {
+    .catch(err => {
       console.error(err);
       reject(err);
       process.exit(1);

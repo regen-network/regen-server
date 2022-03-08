@@ -5,7 +5,7 @@ import * as Airtable from 'airtable';
 const { runnerPromise } = require('../pool');
 
 let runner;
-runnerPromise.then((res) => {
+runnerPromise.then(res => {
   runner = res;
 });
 
@@ -19,10 +19,10 @@ router.post('/contact', bodyParser.json(), (req, res: express.Response) => {
     [
       {
         fields: {
-          "Full name": name,
-          "Email address": email,
-          "Organization name": orgName,
-          "Type of request": requestType,
+          'Full name': name,
+          'Email address': email,
+          'Organization name': orgName,
+          'Type of request': requestType,
           Message: message,
         },
       },
@@ -33,22 +33,27 @@ router.post('/contact', bodyParser.json(), (req, res: express.Response) => {
         res.status(400).send(err);
       } else {
         if (runner) {
-          runner.addJob('send_email', { 
-            options: {
-              to: requestType,
-              subject: 'New contact submission',
-              text: `Name: ${name}\n\nEmail address: ${email}\n\nOrganisation: ${orgName}\n\nMessage: ${message}`
-            }
-          }).then(() => {
-            res.sendStatus(200);
-          }, (err) => {
-            res.status(400).send(err);
-          });
+          runner
+            .addJob('send_email', {
+              options: {
+                to: requestType,
+                subject: 'New contact submission',
+                text: `Name: ${name}\n\nEmail address: ${email}\n\nOrganisation: ${orgName}\n\nMessage: ${message}`,
+              },
+            })
+            .then(
+              () => {
+                res.sendStatus(200);
+              },
+              err => {
+                res.status(400).send(err);
+              },
+            );
         } else {
           res.sendStatus(200);
         }
       }
-    }
+    },
   );
 });
 

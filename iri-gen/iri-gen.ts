@@ -20,19 +20,19 @@ const iriVersion0 = 0;
  * This is more or less copied from regen-ledger data module:
  * https://github.com/regen-network/regen-ledger/blob/87d2035d0e1815a65abc7ce6f68c535dd845a23e/x/data/iri.go#L60
  * @param  {string} hash represents the hash of some JSON-LD data based on BLAKE2b-256
- * @returns string 
+ * @returns string
  */
 function toIRI(hash: Uint8Array): string {
   const bz = new Uint8Array(4);
   bz[0] = IriPrefixGraph;
-	bz[1] = GraphCanonicalizationAlgorithmURDNA2015;
-	bz[2] = GraphMerkleTreeUnspecified;
-	bz[3] = DigestAlgorithmBLAKE2b256;
+  bz[1] = GraphCanonicalizationAlgorithmURDNA2015;
+  bz[2] = GraphMerkleTreeUnspecified;
+  bz[3] = DigestAlgorithmBLAKE2b256;
   const input = Uint8Array.from([...bz, ...hash]);
 
   const hashStr = checkEncode(input, iriVersion0);
-  
-	return `regen:${hashStr}.rdf`
+
+  return `regen:${hashStr}.rdf`;
 }
 
 /**
@@ -49,7 +49,7 @@ function checkEncode(input: Uint8Array, version: number): string {
   }
   const b = Uint8Array.from([version, ...input]);
   const cksum = checksum(b);
-  
+
   return binary_to_base58([...b, ...cksum]);
 }
 
@@ -76,7 +76,7 @@ export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
     // Canonize JSON-LD to n-quads
     const canonized = await jsonld.canonize(doc, {
       algorithm: 'URDNA2015',
-      format: 'application/n-quads'
+      format: 'application/n-quads',
     });
 
     // Generate BLAKE2b with 256 bits (32 bytes) length hash

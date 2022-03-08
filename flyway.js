@@ -1,4 +1,4 @@
-module.exports = function() {
+module.exports = function () {
   return {
     flywayArgs: {
       url: process.env.FLYWAY_URL || 'jdbc:postgresql:regen_registry',

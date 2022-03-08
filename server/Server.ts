@@ -18,8 +18,10 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
-const WEBSITE_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-website\.netlify\.app$/;
-const REGISTRY_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-registry\.netlify\.app$/;
+const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
+  /deploy-preview-\d+--regen-website\.netlify\.app$/;
+const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
+  /deploy-preview-\d+--regen-registry\.netlify\.app$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
 const corsOptions = (req, callback) => {
@@ -28,18 +30,21 @@ const corsOptions = (req, callback) => {
     options = { origin: true };
   } else {
     const originURL = req.header('Origin') && url.parse(req.header('Origin'));
-    if (originURL && (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
-      originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
-      originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
-      originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))) {
+    if (
+      originURL &&
+      (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))
+    ) {
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
     } else {
       options = { origin: false }; // disable CORS for this request
     }
   }
 
-  callback(null, options) // callback expects two parameters: error and options
-}
+  callback(null, options); // callback expects two parameters: error and options
+};
 
 const app = express();
 
@@ -50,33 +55,41 @@ app.use(getJwt(false));
 
 app.use('/image', imageOptimizer());
 
-app.use('/ledger', createProxyMiddleware({
-  target: process.env.LEDGER_TENDERMINT_RPC || 'http://13.59.81.92:26657/',
-  pathRewrite: { '^/ledger': '/'},
-}));
+app.use(
+  '/ledger',
+  createProxyMiddleware({
+    target: process.env.LEDGER_TENDERMINT_RPC || 'http://13.59.81.92:26657/',
+    pathRewrite: { '^/ledger': '/' },
+  }),
+);
 
-app.use('/ledger-rest', createProxyMiddleware({
-  target: process.env.LEDGER_REST_ENDPOINT,
-  pathRewrite: { '^/ledger-rest': '/'},
-}));
+app.use(
+  '/ledger-rest',
+  createProxyMiddleware({
+    target: process.env.LEDGER_REST_ENDPOINT,
+    pathRewrite: { '^/ledger-rest': '/' },
+  }),
+);
 
-app.use(postgraphile(pgPool, 'public', {
-  graphiql: true,
-  watchPg: true,
-  dynamicJson: true,
-  appendPlugins: [PgManyToManyPlugin],
-  pgSettings: (req: UserIncomingMessage) => {
-    if(req.user && req.user.sub) {
-      const { sub, ...user } = req.user;
-      const settings = { role: sub };
-      // TODO need to deal with keys that aren't strings properly
-      // Object.keys(user).map(k =>
-      //   settings['jwt.claims.' + k] = user[k]
-      // );
-      return settings;
-    } else return { role: 'app_user' };
-   }
-}));
+app.use(
+  postgraphile(pgPool, 'public', {
+    graphiql: true,
+    watchPg: true,
+    dynamicJson: true,
+    appendPlugins: [PgManyToManyPlugin],
+    pgSettings: (req: UserIncomingMessage) => {
+      if (req.user && req.user.sub) {
+        const { sub, ...user } = req.user;
+        const settings = { role: sub };
+        // TODO need to deal with keys that aren't strings properly
+        // Object.keys(user).map(k =>
+        //   settings['jwt.claims.' + k] = user[k]
+        // );
+        return settings;
+      } else return { role: 'app_user' };
+    },
+  }),
+);
 
 app.use(require('./routes/mailerlite'));
 app.use(require('./routes/contact'));

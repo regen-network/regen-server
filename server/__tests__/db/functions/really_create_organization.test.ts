@@ -1,21 +1,28 @@
 import { withRootDb, reallyCreateOrganization, createUser } from '../helpers';
 
-const walletAddr: string = 'addr123';
+const walletAddr = 'addr123';
 const legalName = 'acme inc';
 const displayName = 'Acme';
-const image: string = 'image';
-const description: string = 'description for acme';
+const image = 'image';
+const description = 'description for acme';
 const roles = null;
-const orgAddress: object = { 'some': 'address' };
+const orgAddress: object = { some: 'address' };
 
-const userEmail: string = 'test@user'
-const userName: string = 'orgUserName'
-const userImage: string = 'orgUserImage'
+const userEmail = 'test@user';
+const userName = 'orgUserName';
+const userImage = 'orgUserImage';
 
 it('creates org successfully', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     // Action
-    const user = await createUser(client, userEmail, userName, userImage, null, null)
+    const user = await createUser(
+      client,
+      userEmail,
+      userName,
+      userImage,
+      null,
+      null,
+    );
     const org = await reallyCreateOrganization(
       client,
       legalName,
@@ -25,7 +32,7 @@ it('creates org successfully', () =>
       image,
       description,
       roles,
-      orgAddress
+      orgAddress,
     );
 
     // Assertions
@@ -35,7 +42,7 @@ it('creates org successfully', () =>
 
     const { rows: orgParties } = await client.query(
       'select * from party where id=$1',
-      [org.party_id]
+      [org.party_id],
     );
 
     expect(orgParties).toHaveLength(1);
@@ -50,7 +57,7 @@ it('creates org successfully', () =>
 
     const { rows: orgMembers } = await client.query(
       'select * from organization_member where organization_id=$1',
-      [org.id]
+      [org.id],
     );
 
     expect(orgMembers).toHaveLength(1);
@@ -58,10 +65,9 @@ it('creates org successfully', () =>
 
     const { rows: users } = await client.query(
       'select * from "user" where id=$1',
-      [orgMembers[0].member_id]
+      [orgMembers[0].member_id],
     );
 
     expect(users).toHaveLength(1);
     expect(users[0].email).toEqual(userEmail);
-  })
-);
+  }));

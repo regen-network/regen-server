@@ -30,7 +30,7 @@ export interface SendEmailPayload {
   };
 }
 
-const task: Task = async (inPayload) => {
+const task: Task = async inPayload => {
   const payload: SendEmailPayload = inPayload as any;
   const { options: inOptions, template, variables } = payload;
   const options = {
@@ -42,8 +42,7 @@ const task: Task = async (inPayload) => {
     let html = await templateFn(variables);
     html = html.replace(/&lt;i&gt;/g, '<i>').replace(/&lt;\/i&gt;/g, '</i>');
 
-    const html2textableHtml = html
-      .replace(/(<\/?)div/g, '$1p');
+    const html2textableHtml = html.replace(/(<\/?)div/g, '$1p');
     const text = html2text
       .fromString(html2textableHtml, {
         wordwrap: 120,
@@ -54,9 +53,9 @@ const task: Task = async (inPayload) => {
   try {
     const info = await transporter.sendMail(options);
   } catch (e) {
-    console.log(e)
+    console.log(e);
   }
-}
+};
 
 export default task;
 
@@ -69,7 +68,7 @@ function loadTemplate(template: string) {
       }
       const templateString = await readFile(
         `${__dirname}/../templates/${template}`,
-        'utf8'
+        'utf8',
       );
       const templateFn = lodashTemplate(templateString, {
         escape: /\[\[([\s\S]+?)\]\]/g,
@@ -87,13 +86,12 @@ function loadTemplate(template: string) {
   return templatePromises[template];
 }
 
-export const dateFormat = new Intl.DateTimeFormat("en", {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
+export const dateFormat = new Intl.DateTimeFormat('en', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
 });
 
-export const numberFormat = new Intl.NumberFormat("en-US", {
+export const numberFormat = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
 });
-

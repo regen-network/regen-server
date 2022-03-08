@@ -16,7 +16,7 @@ beforeAll(() => {
 afterAll(() => {
   const keys = Object.keys(pools);
   return Promise.all(
-    keys.map(async (key) => {
+    keys.map(async key => {
       try {
         const pool = pools[key];
         delete pools[key];
@@ -25,7 +25,7 @@ afterAll(() => {
         console.error('Failed to release connection!');
         console.error(e);
       }
-    })
+    }),
   );
 });
 
@@ -61,16 +61,12 @@ const withDbFromUrl = async <T>(url: string, fn: ClientCallback<T>) => {
 export const withRootDb = <T>(fn: ClientCallback<T>) =>
   withDbFromUrl(TEST_DATABASE_URL, fn);
 
-export const becomeRoot = (client: PoolClient) => client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
+export const becomeRoot = (client: PoolClient) =>
+  client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
 
-export const becomeUser = async (
-  client: PoolClient,
-  userSub: string,
-) => {
+export const becomeUser = async (client: PoolClient, userSub: string) => {
   await becomeRoot(client);
-  await client.query(
-    `set role "${userSub}"`
-  );
+  await client.query(`set role "${userSub}"`);
 };
 
 export type Party = {
@@ -84,17 +80,27 @@ export type User = {
 };
 
 export const withAdminUserDb = <T>(
-  fn: (client: PoolClient, user: User, party: Party) => Promise<T>
+  fn: (client: PoolClient, user: User, party: Party) => Promise<T>,
 ) =>
-  withRootDb(async (client) => {
-    const sub: string = 'test-admin-sub';
-    const email: string = 'johndoe@regen.network';
-    const name: string = 'john doe';
-    const organization = await createUserOrganisation(client, email, name, '', 'RND test', 'walletAddr', null, { 'some': 'address' });
-    const { rows: [party] } = await client.query(
-      'select * from party where id=$1',
-      [organization.party_id]
+  withRootDb(async client => {
+    const sub = 'test-admin-sub';
+    const email = 'johndoe@regen.network';
+    const name = 'john doe';
+    const organization = await createUserOrganisation(
+      client,
+      email,
+      name,
+      '',
+      'RND test',
+      'walletAddr',
+      null,
+      { some: 'address' },
     );
+    const {
+      rows: [party],
+    } = await client.query('select * from party where id=$1', [
+      organization.party_id,
+    ]);
     await client.query('SELECT private.create_app_user_if_needed($1)', [sub]);
     await client.query('INSERT INTO admin (auth0_sub) VALUES ($1)', [sub]);
 
@@ -123,7 +129,7 @@ export async function createUser(
         $5
       )
       `,
-    [email, name, image, sub, roles]
+    [email, name, image, sub, roles],
   );
   return row;
 }
@@ -152,7 +158,7 @@ export async function createUserOrganisation(
         $7
       )
       `,
-    [email, name, image, orgName, walletAddr, roles, orgAddress]
+    [email, name, image, orgName, walletAddr, roles, orgAddress],
   );
   return row;
 }
@@ -161,9 +167,36 @@ export async function createProject(
   client: PoolClient,
   issuerWalletId: string | null,
 ) {
-  const methodologyDeveloper = await createUserOrganisation(client, 'methodology@test.com', 'methodology dev user', '', 'methodology dev org', 'methodology wallet address', null, { 'some': 'address' });
-  const projectDeveloper = await createUserOrganisation(client, 'project@test.com', 'project dev user', '', 'project dev org', 'project wallet address', null, { 'some': 'address' });
-  const landSteward = await createUserOrganisation(client, 'steward@test.com', 'steward user', '', 'steward org', 'steward wallet address', null, { 'some': 'address' });
+  const methodologyDeveloper = await createUserOrganisation(
+    client,
+    'methodology@test.com',
+    'methodology dev user',
+    '',
+    'methodology dev org',
+    'methodology wallet address',
+    null,
+    { some: 'address' },
+  );
+  const projectDeveloper = await createUserOrganisation(
+    client,
+    'project@test.com',
+    'project dev user',
+    '',
+    'project dev org',
+    'project wallet address',
+    null,
+    { some: 'address' },
+  );
+  const landSteward = await createUserOrganisation(
+    client,
+    'steward@test.com',
+    'steward user',
+    '',
+    'steward org',
+    'steward wallet address',
+    null,
+    { some: 'address' },
+  );
   const {
     rows: [project],
   } = await client.query(
@@ -180,7 +213,7 @@ export async function createProject(
       new Date(),
       new Date(),
       'active',
-    ]
+    ],
   );
 
   // Insert credit_class_version and methodology_version
@@ -191,9 +224,7 @@ export async function createProject(
       select methodology_id from credit_class
       where id = $1
       `,
-    [
-      project.credit_class_id,
-    ]
+    [project.credit_class_id],
   );
   const {
     rows: [methodologyVersion],
@@ -203,9 +234,7 @@ export async function createProject(
       values ($1, $2, 'some methodology', 'v1.0', now())
       returning *
       `,
-    [
-      creditClass.methodology_id, new Date(),
-    ]
+    [creditClass.methodology_id, new Date()],
   );
   const {
     rows: [creditClassVersion],
@@ -215,9 +244,7 @@ export async function createProject(
       values ($1, $2, 'some credit class', 'v1.0', now())
       returning *
       `,
-    [
-      project.credit_class_id, new Date(),
-    ]
+    [project.credit_class_id, new Date()],
   );
 
   if (issuerWalletId) {
@@ -257,7 +284,16 @@ export async function reallyCreateOrganization(
         $8
       )
     `,
-    [legalName, displayName, walletAddr, ownerId, image, description, roles, orgAddress]
+    [
+      legalName,
+      displayName,
+      walletAddr,
+      ownerId,
+      image,
+      description,
+      roles,
+      orgAddress,
+    ],
   );
   return row;
 }
@@ -288,7 +324,16 @@ export async function reallyCreateOrganizationIfNeeded(
         $8
       )
     `,
-    [legalName, displayName, walletAddr, ownerId, image, description, roles, orgAddress]
+    [
+      legalName,
+      displayName,
+      walletAddr,
+      ownerId,
+      image,
+      description,
+      roles,
+      orgAddress,
+    ],
   );
   return row;
 }

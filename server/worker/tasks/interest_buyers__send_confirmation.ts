@@ -7,9 +7,7 @@ interface InterestBuyersSendConfirmationPayload {
 }
 
 const task: Task = async (inPayload, { addJob }) => {
-  const {
-    email,
-  }: InterestBuyersSendConfirmationPayload = inPayload as any;
+  const { email }: InterestBuyersSendConfirmationPayload = inPayload as any;
   const sendEmailPayload: SendEmailPayload = {
     options: {
       to: email,

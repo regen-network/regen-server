@@ -9,7 +9,7 @@ import getJwt from '../middleware/jwt';
 const { runnerPromise } = require('../pool');
 
 let runner;
-runnerPromise.then((res) => {
+runnerPromise.then(res => {
   runner = res;
 });
 
@@ -30,7 +30,8 @@ router.post(
     } catch (err) {
       res.status(400).send(err);
     }
-})
+  },
+);
 
 router.post(
   '/create-account-link',
@@ -61,10 +62,7 @@ router.post(
         // Update user in the db
         await client.query(
           'update "user" set stripe_account_id=$2 where email=$1',
-          [
-            email,
-            account.id,
-          ]
+          [email, account.id],
         );
 
         // Create stripe account link for on boarding
@@ -86,14 +84,18 @@ router.post(
         client.release();
       }
     }
-  }
+  },
 );
 
-router.post(
-  '/create-checkout-session',
-  bodyParser.json(),
-  async (req, res) => {
-  const { price, units, cancelUrl, successUrl, customerEmail, clientReferenceId } = req.body;
+router.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
+  const {
+    price,
+    units,
+    cancelUrl,
+    successUrl,
+    customerEmail,
+    clientReferenceId,
+  } = req.body;
 
   try {
     // Retrieve product that contains connected account id in its metadata
@@ -123,7 +125,9 @@ router.post(
       });
       res.json({ id: session.id });
     } catch (err) {
-      res.status(400).send(`Error creating Stripe checkout session: ${err.message}`);
+      res
+        .status(400)
+        .send(`Error creating Stripe checkout session: ${err.message}`);
     }
   } catch (err) {
     res.sendStatus(500);
@@ -142,7 +146,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_ENDPOINT_SECRET
+        process.env.STRIPE_ENDPOINT_SECRET,
       );
     } catch (err) {
       res.status(400).send(`Webhook Error: ${err.message}`);
@@ -161,23 +165,32 @@ router.post(
 
           try {
             // Retrieve charge balance_transaction for fee details
-            const charge = await stripe.charges.retrieve(
-              invoice.charge,
-              {
-                expand: ['balance_transaction'],
-              }
-            );
+            const charge = await stripe.charges.retrieve(invoice.charge, {
+              expand: ['balance_transaction'],
+            });
             for (let i = 0; i < lines.length; i++) {
               item = lines[i];
               try {
                 // Retrieve product for account id
-                const product = await stripe.products.retrieve(item.price.product);
+                const product = await stripe.products.retrieve(
+                  item.price.product,
+                );
 
                 // Transfer 90% to Connect account minus the Stripe fees
-                if (product && product.metadata && product.metadata.account_id && charge) {
+                if (
+                  product &&
+                  product.metadata &&
+                  product.metadata.account_id &&
+                  charge
+                ) {
                   try {
                     const transfer = await stripe.transfers.create({
-                      amount: getTransferAmount(item.amount, Math.round(charge.balance_transaction.fee / lines.length)),
+                      amount: getTransferAmount(
+                        item.amount,
+                        Math.round(
+                          charge.balance_transaction.fee / lines.length,
+                        ),
+                      ),
                       currency: charge.currency,
                       destination: product.metadata.account_id,
                       source_transaction: charge.id,
@@ -208,7 +221,7 @@ router.post(
                       invoice.customer_name || '',
                       charge.receipt_url,
                       false,
-                    ]
+                    ],
                   );
                 } catch (err) {
                   console.error('Error transfering credits', err);
@@ -254,27 +267,45 @@ router.post(
               session.payment_intent,
               {
                 expand: ['charges.data.balance_transaction'],
-              }
+              },
             );
 
-            if (paymentIntent && paymentIntent.charges && paymentIntent.charges.data.length > 0) {
+            if (
+              paymentIntent &&
+              paymentIntent.charges &&
+              paymentIntent.charges.data.length > 0
+            ) {
               const charge = paymentIntent.charges.data[0]; // The data list only contains the latest charge
 
-              const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+              const lineItems = await stripe.checkout.sessions.listLineItems(
+                session.id,
+              );
               for (let i = 0; i < lineItems.data.length; i++) {
                 const item = lineItems.data[i];
                 try {
-                  const product = await stripe.products.retrieve(item.price.product);
+                  const product = await stripe.products.retrieve(
+                    item.price.product,
+                  );
 
                   // Transfer 90% to Connect account minus the Stripe fees
-                  if (product && product.metadata && product.metadata.account_id) {
+                  if (
+                    product &&
+                    product.metadata &&
+                    product.metadata.account_id
+                  ) {
                     try {
                       const transfer = await stripe.transfers.create({
-                        amount: getTransferAmount(item.amount_total, Math.round(charge.balance_transaction.fee / lineItems.data.length)),
+                        amount: getTransferAmount(
+                          item.amount_total,
+                          Math.round(
+                            charge.balance_transaction.fee /
+                              lineItems.data.length,
+                          ),
+                        ),
                         currency: charge.currency,
                         destination: product.metadata.account_id,
                         source_transaction: charge.id,
-                      })
+                      });
                     } catch (err) {
                       console.error('Error transferring', err);
                       res.status(500).send(err);
@@ -301,7 +332,7 @@ router.post(
                         name,
                         charge.receipt_url,
                         false,
-                      ]
+                      ],
                     );
                   } catch (err) {
                     console.error('Error transfering credits', err);
@@ -330,7 +361,6 @@ router.post(
               } else {
                 res.sendStatus(400);
               }
-
             } else {
               res.status(400).send('No corresponding charge found');
             }
@@ -351,7 +381,7 @@ router.post(
         client.release();
       }
     }
-  }
+  },
 );
 
 function getTransferAmount(amount: number, fee: number): number {

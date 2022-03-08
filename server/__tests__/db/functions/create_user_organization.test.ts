@@ -1,18 +1,27 @@
 import { withRootDb, createUserOrganisation } from '../helpers';
 
-const email: string = 'johndoe@gmail.com';
-const name: string = 'john doe';
-const image: string = 'image';
+const email = 'johndoe@gmail.com';
+const name = 'john doe';
+const image = 'image';
 const orgName = 'john doe ltd';
 const roles = null;
-const walletAddr: string = 'addr123';
-const orgAddress: object = { 'some': 'address' };
-const updates: boolean = true;
+const walletAddr = 'addr123';
+const orgAddress: object = { some: 'address' };
+const updates = true;
 
 it('creates user and org successfully', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     // Action
-    const org = await createUserOrganisation(client, email, name, image, orgName, walletAddr, roles, orgAddress);
+    const org = await createUserOrganisation(
+      client,
+      email,
+      name,
+      image,
+      orgName,
+      walletAddr,
+      roles,
+      orgAddress,
+    );
 
     // Assertions
     // Creates org, org party, wallet and address
@@ -22,7 +31,7 @@ it('creates user and org successfully', () =>
 
     const { rows: orgParties } = await client.query(
       'select * from party where id=$1',
-      [org.party_id]
+      [org.party_id],
     );
 
     expect(orgParties).toHaveLength(1);
@@ -36,7 +45,7 @@ it('creates user and org successfully', () =>
 
     const { rows: wallets } = await client.query(
       'select * from wallet where id=$1',
-      [orgParty.wallet_id]
+      [orgParty.wallet_id],
     );
 
     expect(wallets).toHaveLength(1);
@@ -44,7 +53,7 @@ it('creates user and org successfully', () =>
 
     const { rows: addresses } = await client.query(
       'select * from address where id=$1',
-      [orgParty.address_id]
+      [orgParty.address_id],
     );
 
     expect(addresses).toHaveLength(1);
@@ -53,7 +62,7 @@ it('creates user and org successfully', () =>
     // Creates organization member and user
     const { rows: members } = await client.query(
       'select * from organization_member where organization_id=$1',
-      [org.id]
+      [org.id],
     );
 
     expect(members).toHaveLength(1);
@@ -61,7 +70,7 @@ it('creates user and org successfully', () =>
 
     const { rows: users } = await client.query(
       'select * from "user" where id=$1',
-      [members[0].member_id]
+      [members[0].member_id],
     );
 
     expect(users).toHaveLength(1);
@@ -69,7 +78,7 @@ it('creates user and org successfully', () =>
 
     const { rows: userParties } = await client.query(
       'select * from party where id=$1',
-      [users[0].party_id]
+      [users[0].party_id],
     );
 
     expect(userParties).toHaveLength(1);

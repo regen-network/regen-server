@@ -5,7 +5,7 @@ import * as Airtable from 'airtable';
 const { runnerPromise } = require('../pool');
 
 let runner;
-runnerPromise.then((res) => {
+runnerPromise.then(res => {
   runner = res;
 });
 
@@ -19,12 +19,13 @@ router.post('/buyers-info', bodyParser.json(), (req, res: express.Response) => {
     [
       {
         fields: {
-          "Full Name": name,
-          "Email address": email,
-          "Organization Name": orgName,
+          'Full Name': name,
+          'Email address': email,
+          'Organization Name': orgName,
           Budget: budget,
-          "Which types of carbon credits projects are you interested in?": projectTypes,
-          "I am interested in buying carbon credits on behalf of:": onBehalfOf,
+          'Which types of carbon credits projects are you interested in?':
+            projectTypes,
+          'I am interested in buying carbon credits on behalf of:': onBehalfOf,
         },
       },
     ],
@@ -34,16 +35,19 @@ router.post('/buyers-info', bodyParser.json(), (req, res: express.Response) => {
         res.status(400).send(err);
       } else {
         if (runner) {
-          runner.addJob('interest_buyers__send_confirmation', { email }).then(() => {
-            res.sendStatus(200);
-          }, (err) => {
-            res.status(400).send(err);
-          });
+          runner.addJob('interest_buyers__send_confirmation', { email }).then(
+            () => {
+              res.sendStatus(200);
+            },
+            err => {
+              res.status(400).send(err);
+            },
+          );
         } else {
           res.sendStatus(200);
         }
       }
-    }
+    },
   );
 });
 

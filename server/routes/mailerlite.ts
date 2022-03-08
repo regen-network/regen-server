@@ -6,18 +6,21 @@ const router = express.Router();
 
 const mailerLite = MailerLite(process.env.MAILERLITE_API_KEY);
 
-router.post('/mailerlite', bodyParser.json(), async (req, res: express.Response) => {
-  const { email } = req.body;
-  try {
-    await mailerLite.addSubscriberToGroup(process.env.MAILERLITE_GROUP, {
-      email,
-    });
-    res.sendStatus(200);
-  } catch(e) {
-    console.log(e)
-    res.status(400).send(e);
-  }
-});
+router.post(
+  '/mailerlite',
+  bodyParser.json(),
+  async (req, res: express.Response) => {
+    const { email } = req.body;
+    try {
+      await mailerLite.addSubscriberToGroup(process.env.MAILERLITE_GROUP, {
+        email,
+      });
+      res.sendStatus(200);
+    } catch (e) {
+      console.log(e);
+      res.status(400).send(e);
+    }
+  },
+);
 
 module.exports = router;
-
