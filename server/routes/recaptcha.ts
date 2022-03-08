@@ -6,7 +6,7 @@ const router = express.Router();
 const recaptchaKey = process.env.RECAPTCHA_SECRET_KEY;
 const recaptchaV3Key = process.env.RECAPTCHA_V3_SECRET_KEY;
 
-function verify(request, response: express.Response, key: string) {
+function verify(request, response: express.Response, key: string): void {
   const body = request.body;
 
   axios
