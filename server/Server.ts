@@ -24,7 +24,7 @@ const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-registry\.netlify\.app$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
-const corsOptions = (req, callback) => {
+const corsOptions: void = (req, callback) => {
   let options;
   if (process.env.NODE_ENV !== 'production') {
     options = { origin: true };
