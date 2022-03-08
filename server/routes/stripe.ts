@@ -256,7 +256,7 @@ router.post(
             res.status(400).send(err);
           }
           break;
-        case 'checkout.session.completed':
+        case 'checkout.session.completed': {
           const session = event.data.object;
           const clientReferenceId = session['client_reference_id']; // buyer name, wallet id and address id
           const { name, walletId, addressId } = JSON.parse(clientReferenceId);
@@ -369,6 +369,7 @@ router.post(
             res.status(400).send(err);
           }
           break;
+        }
         default:
           // Unexpected event type
           return res.status(400).end();
