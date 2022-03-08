@@ -126,14 +126,19 @@ To run the linter and formatter for the whole project:
 yarn run eslint .
 ```
 
+To run the linter and formatter for the whole project, only showing "error"s:
+```sh
+yarn run eslint --quiet .
+```
+
 To run the linter and formatter for a specific file:
 ```sh
-yarn run eslint <path-to-file>
+yarn run eslint <path-to-files>
 ```
 
 To automatically apply fixes where possible use `--fix`:
 ```sh
-yarn run eslint <path-to-file> --fix
+yarn run eslint <path-to-files> --fix
 ```
 
 ## SHACL Graphs
