@@ -13,9 +13,10 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint'],
+  ignorePatterns: ['**/dist/*.js'],
   rules: {
     'no-empty': 'off',
-    'no-console': 'warn',
+    'no-console': 'off',
     'no-useless-escape': 'off',
     '@typescript-eslint/explicit-function-return-type': [
       'error',
