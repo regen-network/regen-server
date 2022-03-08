@@ -1,8 +1,8 @@
 import * as jsonld from 'jsonld';
 import * as blake from 'blakejs';
 
-const { binary_to_base58 } = require('base58-js');
-const createHash = require('sha256-uint8array').createHash;
+import { binary_to_base58 } from 'base58-js';
+import { createHash } from 'sha256-uint8array';
 
 const IriPrefixGraph = 1;
 const GraphCanonicalizationAlgorithmURDNA2015 = 1;

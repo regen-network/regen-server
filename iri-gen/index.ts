@@ -7,7 +7,7 @@ if (process.argv.length < 3) {
   process.exit(1);
 }
 
-async function readFileAndGenerateIRI() {
+async function readFileAndGenerateIRI(): Promise<void> {
   try {
     const path = process.argv[2];
     const rawdata = fs.readFileSync(path);
