@@ -98,8 +98,8 @@ If for some reasons, your database is in a messy state and it's best to just res
 After connecting to postgres (`psql postgresql://postgres:postgres@localhost:5432`, make sure your [postgres Docker container is running](#starting-postgresql-locally)), run sequentially:
 ```sql
 DROP DATABASE regen_registry;
-CREATE DATABASE regen_registry;
 DROP ROLE app_user;
+CREATE DATABASE regen_registry;
 ```
 
 Then [run the migrations](#migrations) and you're ready to go again!
