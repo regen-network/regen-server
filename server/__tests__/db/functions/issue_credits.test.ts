@@ -21,6 +21,15 @@ export interface Metadata {
   };
 }
 
+interface IssueCreditsRow {
+  creditVintageId: string;
+  accountBalances: any[];
+}
+
+interface IssueCredits {
+  issue_credits: IssueCreditsRow;
+}
+
 export async function issueCredits(
   client: PoolClient,
   projectId: string | null,
@@ -34,7 +43,7 @@ export async function issueCredits(
   issuerId: string | null,
   resellerId: string | null,
   batchDenom: string | null = null,
-) {
+): Promise<IssueCredits> {
   const {
     rows: [row],
   } = await client.query(
@@ -663,7 +672,10 @@ it('fails if current user is not credit class issuer', () =>
     await expect(promise).rejects.toHaveProperty('code', 'DNIED');
   }));
 
-export async function setupPools(client: PoolClient, creditClassId: string) {
+export async function setupPools(
+  client: PoolClient,
+  creditClassId: string,
+): Promise<void> {
   await client.query(
     `select really_create_user_if_needed('permanence-registry@regen.network',
       'Permanence Reversal Buffer', null, null, '{"administrative", "buyer"}', '{}'::jsonb, 'permanence', false)`,
