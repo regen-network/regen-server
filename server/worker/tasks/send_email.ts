@@ -1,6 +1,5 @@
 import * as AWS from 'aws-sdk';
 import * as nodemailer from 'nodemailer';
-// @ts-ignore
 import mjml2html = require('mjml');
 import { template as lodashTemplate } from 'lodash';
 import { promises as fsp } from 'fs';
@@ -60,7 +59,7 @@ const task: Task = async inPayload => {
 export default task;
 
 const templatePromises = {};
-function loadTemplate(template: string) {
+function loadTemplate(template: string): Promise {
   if (!templatePromises[template]) {
     templatePromises[template] = (async () => {
       if (!template.match(/^[a-zA-Z0-9_.-]+$/)) {
