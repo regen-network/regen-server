@@ -16,5 +16,14 @@ module.exports = {
         "@typescript-eslint",
     ],
     "rules": {
+        "no-empty": "off",
+        "no-console": "warn",
+        "no-useless-escape": "off",
+        "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+                allowExpressions: true,
+            },
+        ]
     }
 }
