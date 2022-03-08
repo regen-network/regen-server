@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient, QueryResult } from 'pg';
 require('dotenv').config();
 
 const pools = {};
@@ -29,7 +29,7 @@ afterAll(() => {
   );
 });
 
-export const poolFromUrl = (url: string) => {
+export const poolFromUrl = (url: string): Pool => {
   if (!pools[url]) {
     pools[url] = new Pool({ connectionString: url });
   }
@@ -38,7 +38,10 @@ export const poolFromUrl = (url: string) => {
 
 type ClientCallback<T = any> = (client: PoolClient) => Promise<T>;
 
-const withDbFromUrl = async <T>(url: string, fn: ClientCallback<T>) => {
+const withDbFromUrl = async <T>(
+  url: string,
+  fn: ClientCallback<T>,
+): Promise<void> => {
   const pool = poolFromUrl(url);
   const client = await pool.connect();
   await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE;');
@@ -58,13 +61,16 @@ const withDbFromUrl = async <T>(url: string, fn: ClientCallback<T>) => {
   }
 };
 
-export const withRootDb = <T>(fn: ClientCallback<T>) =>
+export const withRootDb = <T>(fn: ClientCallback<T>): Promise<void> =>
   withDbFromUrl(TEST_DATABASE_URL, fn);
 
-export const becomeRoot = (client: PoolClient) =>
+export const becomeRoot = (client: PoolClient): Promise<QueryResult<any>> =>
   client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
 
-export const becomeUser = async (client: PoolClient, userSub: string) => {
+export const becomeUser = async (
+  client: PoolClient,
+  userSub: string,
+): Promise<void> => {
   await becomeRoot(client);
   await client.query(`set role "${userSub}"`);
 };
@@ -81,7 +87,7 @@ export type User = {
 
 export const withAdminUserDb = <T>(
   fn: (client: PoolClient, user: User, party: Party) => Promise<T>,
-) =>
+): Promise<void> =>
   withRootDb(async client => {
     const sub = 'test-admin-sub';
     const email = 'johndoe@regen.network';
@@ -116,7 +122,7 @@ export async function createUser(
   image: string | null,
   sub: string | null,
   roles: string[] | null,
-) {
+): Promise<User> {
   const {
     rows: [row],
   } = await client.query(
@@ -134,6 +140,12 @@ export async function createUser(
   return row;
 }
 
+interface OrganizationType {
+  id: string;
+  party_id: string;
+  legal_name: string;
+}
+
 export async function createUserOrganisation(
   client: PoolClient,
   email: string | null,
@@ -143,7 +155,7 @@ export async function createUserOrganisation(
   walletAddr: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
@@ -163,10 +175,33 @@ export async function createUserOrganisation(
   return row;
 }
 
+interface ProjectType {
+  id: string;
+  credit_class_id: string;
+  developer_id: string;
+  steward_id: string;
+}
+
+interface MethodologyVersion {
+  id: string;
+  created_at: string;
+}
+
+interface CreditClassVersion {
+  id: string;
+  created_at: string;
+}
+
+interface CreateProject {
+  project: ProjectType;
+  methodologyVersion: MethodologyVersion;
+  creditClassVersion: CreditClassVersion;
+}
+
 export async function createProject(
   client: PoolClient,
   issuerWalletId: string | null,
-) {
+): Promise<CreateProject> {
   const methodologyDeveloper = await createUserOrganisation(
     client,
     'methodology@test.com',
@@ -268,7 +303,7 @@ export async function reallyCreateOrganization(
   description: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
@@ -308,7 +343,7 @@ export async function reallyCreateOrganizationIfNeeded(
   description: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
