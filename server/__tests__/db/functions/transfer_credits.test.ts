@@ -16,6 +16,14 @@ import {
   Metadata,
 } from './issue_credits.test';
 
+interface TransferCreditsRow {
+  purchaseId: string;
+}
+
+interface TransferCredits {
+  transfer_credits: TransferCreditsRow;
+}
+
 async function transferCredits(
   client: PoolClient,
   vintageId: string | null,
@@ -27,7 +35,7 @@ async function transferCredits(
   autoRetire: boolean | null,
   partyId: string | null,
   userId: string | null,
-) {
+): Promise<TransferCredits> {
   const {
     rows: [row],
   } = await client.query(
@@ -36,6 +44,11 @@ async function transferCredits(
         $1, $2, $3, $4, $5, $6, uuid_nil(), '', 'offline'::purchase_type, 'USD', '', $7, '', '', false, $8, $9
       )
     `,
+    // TODO: Change select * to be more explicit.
+    // It will make reading the tests easier IMO.
+    // I.e. In the tests I found myself thinking
+    // where is this "purchaseId" defined? And the
+    // answer is that it's coming from this select *.
     [
       vintageId,
       buyerWalletId,
@@ -509,6 +522,13 @@ it('fails if not enough credits left with buffer pool and permanence reversal po
     await expect(promise).rejects.toHaveProperty('code', 'DNIED');
   }));
 
+interface Setup {
+  vintageId: string;
+  project: any;
+  buyerWalletId: string;
+  addressId: string;
+}
+
 async function setup(
   client: PoolClient,
   units: number,
@@ -518,7 +538,7 @@ async function setup(
   resellerId: string | null,
   pools: boolean | undefined = false,
   withPools: boolean | undefined = false,
-) {
+): Promise<Setup> {
   await becomeRoot(client);
   // Create buyer
   const {
