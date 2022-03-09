@@ -59,7 +59,7 @@ const task: Task = async inPayload => {
 export default task;
 
 const templatePromises = {};
-function loadTemplate(template: string): Promise {
+function loadTemplate(template: string): Promise<(variables: { [varName: string]: any }) => Promise<string>> {
   if (!templatePromises[template]) {
     templatePromises[template] = (async () => {
       if (!template.match(/^[a-zA-Z0-9_.-]+$/)) {
