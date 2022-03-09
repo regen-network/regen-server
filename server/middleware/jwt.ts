@@ -1,5 +1,5 @@
 import * as jwks from 'jwks-rsa';
-import * as jwt from 'express-jwt';
+import jwt from 'express-jwt';
 
 export default function getJwt(
   credentialsRequired: boolean,
