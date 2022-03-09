@@ -83,6 +83,8 @@ export type Party = {
 export type User = {
   auth0_sub: string;
   id: string;
+  email: string;
+  party_id: string;
 };
 
 export const withAdminUserDb = <T>(
