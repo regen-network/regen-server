@@ -13,7 +13,7 @@ import imageOptimizer from './middleware/imageOptimizer';
 // needed to add esModuleInterop to the tsconfig compiler settings.
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
-const url = require('url');
+import url from 'url';
 const { pgPool } = require('./pool');
 
 if (process.env.NODE_ENV !== 'production') {
