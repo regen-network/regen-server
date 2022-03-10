@@ -1,9 +1,10 @@
 import { Pool, Client, PoolConfig } from 'pg';
 import * as fs from 'fs';
 import { main as workerMain } from './worker/worker';
+import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  dotenv.config();
 }
 
 const pgPoolConfig: PoolConfig = {
