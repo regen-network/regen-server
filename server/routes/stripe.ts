@@ -6,15 +6,17 @@ import * as jwt from 'express-jwt';
 import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';
 
-const { runnerPromise } = require('../pool');
+import { pgPool, runnerPromise } from '../pool';
 
 let runner;
 runnerPromise.then(res => {
   runner = res;
 });
 
-const stripe = require('stripe')(process.env.STRIPE_API_KEY);
-const { pgPool } = require('../pool');
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_API_KEY, {
+  apiVersion: '2020-08-27',
+});
 const router = express.Router();
 
 router.post(
@@ -100,7 +102,9 @@ router.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
   try {
     // Retrieve product that contains connected account id in its metadata
     const priceObject = await stripe.prices.retrieve(price);
-    const product = await stripe.products.retrieve(priceObject.product);
+    const product = await stripe.products.retrieve(
+      priceObject.product as string,
+    );
     try {
       // Create a new checkout session
       const session = await stripe.checkout.sessions.create({
@@ -173,7 +177,7 @@ router.post(
               try {
                 // Retrieve product for account id
                 const product = await stripe.products.retrieve(
-                  item.price.product,
+                  item.price.product as string,
                 );
 
                 // Transfer 90% to Connect account minus the Stripe fees
@@ -188,7 +192,9 @@ router.post(
                       amount: getTransferAmount(
                         item.amount,
                         Math.round(
-                          charge.balance_transaction.fee / lines.length,
+                          (
+                            charge.balance_transaction as Stripe.BalanceTransaction
+                          ).fee / lines.length,
                         ),
                       ),
                       currency: charge.currency,
@@ -284,7 +290,7 @@ router.post(
                 const item = lineItems.data[i];
                 try {
                   const product = await stripe.products.retrieve(
-                    item.price.product,
+                    item.price.product as string,
                   );
 
                   // Transfer 90% to Connect account minus the Stripe fees
@@ -298,8 +304,9 @@ router.post(
                         amount: getTransferAmount(
                           item.amount_total,
                           Math.round(
-                            charge.balance_transaction.fee /
-                              lineItems.data.length,
+                            (
+                              charge.balance_transaction as Stripe.BalanceTransaction
+                            ).fee / lineItems.data.length,
                           ),
                         ),
                         currency: charge.currency,
