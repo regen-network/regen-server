@@ -1,7 +1,6 @@
 import * as express from 'express';
 import { expressSharp, HttpAdapter, S3Adapter } from 'express-sharp';
-
-const Keyv = require('keyv');
+import Keyv from 'keyv';
 
 export default function imageOptimizer(): express.Router {
   let imageAdapter;
