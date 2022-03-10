@@ -3,10 +3,10 @@ import * as bodyParser from 'body-parser';
 
 import { UserRequest } from '../types';
 import pgPool from '../pool';
+import { ManagementClient } from 'auth0';
 
 const router = express.Router();
 
-const ManagementClient = require('auth0').ManagementClient;
 const auth0 = new ManagementClient({
   domain: process.env.AUTH0_DOMAIN,
   clientId: process.env.AUTH0_CLIENT_ID,
