@@ -178,7 +178,7 @@ export async function createUserOrganisation(
   return row;
 }
 
-interface ProjectType {
+export interface ProjectType {
   id: string;
   credit_class_id: string;
   developer_id: string;
