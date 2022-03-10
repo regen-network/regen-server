@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-const S3 = require('aws-sdk/clients/s3');
-const { Readable } = require('stream');
+import S3 from 'aws-sdk/clients/s3';
+import { Readable } from 'stream';
 const router = express.Router();
 
 const bucketName = process.env.AWS_S3_BUCKET;
@@ -30,7 +30,7 @@ router.post(
   (request, response: express.Response) => {
     const image = (request as FilesRequest).files.image;
     const key = request.body.filePath;
-    const fileStream = Readable.from(image.data);
+    const fileStream = Readable.from([image.data]);
 
     const uploadParams = {
       Bucket: `${bucketName}/${key}`,
