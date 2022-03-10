@@ -15,9 +15,10 @@ import imageOptimizer from './middleware/imageOptimizer';
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import url from 'url';
 import pgPool from './pool';
+import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  dotenv.config();
 }
 
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
