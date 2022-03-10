@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 
-const MailerLite = require('mailerlite-api-v2-node').default;
+import { default as MailerLite } from 'mailerlite-api-v2-node';
 const router = express.Router();
 
 const mailerLite = MailerLite(process.env.MAILERLITE_API_KEY);
@@ -12,7 +12,8 @@ router.post(
   async (req, res: express.Response) => {
     const { email } = req.body;
     try {
-      await mailerLite.addSubscriberToGroup(process.env.MAILERLITE_GROUP, {
+      const groupId = Number(process.env.MAILERLITE_GROUP);
+      await mailerLite.addSubscriberToGroup(groupId, {
         email,
       });
       res.sendStatus(200);
