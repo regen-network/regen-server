@@ -1,5 +1,5 @@
 import * as express from 'express';
-const axios = require('axios');
+import axios from 'axios';
 import * as bodyParser from 'body-parser';
 
 const router = express.Router();
