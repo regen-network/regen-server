@@ -50,7 +50,7 @@ const task: Task = async inPayload => {
     Object.assign(options, { html, text });
   }
   try {
-    const info = await transporter.sendMail(options);
+    await transporter.sendMail(options);
   } catch (e) {
     console.log(e);
   }

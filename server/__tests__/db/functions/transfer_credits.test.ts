@@ -8,6 +8,7 @@ import {
   User,
   Party,
   createUserOrganisation,
+  ProjectType,
 } from '../helpers';
 import {
   issueCredits,
@@ -174,7 +175,7 @@ it('transfers 3rd party credits with reseller and initial issuer', () =>
     expect(thirdPartyOrg).not.toBeNull();
 
     await becomeUser(client, user.auth0_sub);
-    const { vintageId, buyerWalletId, addressId, project } = await setup(
+    const { vintageId, buyerWalletId, addressId } = await setup(
       client,
       1000,
       user,
@@ -427,7 +428,7 @@ it('transfers credits and auto-retires', () =>
 
 it('fails if current user is not an admin', () =>
   withAdminUserDb(async (client, user, party) => {
-    const { vintageId, buyerWalletId, addressId, project } = await setup(
+    const { vintageId, buyerWalletId, addressId } = await setup(
       client,
       1000,
       user,
@@ -462,7 +463,7 @@ it('fails if current user is not an admin', () =>
 
 it('fails if not enough credits left', () =>
   withAdminUserDb(async (client, user, party) => {
-    const { vintageId, buyerWalletId, addressId, project } = await setup(
+    const { vintageId, buyerWalletId, addressId } = await setup(
       client,
       1000,
       user,
@@ -492,7 +493,7 @@ it('fails if not enough credits left', () =>
 
 it('fails if not enough credits left with buffer pool and permanence reversal pool', () =>
   withAdminUserDb(async (client, user, party) => {
-    const { vintageId, buyerWalletId, addressId, project } = await setup(
+    const { vintageId, buyerWalletId, addressId } = await setup(
       client,
       1000,
       user,
@@ -524,7 +525,7 @@ it('fails if not enough credits left with buffer pool and permanence reversal po
 
 interface Setup {
   vintageId: string;
-  project: any;
+  project: ProjectType;
   buyerWalletId: string;
   addressId: string;
 }

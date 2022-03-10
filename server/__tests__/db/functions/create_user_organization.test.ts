@@ -7,7 +7,6 @@ const orgName = 'john doe ltd';
 const roles = null;
 const walletAddr = 'addr123';
 const orgAddress: object = { some: 'address' };
-const updates = true;
 
 it('creates user and org successfully', () =>
   withRootDb(async client => {

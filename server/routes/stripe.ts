@@ -1,7 +1,5 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import * as jwks from 'jwks-rsa';
-import * as jwt from 'express-jwt';
 
 import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';

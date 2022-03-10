@@ -13,7 +13,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint'],
-  ignorePatterns: ['**/dist/*.js'],
+  ignorePatterns: ['**/dist/*.js', '**/dist/*.d.ts'],
   rules: {
     'no-empty': 'off',
     'no-console': 'off',

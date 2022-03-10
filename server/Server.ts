@@ -1,5 +1,4 @@
 import express from 'express';
-import * as path from 'path';
 import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
@@ -83,7 +82,7 @@ app.use(
     appendPlugins: [PgManyToManyPlugin],
     pgSettings: (req: UserIncomingMessage) => {
       if (req.user && req.user.sub) {
-        const { sub, ...user } = req.user;
+        const { sub } = req.user;
         const settings = { role: sub };
         // TODO need to deal with keys that aren't strings properly
         // Object.keys(user).map(k =>

@@ -1,4 +1,4 @@
-import { Pool, Client, PoolConfig } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import * as fs from 'fs';
 import { main as workerMain } from './worker/worker';
 import dotenv from 'dotenv';
