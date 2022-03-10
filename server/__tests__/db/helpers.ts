@@ -1,5 +1,6 @@
 import { Pool, PoolClient, QueryResult } from 'pg';
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 const pools = {};
 
