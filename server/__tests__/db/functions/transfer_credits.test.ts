@@ -539,7 +539,7 @@ async function setup(
   resellerId: string | null,
   pools: boolean | undefined = false,
   withPools: boolean | undefined = false,
-): Promise<Setup> {
+) {
   await becomeRoot(client);
   // Create buyer
   const {
@@ -564,7 +564,7 @@ async function setup(
   expect(project).not.toBeNull();
 
   if (pools) {
-    await setupPools(client);
+    await setupPools(client, project.credit_class_id);
   }
 
   // Issue credits
