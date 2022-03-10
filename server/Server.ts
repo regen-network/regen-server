@@ -14,7 +14,7 @@ import imageOptimizer from './middleware/imageOptimizer';
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import url from 'url';
-const { pgPool } = require('./pool');
+import pgPool from './pool';
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
