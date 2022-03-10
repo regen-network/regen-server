@@ -389,4 +389,5 @@ function getTransferAmount(amount: number, fee: number): number {
   return amount * 0.9 - fee;
 }
 
+export default router;
 module.exports = router;

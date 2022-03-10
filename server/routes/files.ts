@@ -78,4 +78,5 @@ router.delete(
   },
 );
 
+export default router;
 module.exports = router;

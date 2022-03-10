@@ -40,4 +40,5 @@ router.get('/metadata-graph/:iri', async (req, res) => {
   }
 });
 
+export default router;
 module.exports = router;

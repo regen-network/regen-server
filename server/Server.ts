@@ -95,14 +95,22 @@ app.use(
   }),
 );
 
-app.use(require('./routes/mailerlite'));
-app.use(require('./routes/contact'));
-app.use(require('./routes/buyers-info'));
-app.use(require('./routes/stripe'));
-app.use(require('./routes/auth'));
-app.use(require('./routes/recaptcha'));
-app.use(require('./routes/files'));
-app.use(require('./routes/metadata-graph'));
+import mailerlite from './routes/mailerlite';
+import contact from './routes/contact';
+import buyersInfo from './routes/buyers-info';
+import stripe from './routes/stripe';
+import auth from './routes/auth';
+import recaptcha from './routes/recaptcha';
+import files from './routes/files';
+import metadataGraph from './routes/metadata-graph';
+app.use(mailerlite);
+app.use(contact);
+app.use(buyersInfo);
+app.use(stripe);
+app.use(auth);
+app.use(recaptcha);
+app.use(files);
+app.use(metadataGraph);
 
 const port = process.env.PORT || 5000;
 
