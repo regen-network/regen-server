@@ -27,7 +27,7 @@ router.post('/contact', bodyParser.json(), (req, res: express.Response) => {
         },
       },
     ],
-    function (err, records) {
+    function (err) {
       if (err) {
         console.error(err);
         res.status(400).send(err);
