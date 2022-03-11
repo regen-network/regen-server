@@ -638,7 +638,7 @@ it('fails if current user does not belong to an organization', () =>
   }));
 
 it('fails if current user is not credit class issuer', () =>
-  withAdminUserDb(async (client, user, party) => {
+  withAdminUserDb(async (client, user) => {
     const distribution: Distribution = {
       'http://regen.network/projectDeveloperDistribution': 0.6,
       'http://regen.network/landStewardDistribution': 0.4,
