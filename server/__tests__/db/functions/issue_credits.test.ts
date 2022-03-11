@@ -672,9 +672,7 @@ it('fails if current user is not credit class issuer', () =>
     await expect(promise).rejects.toHaveProperty('code', 'DNIED');
   }));
 
-export async function setupPools(
-  client: PoolClient,
-): Promise<void> {
+export async function setupPools(client: PoolClient): Promise<void> {
   await client.query(
     `select really_create_user_if_needed('permanence-registry@regen.network',
       'Permanence Reversal Buffer', null, null, '{"administrative", "buyer"}', '{}'::jsonb, 'permanence', false)`,
