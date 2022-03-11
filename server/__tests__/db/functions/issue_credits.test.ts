@@ -369,7 +369,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     const { project, creditClassVersion, methodologyVersion } =
       await createProject(client, party.wallet_id);
     expect(project).not.toBeNull();
-    await setupPools(client, project.credit_class_id);
+    await setupPools(client);
 
     await becomeUser(client, user.auth0_sub);
     const result = await issueCredits(
@@ -674,7 +674,6 @@ it('fails if current user is not credit class issuer', () =>
 
 export async function setupPools(
   client: PoolClient,
-  creditClassId: string,
 ): Promise<void> {
   await client.query(
     `select really_create_user_if_needed('permanence-registry@regen.network',
