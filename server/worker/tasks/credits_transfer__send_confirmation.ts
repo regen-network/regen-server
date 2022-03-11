@@ -1,6 +1,6 @@
 import { Task } from 'graphile-worker';
 
-import { SendEmailPayload, dateFormat, numberFormat } from './send_email';
+import { SendEmailPayload } from './send_email';
 
 interface CreditsTransferSendConfirmationPayload {
   // purchaseId: string;
