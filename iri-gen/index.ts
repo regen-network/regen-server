@@ -40,8 +40,9 @@ async function main() {
     console.log(`The IRI for ${path} is: ${iri}`)
     if (insertFlag) {
       const pool = setupPgPool();
+      let client;
       try {
-        const client = await pool.connect();
+        client = await pool.connect();
         console.log('Inserting IRI, and metadata into metadata_graph table.');
         const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
         console.log('IRI and metadata inserted successfully.');
