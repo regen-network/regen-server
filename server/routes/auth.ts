@@ -57,7 +57,7 @@ router.post(
           client.query(
             'SELECT private.create_app_user_if_needed($1)',
             [sub],
-            (err, qres) => {
+            (err) => {
               if (err) {
                 res.sendStatus(500);
                 console.error('Error creating role', err.stack);
@@ -66,7 +66,7 @@ router.post(
                 client.query(
                   'SELECT private.really_create_user_if_needed($1, $2, $3, $4, NULL)',
                   [req.body.email, req.body.nickname, req.body.picture, sub],
-                  (err, qres) => {
+                  (err) => {
                     release();
                     if (err) {
                       res.sendStatus(500);
