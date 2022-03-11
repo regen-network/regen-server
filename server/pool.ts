@@ -1,22 +1,7 @@
 import { Pool, Client, PoolConfig } from 'pg';
 import * as fs from 'fs';
 import { main as workerMain } from './worker/worker';
-
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
-
-const pgPoolConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/regen_registry',
-};
-
-if (process.env.NODE_ENV === 'production') {
-  pgPoolConfig.ssl = {
-    ca: fs.readFileSync(`${__dirname}/../config/rds-combined-ca-bundle.pem`),
-  };
-}
-
-const pgPool = new Pool(pgPoolConfig);
+import { pgPool } from 'common/utils';
 
 const runnerPromise = new Promise((resolve, reject) => {
   workerMain(pgPool)
@@ -30,5 +15,4 @@ const runnerPromise = new Promise((resolve, reject) => {
     });
 });
 
-exports.pgPool = pgPool;
 exports.runnerPromise = runnerPromise;

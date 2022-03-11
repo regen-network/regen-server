@@ -11,12 +11,12 @@ import imageOptimizer from './middleware/imageOptimizer';
 
 const PgManyToManyPlugin = require('@graphile-contrib/pg-many-to-many');
 const url = require('url');
-const { pgPool } = require('./pool');
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
+import { pgPool } from 'common/utils';
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-website\.netlify\.app$/;
 const REGISTRY_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-registry\.netlify\.app$/;

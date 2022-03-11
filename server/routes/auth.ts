@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 
 import { UserRequest } from '../types';
-const { pgPool } = require('../pool');
+import { pgPool } from 'common/utils';
 
 const router = express.Router();
 

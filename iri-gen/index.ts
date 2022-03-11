@@ -1,22 +1,7 @@
 import * as fs from 'fs';
-import { Pool, Client, PoolConfig } from 'pg';
 import { generateIRI } from './iri-gen';
 import 'dotenv/config';
-
-function setupPgPool() {
-  const poolConfig: PoolConfig = {
-    connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/regen_registry',
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    poolConfig.ssl = {
-      ca: fs.readFileSync(`${__dirname}/../config/rds-combined-ca-bundle.pem`),
-    };
-  }
-
-  const pool = new Pool(poolConfig);
-  return pool;
-}
+import { pgPool } from 'common/utils';
 
 async function readFileAndGenerateIRI(path) {
   const rawdata = fs.readFileSync(path);
@@ -39,10 +24,9 @@ async function main() {
   if (iri) {
     console.log(`The IRI for ${path} is: ${iri}`)
     if (insertFlag) {
-      const pool = setupPgPool();
       let client;
       try {
-        client = await pool.connect();
+        client = await pgPool.connect();
         console.log('Inserting IRI, and metadata into metadata_graph table.');
         const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
         console.log('IRI and metadata inserted successfully.');

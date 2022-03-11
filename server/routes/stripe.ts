@@ -5,6 +5,7 @@ import * as jwt from 'express-jwt';
 
 import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';
+import { pgPool } from 'common/utils';
 
 const { runnerPromise } = require('../pool');
 
@@ -14,7 +15,6 @@ runnerPromise.then((res) => {
 });
 
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
-const { pgPool } = require('../pool');
 const router = express.Router();
 
 router.post(

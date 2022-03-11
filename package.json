@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "server",
-    "iri-gen"
+    "iri-gen",
+    "common"
   ],
   "dependencies": {
     "@lerna/project": "^3.21.0",
