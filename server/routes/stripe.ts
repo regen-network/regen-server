@@ -7,7 +7,7 @@ import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';
 import { pgPool } from 'common/pool';
 
-const { runnerPromise } = require('../pool');
+const { runnerPromise } = require('../runner');
 
 let runner;
 runnerPromise.then((res) => {
