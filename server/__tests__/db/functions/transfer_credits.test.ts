@@ -564,7 +564,7 @@ async function setup(
   expect(project).not.toBeNull();
 
   if (pools) {
-    await setupPools(client, project.credit_class_id);
+    await setupPools(client);
   }
 
   // Issue credits
