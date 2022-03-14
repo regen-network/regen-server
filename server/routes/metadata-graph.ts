@@ -1,6 +1,6 @@
 import * as express from 'express';
 
-import { pgPool } from 'common/utils';
+import { pgPool } from 'common/pool';
 
 const router = express.Router();
 

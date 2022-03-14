@@ -5,7 +5,7 @@ import * as jwt from 'express-jwt';
 
 import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';
-import { pgPool } from 'common/utils';
+import { pgPool } from 'common/pool';
 
 const { runnerPromise } = require('../pool');
 

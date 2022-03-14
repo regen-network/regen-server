@@ -1,7 +1,7 @@
 import { Pool, Client, PoolConfig } from 'pg';
 import * as fs from 'fs';
 import { main as workerMain } from './worker/worker';
-import { pgPool } from 'common/utils';
+import { pgPool } from 'common/pool';
 
 const runnerPromise = new Promise((resolve, reject) => {
   workerMain(pgPool)

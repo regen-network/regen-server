@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { generateIRI } from './iri-gen';
 import 'dotenv/config';
-import { pgPool } from 'common/utils';
+import { pgPool } from 'common/pool';
 
 async function readFileAndGenerateIRI(path) {
   const rawdata = fs.readFileSync(path);
