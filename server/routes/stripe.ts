@@ -395,4 +395,3 @@ function getTransferAmount(amount: number, fee: number): number {
 }
 
 export default router;
-module.exports = router;

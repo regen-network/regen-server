@@ -34,5 +34,3 @@ const runnerPromise = new Promise((resolve, reject) => {
 });
 
 export { pgPool, runnerPromise };
-exports.pgPool = pgPool;
-exports.runnerPromise = runnerPromise;

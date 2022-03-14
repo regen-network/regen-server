@@ -58,4 +58,3 @@ router.post('/contact', bodyParser.json(), (req, res: express.Response) => {
 });
 
 export default router;
-module.exports = router;

@@ -52,4 +52,3 @@ router.post('/buyers-info', bodyParser.json(), (req, res: express.Response) => {
 });
 
 export default router;
-module.exports = router;
