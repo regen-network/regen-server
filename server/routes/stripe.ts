@@ -98,11 +98,22 @@ router.post('/create-checkout-session', bodyParser.json(), async (req, res) => {
   } = req.body;
 
   try {
+    // Retrieve product that contains connected account id in its metadata
+    // const priceObject = await stripe.prices.retrieve(price);
+    // const product = await stripe.products.retrieve(
+    //   priceObject.product as string,
+    // );
     try {
       // Create a new checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         customer_email: customerEmail,
+        // payment_intent_data: {
+        //   application_fee_amount: priceObject.unit_amount * units * 0.10,
+        //   transfer_data: {
+        //     destination: product.metadata.account_id,
+        //   },
+        // },
         line_items: [
           {
             price,
