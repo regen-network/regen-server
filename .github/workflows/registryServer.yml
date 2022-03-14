@@ -3,6 +3,7 @@ name: registry-server
 on:
   push:
     branches:
+      - '**'
       - '!master'
 
 jobs:
