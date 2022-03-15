@@ -1,0 +1,8 @@
+{
+  "name": "common",
+  "version": "1.0.0",
+  "description": "Common module for shared code in registry-server",
+  "repository": "https://github.com/regen-network/registry-server",
+  "author": "wgwz",
+  "license": "MIT"
+}
