@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FLYWAY_URL: jdbc:postgresql://postgres:postgres@localhost:5432/regen_registry
+      FLYWAY_URL: jdbc:postgresql:regen_registry
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry 
       TEST_DATABASE_USER: postgres
 
@@ -51,8 +51,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v2
