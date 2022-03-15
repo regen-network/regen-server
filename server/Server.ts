@@ -60,15 +60,19 @@ app.use('/ledger-rest', createProxyMiddleware({
   pathRewrite: { '^/ledger-rest': '/'},
 }));
 
-app.use('/exp-ledger', createProxyMiddleware({
-  target: process.env.EXP_LEDGER_TENDERMINT_RPC,
-  pathRewrite: { '^/exp-ledger': '/'},
-}));
+if (process.env.EXP_LEDGER_TENDERMINT_RPC) {
+  app.use('/exp-ledger', createProxyMiddleware({
+    target: process.env.EXP_LEDGER_TENDERMINT_RPC,
+    pathRewrite: { '^/exp-ledger': '/'},
+  }));
+}
 
-app.use('/exp-ledger-rest', createProxyMiddleware({
-  target: process.env.EXP_LEDGER_REST_ENDPOINT,
-  pathRewrite: { '^/exp-ledger-rest': '/'},
-}));
+if (process.env.EXP_LEDGER_REST_ENDPOINT) {
+  app.use('/exp-ledger-rest', createProxyMiddleware({
+    target: process.env.EXP_LEDGER_REST_ENDPOINT,
+    pathRewrite: { '^/exp-ledger-rest': '/'},
+  }));
+}
 
 app.use(postgraphile(pgPool, 'public', {
   graphiql: true,
