@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import Airtable from 'airtable';
 
-import { runnerPromise } from '../pool';
+import { runnerPromise } from '../runner';
 
 let runner;
 runnerPromise.then(res => {

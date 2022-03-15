@@ -3,15 +3,19 @@
   "private": true,
   "workspaces": [
     "server",
-    "iri-gen"
+    "iri-gen",
+    "common"
   ],
   "dependencies": {
     "@lerna/project": "^3.21.0",
     "@uppy/tus": "^0.27.4",
     "compare-func": "^2.0.0",
     "dot-prop": "^5.3.0",
+    "dotenv": "^16.0.0",
     "lerna": "^3.22.1",
+    "minimist": "^1.2.5",
     "node-flywaydb": "^3.0.0",
+    "pg": "^8.7.3",
     "shx": "^0.3.2"
   },
   "scripts": {

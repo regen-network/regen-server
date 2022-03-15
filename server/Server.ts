@@ -20,6 +20,7 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
+import { pgPool } from 'common/pool';
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;

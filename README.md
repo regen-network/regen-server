@@ -98,8 +98,8 @@ If for some reasons, your database is in a messy state and it's best to just res
 After connecting to postgres (`psql postgresql://postgres:postgres@localhost:5432`, make sure your [postgres Docker container is running](#starting-postgresql-locally)), run sequentially:
 ```sql
 DROP DATABASE regen_registry;
-CREATE DATABASE regen_registry;
 DROP ROLE app_user;
+CREATE DATABASE regen_registry;
 ```
 
 Then [run the migrations](#migrations) and you're ready to go again!
@@ -155,6 +155,14 @@ IRIs can be generated based on JSON-LD data using the following command:
 
 ```sh
 cd iri-gen && yarn gen json_file_path
+```
+
+IRIs can be generated and inserted to the database using the `--insert`
+flag. Note: You need to create an `iri-gen/.env` when using this flag for
+the staging or production environment. See `iri-gen/.env-example`.
+
+```sh
+cd iri-gen && yarn gen --insert json_file_path
 ```
 
 [1]: https://eslint.org/docs/user-guide/getting-started

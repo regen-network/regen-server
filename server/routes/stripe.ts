@@ -3,8 +3,9 @@ import * as bodyParser from 'body-parser';
 
 import { UserRequest } from '../types';
 import getJwt from '../middleware/jwt';
+import { pgPool } from 'common/pool';
 
-import { pgPool, runnerPromise } from '../pool';
+import { runnerPromise } from '../runner';
 
 let runner;
 runnerPromise.then(res => {
