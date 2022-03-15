@@ -13,4 +13,4 @@ const runnerPromise = new Promise((resolve, reject) => {
     });
 });
 
-exports.runnerPromise = runnerPromise;
+export { runnerPromise };

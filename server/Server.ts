@@ -13,7 +13,6 @@ import imageOptimizer from './middleware/imageOptimizer';
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import url from 'url';
-import { pgPool } from './pool';
 import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV !== 'production') {
