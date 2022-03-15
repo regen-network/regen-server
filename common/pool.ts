@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { Pool, Client, PoolConfig } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 
-function setupPgPool() {
+function setupPgPool(): Pool {
   const poolConfig: PoolConfig = {
     connectionString:
       process.env.DATABASE_URL ||
