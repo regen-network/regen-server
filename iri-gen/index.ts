@@ -4,7 +4,9 @@ import 'dotenv/config';
 import { pgPool } from 'common/pool';
 import * as minimist from 'minimist';
 
-async function readFileAndGenerateIRI(path) {
+async function readFileAndGenerateIRI(
+  path,
+): Promise<{ doc: { [key: string]: number | string | boolean }; iri: string }> {
   const rawdata = fs.readFileSync(path);
   const doc = JSON.parse(rawdata.toString());
   const iri = await generateIRI(doc);
@@ -28,7 +30,7 @@ async function main(): Promise<void> {
       try {
         client = await pgPool.connect();
         console.log('Inserting IRI, and metadata into metadata_graph table.');
-        const res = await client.query(
+        await client.query(
           'INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)',
           [iri, doc],
         );
