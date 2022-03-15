@@ -31,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FLYWAY_URL: jdbc:postgresql://postgres:postgres@postgres:5432/regen_registry
-      TEST_DATABASE_URL: postgres://postgres:postgres@postgres:5432/regen_registry 
+      FLYWAY_URL: jdbc:postgresql://postgres:postgres@localhost:5432/regen_registry
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry 
       TEST_DATABASE_USER: postgres
 
     strategy:
