@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { generateIRI } from './iri-gen';
 import 'dotenv/config';
 import { pgPool } from 'common/pool';
+import * as minimist from 'minimist';
 
 async function readFileAndGenerateIRI(path) {
   const rawdata = fs.readFileSync(path);
@@ -11,8 +12,7 @@ async function readFileAndGenerateIRI(path) {
 }
 
 async function main(): Promise<void> {
-  const parseArgs = require('minimist');
-  const argv = parseArgs(process.argv.slice(2), {'boolean': true});
+  const argv = minimist(process.argv.slice(2), { boolean: true });
   // Make sure we got a filename on the command line.
   if (argv._.length < 1) {
     console.log('You should provide the path to a JSON file');
@@ -22,13 +22,16 @@ async function main(): Promise<void> {
   const path = argv._[0];
   const { iri, doc } = await readFileAndGenerateIRI(path);
   if (iri) {
-    console.log(`The IRI for ${path} is: ${iri}`)
+    console.log(`The IRI for ${path} is: ${iri}`);
     if (insertFlag) {
       let client;
       try {
         client = await pgPool.connect();
         console.log('Inserting IRI, and metadata into metadata_graph table.');
-        const res = await client.query('INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)', [iri, doc]);
+        const res = await client.query(
+          'INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)',
+          [iri, doc],
+        );
         console.log('IRI and metadata inserted successfully.');
       } catch (err) {
         console.error(err);
@@ -42,4 +45,4 @@ async function main(): Promise<void> {
   }
 }
 
-main()
+main();
