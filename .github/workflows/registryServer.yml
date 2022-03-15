@@ -41,7 +41,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgis/postgis:12-master
         env:
           POSTGRES_DB: regen_registry
           POSTGRES_USER: postgres
