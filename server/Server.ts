@@ -11,12 +11,12 @@ import imageOptimizer from './middleware/imageOptimizer';
 
 const PgManyToManyPlugin = require('@graphile-contrib/pg-many-to-many');
 const url = require('url');
-const { pgPool } = require('./pool');
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
+import { pgPool } from 'common/pool';
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-website\.netlify\.app$/;
 const REGISTRY_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-registry\.netlify\.app$/;
@@ -51,7 +51,7 @@ app.use(getJwt(false));
 app.use('/image', imageOptimizer());
 
 app.use('/ledger', createProxyMiddleware({
-  target: process.env.LEDGER_TENDERMINT_RPC || 'http://13.59.81.92:26657/',
+  target: process.env.LEDGER_TENDERMINT_RPC,
   pathRewrite: { '^/ledger': '/'},
 }));
 
@@ -59,6 +59,20 @@ app.use('/ledger-rest', createProxyMiddleware({
   target: process.env.LEDGER_REST_ENDPOINT,
   pathRewrite: { '^/ledger-rest': '/'},
 }));
+
+if (process.env.EXP_LEDGER_TENDERMINT_RPC) {
+  app.use('/exp-ledger', createProxyMiddleware({
+    target: process.env.EXP_LEDGER_TENDERMINT_RPC,
+    pathRewrite: { '^/exp-ledger': '/'},
+  }));
+}
+
+if (process.env.EXP_LEDGER_REST_ENDPOINT) {
+  app.use('/exp-ledger-rest', createProxyMiddleware({
+    target: process.env.EXP_LEDGER_REST_ENDPOINT,
+    pathRewrite: { '^/exp-ledger-rest': '/'},
+  }));
+}
 
 app.use(postgraphile(pgPool, 'public', {
   graphiql: true,
