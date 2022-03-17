@@ -20,6 +20,8 @@ import { pgPool } from 'common/pool';
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-website\.netlify\.app$/;
 const REGISTRY_PREVIEW_HOSTNAME_PATTERN = /deploy-preview-\d+--regen-registry\.netlify\.app$/;
+const REGISTRY_REDWOOD_HOSTNAME_PATTERN = /redwood--regen-registry\.netlify\.app$/;
+const REGISTRY_HAMBACH_HOSTNAME_PATTERN = /hambach--regen-registry\.netlify\.app$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
 const corsOptions = (req, callback) => {
@@ -31,6 +33,8 @@ const corsOptions = (req, callback) => {
     if (originURL && (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
       originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
       originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
+      originURL.hostname.match(REGISTRY_REDWOOD_HOSTNAME_PATTERN) ||
+      originURL.hostname.match(REGISTRY_HAMBACH_HOSTNAME_PATTERN) ||
       originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))) {
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
     } else {
