@@ -5,6 +5,7 @@
     "outDir": "worker/dist",
     "tsBuildInfoFile": "worker/dist/tsconfig.tsbuildinfo",
     "declarationDir": "worker/dist",
+    "esModuleInterop": true,
   },
   "include": ["worker/tasks"]
 }

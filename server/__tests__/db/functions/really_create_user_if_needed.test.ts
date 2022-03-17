@@ -1,13 +1,13 @@
 import { withRootDb, createUser } from '../helpers';
 
-const email: string = 'johndoe@gmail.com';
-const name: string = 'john doe';
-const image: string = 'image';
+const email = 'johndoe@gmail.com';
+const name = 'john doe';
+const image = 'image';
 const sub = null;
 const roles = null;
 
 it('creates user and party successfully', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     // Action
     const user = await createUser(client, email, name, image, sub, roles);
 
@@ -18,7 +18,7 @@ it('creates user and party successfully', () =>
 
     const { rows: users } = await client.query(
       'select * from "user" where email=$1',
-      [email]
+      [email],
     );
 
     expect(users).toHaveLength(1);
@@ -27,7 +27,7 @@ it('creates user and party successfully', () =>
 
     const { rows: parties } = await client.query(
       'select * from party where id=$1',
-      [user.party_id]
+      [user.party_id],
     );
 
     expect(parties).toHaveLength(1);
@@ -41,7 +41,7 @@ it('creates user and party successfully', () =>
   }));
 
 it('returns existing user', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     // Action
     await createUser(client, email, name, image, sub, roles);
     const user = await createUser(client, email, name, image, sub, roles);
@@ -53,7 +53,7 @@ it('returns existing user', () =>
 
     const { rows: users } = await client.query(
       'select * from "user" where email=$1',
-      [email]
+      [email],
     );
 
     expect(users).toHaveLength(1);
@@ -62,7 +62,7 @@ it('returns existing user', () =>
 
     const { rows: parties } = await client.query(
       'select * from party where id=$1',
-      [user.party_id]
+      [user.party_id],
     );
 
     expect(parties).toHaveLength(1);
@@ -76,7 +76,7 @@ it('returns existing user', () =>
   }));
 
 it('updates existing user auth0 sub', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     // Setup
     const newSub = 'newsub';
 
@@ -91,18 +91,18 @@ it('updates existing user auth0 sub', () =>
 
     const { rows: users } = await client.query(
       'select * from "user" where email=$1',
-      [email]
+      [email],
     );
 
     expect(users).toHaveLength(1);
   }));
 
 it('fails with null email', () =>
-  withRootDb(async (client) => {
+  withRootDb(async client => {
     const promise = createUser(client, null, name, image, sub, roles);
 
     await expect(promise).rejects.toMatchInlineSnapshot(
-      `[error: Email is required]`
+      `[error: Email is required]`,
     );
     await expect(promise).rejects.toHaveProperty('code', 'MODAT');
   }));

@@ -1,6 +1,6 @@
-const { run } = require('graphile-worker');
+import { run, Runner } from 'graphile-worker';
 
-export async function main(pgPool) {
+export async function main(pgPool): Promise<Runner> {
   // Run a worker to execute jobs:
   const runner = await run({
     pgPool,
