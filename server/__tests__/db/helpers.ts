@@ -1,5 +1,6 @@
-import { Pool, PoolClient } from 'pg';
-require('dotenv').config();
+import { Pool, PoolClient, QueryResult } from 'pg';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const pools = {};
 
@@ -16,7 +17,7 @@ beforeAll(() => {
 afterAll(() => {
   const keys = Object.keys(pools);
   return Promise.all(
-    keys.map(async (key) => {
+    keys.map(async key => {
       try {
         const pool = pools[key];
         delete pools[key];
@@ -25,11 +26,11 @@ afterAll(() => {
         console.error('Failed to release connection!');
         console.error(e);
       }
-    })
+    }),
   );
 });
 
-export const poolFromUrl = (url: string) => {
+export const poolFromUrl = (url: string): Pool => {
   if (!pools[url]) {
     pools[url] = new Pool({ connectionString: url });
   }
@@ -38,7 +39,10 @@ export const poolFromUrl = (url: string) => {
 
 type ClientCallback<T = any> = (client: PoolClient) => Promise<T>;
 
-const withDbFromUrl = async <T>(url: string, fn: ClientCallback<T>) => {
+const withDbFromUrl = async <T>(
+  url: string,
+  fn: ClientCallback<T>,
+): Promise<void> => {
   const pool = poolFromUrl(url);
   const client = await pool.connect();
   await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE;');
@@ -58,19 +62,18 @@ const withDbFromUrl = async <T>(url: string, fn: ClientCallback<T>) => {
   }
 };
 
-export const withRootDb = <T>(fn: ClientCallback<T>) =>
+export const withRootDb = <T>(fn: ClientCallback<T>): Promise<void> =>
   withDbFromUrl(TEST_DATABASE_URL, fn);
 
-export const becomeRoot = (client: PoolClient) => client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
+export const becomeRoot = (client: PoolClient): Promise<QueryResult<any>> =>
+  client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
 
 export const becomeUser = async (
   client: PoolClient,
   userSub: string,
-) => {
+): Promise<void> => {
   await becomeRoot(client);
-  await client.query(
-    `set role "${userSub}"`
-  );
+  await client.query(`set role "${userSub}"`);
 };
 
 export type Party = {
@@ -81,20 +84,32 @@ export type Party = {
 export type User = {
   auth0_sub: string;
   id: string;
+  email: string;
+  party_id: string;
 };
 
 export const withAdminUserDb = <T>(
-  fn: (client: PoolClient, user: User, party: Party) => Promise<T>
-) =>
-  withRootDb(async (client) => {
-    const sub: string = 'test-admin-sub';
-    const email: string = 'johndoe@regen.network';
-    const name: string = 'john doe';
-    const organization = await createUserOrganisation(client, email, name, '', 'RND test', 'walletAddr', null, { 'some': 'address' });
-    const { rows: [party] } = await client.query(
-      'select * from party where id=$1',
-      [organization.party_id]
+  fn: (client: PoolClient, user: User, party: Party) => Promise<T>,
+): Promise<void> =>
+  withRootDb(async client => {
+    const sub = 'test-admin-sub';
+    const email = 'johndoe@regen.network';
+    const name = 'john doe';
+    const organization = await createUserOrganisation(
+      client,
+      email,
+      name,
+      '',
+      'RND test',
+      'walletAddr',
+      null,
+      { some: 'address' },
     );
+    const {
+      rows: [party],
+    } = await client.query('select * from party where id=$1', [
+      organization.party_id,
+    ]);
     await client.query('SELECT private.create_app_user_if_needed($1)', [sub]);
     await client.query('INSERT INTO admin (auth0_sub) VALUES ($1)', [sub]);
 
@@ -110,7 +125,7 @@ export async function createUser(
   image: string | null,
   sub: string | null,
   roles: string[] | null,
-) {
+): Promise<User> {
   const {
     rows: [row],
   } = await client.query(
@@ -123,9 +138,15 @@ export async function createUser(
         $5
       )
       `,
-    [email, name, image, sub, roles]
+    [email, name, image, sub, roles],
   );
   return row;
+}
+
+interface OrganizationType {
+  id: string;
+  party_id: string;
+  legal_name: string;
 }
 
 export async function createUserOrganisation(
@@ -137,7 +158,7 @@ export async function createUserOrganisation(
   walletAddr: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
@@ -152,18 +173,68 @@ export async function createUserOrganisation(
         $7
       )
       `,
-    [email, name, image, orgName, walletAddr, roles, orgAddress]
+    [email, name, image, orgName, walletAddr, roles, orgAddress],
   );
   return row;
+}
+
+export interface ProjectType {
+  id: string;
+  credit_class_id: string;
+  developer_id: string;
+  steward_id: string;
+}
+
+interface MethodologyVersion {
+  id: string;
+  created_at: string;
+}
+
+interface CreditClassVersion {
+  id: string;
+  created_at: string;
+}
+
+interface CreateProject {
+  project: ProjectType;
+  methodologyVersion: MethodologyVersion;
+  creditClassVersion: CreditClassVersion;
 }
 
 export async function createProject(
   client: PoolClient,
   issuerWalletId: string | null,
-) {
-  const methodologyDeveloper = await createUserOrganisation(client, 'methodology@test.com', 'methodology dev user', '', 'methodology dev org', 'methodology wallet address', null, { 'some': 'address' });
-  const projectDeveloper = await createUserOrganisation(client, 'project@test.com', 'project dev user', '', 'project dev org', 'project wallet address', null, { 'some': 'address' });
-  const landSteward = await createUserOrganisation(client, 'steward@test.com', 'steward user', '', 'steward org', 'steward wallet address', null, { 'some': 'address' });
+): Promise<CreateProject> {
+  const methodologyDeveloper = await createUserOrganisation(
+    client,
+    'methodology@test.com',
+    'methodology dev user',
+    '',
+    'methodology dev org',
+    'methodology wallet address',
+    null,
+    { some: 'address' },
+  );
+  const projectDeveloper = await createUserOrganisation(
+    client,
+    'project@test.com',
+    'project dev user',
+    '',
+    'project dev org',
+    'project wallet address',
+    null,
+    { some: 'address' },
+  );
+  const landSteward = await createUserOrganisation(
+    client,
+    'steward@test.com',
+    'steward user',
+    '',
+    'steward org',
+    'steward wallet address',
+    null,
+    { some: 'address' },
+  );
   const {
     rows: [project],
   } = await client.query(
@@ -180,7 +251,7 @@ export async function createProject(
       new Date(),
       new Date(),
       'active',
-    ]
+    ],
   );
 
   // Insert credit_class_version and methodology_version
@@ -191,9 +262,7 @@ export async function createProject(
       select methodology_id from credit_class
       where id = $1
       `,
-    [
-      project.credit_class_id,
-    ]
+    [project.credit_class_id],
   );
   const {
     rows: [methodologyVersion],
@@ -203,9 +272,7 @@ export async function createProject(
       values ($1, $2, 'some methodology', 'v1.0', now())
       returning *
       `,
-    [
-      creditClass.methodology_id, new Date(),
-    ]
+    [creditClass.methodology_id, new Date()],
   );
   const {
     rows: [creditClassVersion],
@@ -215,9 +282,7 @@ export async function createProject(
       values ($1, $2, 'some credit class', 'v1.0', now())
       returning *
       `,
-    [
-      project.credit_class_id, new Date(),
-    ]
+    [project.credit_class_id, new Date()],
   );
 
   if (issuerWalletId) {
@@ -241,7 +306,7 @@ export async function reallyCreateOrganization(
   description: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
@@ -257,7 +322,16 @@ export async function reallyCreateOrganization(
         $8
       )
     `,
-    [legalName, displayName, walletAddr, ownerId, image, description, roles, orgAddress]
+    [
+      legalName,
+      displayName,
+      walletAddr,
+      ownerId,
+      image,
+      description,
+      roles,
+      orgAddress,
+    ],
   );
   return row;
 }
@@ -272,7 +346,7 @@ export async function reallyCreateOrganizationIfNeeded(
   description: string | null,
   roles: string[] | null,
   orgAddress: object | null,
-) {
+): Promise<OrganizationType> {
   const {
     rows: [row],
   } = await client.query(
@@ -288,7 +362,16 @@ export async function reallyCreateOrganizationIfNeeded(
         $8
       )
     `,
-    [legalName, displayName, walletAddr, ownerId, image, description, roles, orgAddress]
+    [
+      legalName,
+      displayName,
+      walletAddr,
+      ownerId,
+      image,
+      description,
+      roles,
+      orgAddress,
+    ],
   );
   return row;
 }

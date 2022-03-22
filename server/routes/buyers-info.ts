@@ -1,11 +1,11 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import * as Airtable from 'airtable';
+import Airtable from 'airtable';
 
-const { runnerPromise } = require('../runner');
+import { runnerPromise } from '../runner';
 
 let runner;
-runnerPromise.then((res) => {
+runnerPromise.then(res => {
   runner = res;
 });
 
@@ -19,32 +19,36 @@ router.post('/buyers-info', bodyParser.json(), (req, res: express.Response) => {
     [
       {
         fields: {
-          "Full Name": name,
-          "Email address": email,
-          "Organization Name": orgName,
+          'Full Name': name,
+          'Email address': email,
+          'Organization Name': orgName,
           Budget: budget,
-          "Which types of carbon credits projects are you interested in?": projectTypes,
-          "I am interested in buying carbon credits on behalf of:": onBehalfOf,
+          'Which types of carbon credits projects are you interested in?':
+            projectTypes,
+          'I am interested in buying carbon credits on behalf of:': onBehalfOf,
         },
       },
     ],
-    function (err, records) {
+    function (err) {
       if (err) {
         console.error(err);
         res.status(400).send(err);
       } else {
         if (runner) {
-          runner.addJob('interest_buyers__send_confirmation', { email }).then(() => {
-            res.sendStatus(200);
-          }, (err) => {
-            res.status(400).send(err);
-          });
+          runner.addJob('interest_buyers__send_confirmation', { email }).then(
+            () => {
+              res.sendStatus(200);
+            },
+            err => {
+              res.status(400).send(err);
+            },
+          );
         } else {
           res.sendStatus(200);
         }
       }
-    }
+    },
   );
 });
 
-module.exports = router;
+export default router;

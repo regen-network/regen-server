@@ -1,0 +1,66 @@
+name: registry-server
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+
+jobs:
+
+  lint-and-format:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: corepack enable
+      - run: yarn
+      - run: yarn run eslint .
+
+  tests:
+
+    runs-on: ubuntu-latest
+
+    env:
+      FLYWAY_URL: jdbc:postgresql://localhost:5432/regen_registry
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry 
+      TEST_DATABASE_USER: postgres
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    services:
+      postgres:
+        image: postgis/postgis:12-master
+        env:
+          POSTGRES_DB: regen_registry
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: corepack enable
+      - run: yarn
+      - run: yarn migrate
+      - run: yarn test

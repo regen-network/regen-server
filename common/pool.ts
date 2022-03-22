@@ -1,9 +1,11 @@
 import * as fs from 'fs';
-import { Pool, Client, PoolConfig } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 
-function setupPgPool() {
+function setupPgPool(): Pool {
   const poolConfig: PoolConfig = {
-    connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/regen_registry',
+    connectionString:
+      process.env.DATABASE_URL ||
+      'postgres://postgres:postgres@localhost:5432/regen_registry',
   };
 
   if (process.env.NODE_ENV === 'production') {

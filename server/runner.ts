@@ -3,14 +3,14 @@ import { pgPool } from 'common/pool';
 
 const runnerPromise = new Promise((resolve, reject) => {
   workerMain(pgPool)
-    .then((res) => {
+    .then(res => {
       resolve(res);
     })
-    .catch((err) => {
+    .catch(err => {
       console.error(err);
       reject(err);
       process.exit(1);
     });
 });
 
-exports.runnerPromise = runnerPromise;
+export { runnerPromise };
