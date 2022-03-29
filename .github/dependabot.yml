@@ -4,5 +4,7 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
     target-branch: dev
+    reviewers:
+      - "regen-network/interfaces-team"
