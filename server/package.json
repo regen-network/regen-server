@@ -33,8 +33,7 @@
     "nodemailer": "^6.6.3",
     "postgraphile": "^4.7.0",
     "redis": "^3.1.1",
-    "stripe": "^8.120.0",
-    "ts-node": "^9.1.1"
+    "stripe": "^8.120.0"
   },
   "scripts": {
     "start": "ts-node Server.ts",
