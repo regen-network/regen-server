@@ -7,4 +7,4 @@ updates:
       interval: weekly
     target-branch: dev
     reviewers:
-      - "regen-network/interfaces-team"
+      - "regen-network/interfaces-server-team"
