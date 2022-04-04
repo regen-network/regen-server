@@ -9,7 +9,7 @@
   "dependencies": {
     "@lerna/project": "^3.21.0",
     "dotenv": "^16.0.0",
-    "lerna": "^3.22.1",
+    "lerna": "^4.0.0",
     "minimist": "^1.2.5",
     "node-flywaydb": "^3.0.0",
     "pg": "^8.7.3",
