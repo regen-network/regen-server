@@ -62,6 +62,8 @@ app.use(cors(corsOptions));
 
 app.use(getJwt(false));
 
+app.use(express.json());
+
 app.use('/image', imageOptimizer());
 
 app.use(

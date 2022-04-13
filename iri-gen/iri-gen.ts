@@ -72,20 +72,18 @@ function checksum(input: Uint8Array): Uint8Array {
  * @returns Promise
  */
 export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
-  try {
-    // Canonize JSON-LD to n-quads
-    const canonized = await jsonld.canonize(doc, {
-      algorithm: 'URDNA2015',
-      format: 'application/n-quads',
-    });
-
-    // Generate BLAKE2b with 256 bits (32 bytes) length hash
-    const hash = blake.blake2b(canonized, null, 32);
-
-    // Get IRI from hash
-    const iri = toIRI(hash);
-    return iri;
-  } catch (e) {
-    console.error(e);
+  // Canonize JSON-LD to n-quads
+  const canonized = await jsonld.canonize(doc, {
+    algorithm: 'URDNA2015',
+    format: 'application/n-quads',
+  });
+  if (canonized === '') {
+    throw new Error('Invalid JSON-LD document');
   }
+  // Generate BLAKE2b with 256 bits (32 bytes) length hash
+  const hash = blake.blake2b(canonized, null, 32);
+
+  // Get IRI from hash
+  const iri = toIRI(hash);
+  return iri;
 }

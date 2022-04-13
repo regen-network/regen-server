@@ -3,14 +3,15 @@ import { generateIRI } from './iri-gen';
 import 'dotenv/config';
 import { pgPool } from 'common/pool';
 import * as minimist from 'minimist';
+import { PoolClient } from 'pg';
+import { MetadataGraph } from 'common/metadata_graph';
 
-async function readFileAndGenerateIRI(
-  path,
+async function readDocument(
+  path: fs.PathOrFileDescriptor,
 ): Promise<{ doc: { [key: string]: number | string | boolean }; iri: string }> {
   const rawdata = fs.readFileSync(path);
   const doc = JSON.parse(rawdata.toString());
-  const iri = await generateIRI(doc);
-  return { doc, iri };
+  return doc;
 }
 
 async function main(): Promise<void> {
@@ -22,28 +23,27 @@ async function main(): Promise<void> {
   }
   const insertFlag = argv.insert;
   const path = argv._[0];
-  const { iri, doc } = await readFileAndGenerateIRI(path);
-  if (iri) {
-    console.log(`The IRI for ${path} is: ${iri}`);
-    if (insertFlag) {
-      let client;
-      try {
-        client = await pgPool.connect();
+  let client: PoolClient;
+  try {
+    client = await pgPool.connect();
+    const doc = await readDocument(path);
+    const iri = await generateIRI(doc);
+    if (iri) {
+      console.log(`The IRI for ${path} is: ${iri}`);
+      if (insertFlag) {
         console.log('Inserting IRI, and metadata into metadata_graph table.');
-        await client.query(
-          'INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2)',
-          [iri, doc],
-        );
+        await MetadataGraph.insert_iri_doc(client, iri, doc);
         console.log('IRI and metadata inserted successfully.');
-      } catch (err) {
-        console.error(err);
-      } finally {
-        // Make sure to release the client before any error handling,
-        // just in case the error handling itself throws an error.
-        if (client) client.release();
+        process.exit(0);
+      } else {
+        process.exit(0);
       }
-      process.exit(0);
     }
+  } catch (e) {
+    console.log(e);
+    process.exit(1);
+  } finally {
+    if (client) client.release();
   }
 }
 
