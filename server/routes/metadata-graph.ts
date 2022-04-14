@@ -2,12 +2,12 @@ import * as express from 'express';
 import { PoolClient } from 'pg';
 
 import { pgPool } from 'common/pool';
-import { MetadataNotFound, MetadataGraph } from 'common/metadata_graph';
+import { MetadataGraph } from 'common/metadata_graph';
 import { generateIRI } from 'iri-gen/iri-gen';
 
 const router = express.Router();
 
-router.get('/metadata-graph/:iri', async (req, res) => {
+router.get('/metadata-graph/:iri', async (req, res, next) => {
   const { iri } = req.params;
   const iri_re = new RegExp('regen:.+.rdf');
   let client: PoolClient;
@@ -21,13 +21,7 @@ router.get('/metadata-graph/:iri', async (req, res) => {
     const metadata = await MetadataGraph.fetch_by_iri(client, iri);
     return res.json(metadata);
   } catch (err) {
-    if (err instanceof MetadataNotFound) {
-      console.error(err);
-      return res.status(404).send(`metadata_graph with the iri ${iri} not found`);
-    } else {
-      console.error(err);
-      return res.sendStatus(500);
-    }
+    next(err);
   } finally {
     if (client) {
       client.release();
@@ -35,19 +29,23 @@ router.get('/metadata-graph/:iri', async (req, res) => {
   }
 });
 
-router.get('/iri-gen', async (req, res) => {
-  const iri = await generateIRI(req.body);
-  return res.json({ iri });
+router.get('/iri-gen', async (req, res, next) => {
+  try {
+    const iri = await generateIRI(req.body);
+    return res.json({ iri });
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/iri-gen', async (req, res) => {
+router.post('/iri-gen', async (req, res, next) => {
   let client: PoolClient;
   try {
     client = await pgPool.connect();
     const resp = await MetadataGraph.insert_doc(client, req.body);
     return res.status(201).json(resp);
   } catch (err) {
-    res.sendStatus(500);
+    next(err);
   } finally {
     if (client) {
       client.release();

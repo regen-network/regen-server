@@ -65,6 +65,12 @@ function checksum(input: Uint8Array): Uint8Array {
   return h2.slice(0, 4);
 }
 
+export class InvalidJSONLD extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 /**
  * generateIRI canonizes a JSON-LD doc and generates a hash for it using BLAKE2b (256 bits)
  * then converts this hash into an IRI based on the pattern described in toIRI function
@@ -78,7 +84,7 @@ export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
     format: 'application/n-quads',
   });
   if (canonized === '') {
-    throw new Error('Invalid JSON-LD document');
+    throw new InvalidJSONLD('Invalid JSON-LD document');
   }
   // Generate BLAKE2b with 256 bits (32 bytes) length hash
   const hash = blake.blake2b(canonized, null, 32);
