@@ -2,7 +2,7 @@ import * as express from 'express';
 import { PoolClient } from 'pg';
 
 import { pgPool } from 'common/pool';
-import { MetadataGraph } from 'common/metadata_graph';
+import { MetadataNotFound, MetadataGraph } from 'common/metadata_graph';
 import { generateIRI } from 'iri-gen/iri-gen';
 
 const router = express.Router();
@@ -11,31 +11,23 @@ router.get('/metadata-graph/:iri', async (req, res) => {
   const { iri } = req.params;
   const iri_re = new RegExp('regen:.+.rdf');
   let client: PoolClient;
+  if (!iri_re.test(iri)) {
+    return res
+      .status(400)
+      .send('Invalid IRI, it must be of the form regen:<iri-hash>.rdf');
+  }
   try {
-    if (!iri_re.test(iri)) {
-      res
-        .status(400)
-        .send('Invalid IRI, it must be of the form regen:<iri-hash>.rdf');
-    } else {
-      client = await pgPool.connect();
-      try {
-        const { rows } = await client.query(
-          'select metadata from metadata_graph where iri=$1',
-          [iri],
-        );
-        if (!rows.length) {
-          res.status(404).send(`metadata_graph with the iri ${iri} not found`);
-        } else {
-          res.json(rows[0].metadata);
-        }
-      } catch (err) {
-        console.error(err);
-        res.status(400).send(err);
-      }
-    }
+    client = await pgPool.connect();
+    const metadata = await MetadataGraph.fetch_by_iri(client, iri);
+    return res.json(metadata);
   } catch (err) {
-    console.error('Error acquiring postgres client', err);
-    res.sendStatus(500);
+    if (err instanceof MetadataNotFound) {
+      console.error(err);
+      return res.status(404).send(`metadata_graph with the iri ${iri} not found`);
+    } else {
+      console.error(err);
+      return res.sendStatus(500);
+    }
   } finally {
     if (client) {
       client.release();

@@ -2,6 +2,12 @@ import { JsonLdDocument } from 'jsonld';
 import { PoolClient, Client } from 'pg';
 import { generateIRI } from 'iri-gen/iri-gen';
 
+export class MetadataNotFound extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export const MetadataGraph = {
   insert: async function (
     client: PoolClient | Client,
@@ -33,6 +39,11 @@ export const MetadataGraph = {
       'SELECT metadata FROM metadata_graph WHERE iri=$1 LIMIT 1',
       [iri],
     );
-    return rows;
+    if (rows.length === 0) {
+      throw new MetadataNotFound('Metadata not found');
+    } else {
+      const [row] = rows;
+      return row.metadata;
+    }
   },
 };

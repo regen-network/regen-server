@@ -44,4 +44,20 @@ describe('MetadataGraph', () => {
     const doc2 = await MetadataGraph.insert_doc(client, doc);
     expect(doc1).toMatchObject(doc2);
   });
+  test('fetch by iri is working..', async () => {
+    const doc = {
+      'http://schema.org/name': 'Bucky Fuller',
+      'http://schema.org/url': {
+        '@id': 'http://www.wikidata.org/wiki/Q102289/',
+      },
+    };
+    const { iri } = await MetadataGraph.insert_doc(client, doc);
+    const metadata = await MetadataGraph.fetch_by_iri(client, iri);
+    expect(metadata).toMatchObject(doc);
+  });
+  test('fetch by iri throws an error when the iri is not found..', async () => {
+    await expect(
+      MetadataGraph.fetch_by_iri(client, 'regen:abcdefgh.rdf'),
+    ).rejects.toThrow();
+  });
 });
