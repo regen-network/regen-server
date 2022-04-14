@@ -20,21 +20,21 @@ export const MetadataGraph = {
     );
     return resp.rows[0];
   },
-  insert_iri_doc: async function (
+  insertIriDoc: async function (
     client: PoolClient | Client,
     iri: string,
     metadata: JsonLdDocument,
   ) {
     return await this.insert(client, iri, metadata);
   },
-  insert_doc: async function (
+  insertDoc: async function (
     client: PoolClient | Client,
     metadata: JsonLdDocument,
   ) {
     const iri = await generateIRI(metadata);
     return await this.insert(client, iri, metadata);
   },
-  fetch_by_iri: async function (client: PoolClient | Client, iri: string) {
+  fetchByIri: async function (client: PoolClient | Client, iri: string) {
     const { rows } = await client.query(
       'SELECT metadata FROM metadata_graph WHERE iri=$1 LIMIT 1',
       [iri],
