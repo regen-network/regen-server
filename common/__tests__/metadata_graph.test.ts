@@ -6,6 +6,7 @@ describe('MetadataGraph', () => {
   const client = new Client({
     connectionString: dburl,
   });
+  const metadataGraph = new MetadataGraph(client);
 
   beforeAll(async () => {
     return await client.connect();
@@ -27,7 +28,7 @@ describe('MetadataGraph', () => {
         '@id': 'http://www.wikidata.org/wiki/Q102289/',
       },
     };
-    const { iri, metadata } = await MetadataGraph.insertDoc(client, doc);
+    const { iri, metadata } = await metadataGraph.insertDoc(doc);
     expect(iri).toBe(
       'regen:13toVhNei4y1Tt2Ebf2ZkCM1vQ3hcudK4miVKpaqgkc1mmaETcC3jjQ.rdf',
     );
@@ -40,8 +41,8 @@ describe('MetadataGraph', () => {
         '@id': 'http://www.wikidata.org/wiki/Q102289/',
       },
     };
-    const doc1 = await MetadataGraph.insertDoc(client, doc);
-    const doc2 = await MetadataGraph.insertDoc(client, doc);
+    const doc1 = await metadataGraph.insertDoc(doc);
+    const doc2 = await metadataGraph.insertDoc(doc);
     expect(doc1).toMatchObject(doc2);
   });
   test('fetch by iri is working..', async () => {
@@ -51,13 +52,13 @@ describe('MetadataGraph', () => {
         '@id': 'http://www.wikidata.org/wiki/Q102289/',
       },
     };
-    const { iri } = await MetadataGraph.insertDoc(client, doc);
-    const metadata = await MetadataGraph.fetchByIri(client, iri);
+    const { iri } = await metadataGraph.insertDoc(doc);
+    const metadata = await metadataGraph.fetchByIri(iri);
     expect(metadata).toMatchObject(doc);
   });
   test('fetch by iri throws an error when the iri is not found..', async () => {
     await expect(
-      MetadataGraph.fetchByIri(client, 'regen:abcdefgh.rdf'),
+      metadataGraph.fetchByIri('regen:abcdefgh.rdf'),
     ).rejects.toThrow();
   });
 });
