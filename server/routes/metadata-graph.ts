@@ -23,7 +23,7 @@ router.get('/metadata-graph/:iri', async (req, res) => {
         if (!rows.length) {
           res.status(404).send(`metadata_graph with the iri ${iri} not found`);
         } else {
-          res.json(rows[0]);
+          res.json(rows[0].metadata);
         }
       } catch (err) {
         console.error(err);
