@@ -11,7 +11,7 @@ export class MetadataNotFound extends Error {
 type MetadataGraphRow = {
   iri: string;
   metadata: JsonLdDocument;
-}
+};
 
 export class MetadataGraph {
   client: PoolClient | Client;
@@ -20,7 +20,10 @@ export class MetadataGraph {
     this.client = client;
   }
 
-  async insert(iri: string, metadata: JsonLdDocument): Promise<MetadataGraphRow> {
+  async insert(
+    iri: string,
+    metadata: JsonLdDocument,
+  ): Promise<MetadataGraphRow> {
     const resp = await this.client.query(
       'INSERT INTO metadata_graph (iri, metadata) VALUES ($1, $2) ON CONFLICT (iri) DO UPDATE SET iri=$1, metadata=$2 RETURNING iri, metadata',
       [iri, metadata],
@@ -28,7 +31,10 @@ export class MetadataGraph {
     return resp.rows[0];
   }
 
-  async insertIriDoc(iri: string, metadata: JsonLdDocument): Promise<MetadataGraphRow> {
+  async insertIriDoc(
+    iri: string,
+    metadata: JsonLdDocument,
+  ): Promise<MetadataGraphRow> {
     return await this.insert(iri, metadata);
   }
 
