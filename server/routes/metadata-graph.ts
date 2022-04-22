@@ -18,7 +18,8 @@ router.get('/metadata-graph/:iri', async (req, res, next) => {
   }
   try {
     client = await pgPool.connect();
-    const metadata = await MetadataGraph.fetchByIri(client, iri);
+    const metadataGraph = new MetadataGraph(client);
+    const metadata = await metadataGraph.fetchByIri(iri);
     return res.json(metadata);
   } catch (err) {
     next(err);
@@ -42,7 +43,8 @@ router.post('/iri-gen', async (req, res, next) => {
   let client: PoolClient;
   try {
     client = await pgPool.connect();
-    const resp = await MetadataGraph.insertDoc(client, req.body);
+    const metadataGraph = new MetadataGraph(client);
+    const resp = await metadataGraph.insertDoc(req.body);
     return res.status(201).json(resp);
   } catch (err) {
     next(err);
