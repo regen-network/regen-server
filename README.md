@@ -81,14 +81,14 @@ It's also recommended to start from a local database without any data, otherwise
 
 1. Export data from the production database using `pg_dump`:
 ```sh
-pg_dump -d postgres -h registryproduction.cna6zybeqdns.us-east-1.rds.amazonaws.com -p 5432 -U postgres --file dump.sql --data-only
+pg_dump -d postgres -h registryproduction.cna6zybeqdns.us-east-1.rds.amazonaws.com -p 5432 -U postgres --file dump --data-only -F c
 ```
 You'll be asked for the database password, if you don't know where to find it, please contact one of the contributors of this repository.
-After entering the password, this might take a few seconds before data is exported into `dump.sql`.
+After entering the password, this might take a few seconds before data is exported into `dump`.
 
-2. Import production data to your local database using:
+2. Import production data to your local database using (the password is just `postgres` for your local database):
 ```sh
-psql postgresql://postgres:postgres@localhost:5432/regen_registry -f dump.sql
+pg_restore -d regen_registry -h localhost -p 5432 -U postgres dump
 ```
 
 ### Dropping local database
