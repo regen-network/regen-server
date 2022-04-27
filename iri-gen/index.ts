@@ -32,7 +32,8 @@ async function main(): Promise<void> {
       console.log(`The IRI for ${path} is: ${iri}`);
       if (insertFlag) {
         console.log('Inserting IRI, and metadata into metadata_graph table.');
-        await MetadataGraph.insertIriDoc(client, iri, doc);
+        const metadataGraph = new MetadataGraph(client);
+        await metadataGraph.insertIriDoc(iri, doc);
         console.log('IRI and metadata inserted successfully.');
         process.exit(0);
       } else {
