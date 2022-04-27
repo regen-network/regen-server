@@ -1,6 +1,5 @@
+const commonConfig = require("../common.jest.config")
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testMatch: ['<rootDir>/**/__tests__/*.test.[jt]s'],
+  ...commonConfig,
   setupFiles: ['./jestSetupFile.ts'],
 };
