@@ -165,5 +165,58 @@ the staging or production environment. See `iri-gen/.env-example`.
 cd iri-gen && yarn gen --insert json_file_path
 ```
 
+## Manual Deployment
+
+If you need to deploy the app manually, you can download [the Heroku CLI][4] and
+use the following commands.
+
+Authenticate the CLI with Heroku:
+```
+$ heroku login
+```
+
+View apps available to the team:
+```
+heroku apps --team=regen-network
+=== Apps in team regen-network
+regen-analytics
+regen-dev-analytics
+regen-keystone-dev
+regen-registry-server
+regen-registry-server-staging
+regen-web-backend
+```
+
+Checkout and synchronize the code you want to deploy:
+```
+git checkout dev
+git fetch origin
+git merge origin/dev
+```
+
+Set up a git remote for the heroku app you want to deploy, i.e.
+`regen-registry-server-staging`:
+```
+$ heroku git:remote -r regen-registry-server-staging -a regen-registry-server-staging
+$ git remote -v
+origin	git@github.com:regen-network/registry-server.git (fetch)
+origin	git@github.com:regen-network/registry-server.git (push)
+regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (fetch)
+regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (push)
+```
+
+Deploy the branch you want, to the app/remote, i.e. we deploy branch `dev` to
+the app/remote `regen-registry-server-staging`:
+```
+git push regen-registry-server-staging dev:main
+```
+
+Note: When you are deploying a branch, Heroku requires it to be `<branch>:main`
+for some reason.
+
+For more on this manual process, see [the Heroku docs][3].
+
 [1]: https://eslint.org/docs/user-guide/getting-started
 [2]: https://prettier.io/docs/en/integrating-with-linters.html 
+[3]: https://devcenter.heroku.com/articles/git
+[4]: https://devcenter.heroku.com/articles/heroku-cli
