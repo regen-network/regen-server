@@ -25,12 +25,12 @@ async function main(): Promise<void> {
   const path = argv._[0];
   let client: PoolClient;
   try {
-    client = await pgPool.connect();
     const doc = await readDocument(path);
     const iri = await generateIRI(doc);
     if (iri) {
       console.log(`The IRI for ${path} is: ${iri}`);
       if (insertFlag) {
+        client = await pgPool.connect();
         console.log('Inserting IRI, and metadata into metadata_graph table.');
         const metadataGraph = new MetadataGraph(client);
         await metadataGraph.insertIriDoc(iri, doc);
