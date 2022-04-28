@@ -62,6 +62,8 @@ app.use(cors(corsOptions));
 
 app.use(getJwt(false));
 
+app.use(express.json());
+
 app.use('/image', imageOptimizer());
 
 app.use(
@@ -128,6 +130,8 @@ import auth from './routes/auth';
 import recaptcha from './routes/recaptcha';
 import files from './routes/files';
 import metadataGraph from './routes/metadata-graph';
+import { MetadataNotFound } from 'common/metadata_graph';
+import { InvalidJSONLD } from 'iri-gen/iri-gen';
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -136,6 +140,23 @@ app.use(auth);
 app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  const { params, query, body, path } = req;
+  console.error('req info:', { params, query, body, path });
+  next(err);
+});
+app.use((err, req, res, next) => {
+  const errResponse = { error: err.message };
+  if (err instanceof MetadataNotFound) {
+    res.status(404).send(errResponse);
+  } else if (err instanceof InvalidJSONLD) {
+    res.status(400).send(errResponse);
+  } else {
+    next(err);
+  }
+});
 
 const port = process.env.PORT || 5000;
 

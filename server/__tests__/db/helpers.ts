@@ -1,5 +1,5 @@
 import { Pool, PoolClient, QueryResult } from 'pg';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 const pools = {};
@@ -56,8 +56,8 @@ const withDbFromUrl = async <T>(
     }
     throw e;
   } finally {
-    await client.query('ROLLBACK;');
-    await client.query('RESET ALL;'); // Shouldn't be necessary, but just in case...
+    await client.query('ROLLBACK');
+    await client.query('RESET ALL'); // Shouldn't be necessary, but just in case...
     await client.release();
   }
 };
