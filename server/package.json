@@ -19,7 +19,7 @@
     "express": "4.17.3",
     "express-fileupload": "^1.1.10",
     "express-jwt": "6.0.0",
-    "express-sharp": "^4.2.24",
+    "express-sharp": "^4.2.41",
     "got": "^11.8.2",
     "graphile-build-pg": "^4.5.0",
     "graphile-worker": "^0.6.0",
