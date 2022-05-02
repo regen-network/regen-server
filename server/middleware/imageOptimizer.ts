@@ -24,7 +24,9 @@ export default function imageOptimizer(): express.Router {
       const options = { tls: { rejectUnauthorized: false } };
       redis = new Redis(redisUrl, options);
       // there is a bug in KeyvRedis which required me to also
-      // pass tls options there, otherwise it gets overrided.
+      // pass tls options there, otherwise it gets overridden.
+      // without this, you will see ECONNRESET errors when the
+      // application tries to connect to redis.
       keyvRedis = new KeyvRedis(redis, options);
     } else if (redisUrl.startsWith('redis://')) {
       redis = new Redis(redisUrl);
