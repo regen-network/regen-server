@@ -190,8 +190,7 @@ regen-web-backend
 Checkout and synchronize the code you want to deploy:
 ```
 git checkout dev
-git fetch origin
-git merge origin/dev
+git pull
 ```
 
 Set up a git remote for the heroku app you want to deploy, i.e.
