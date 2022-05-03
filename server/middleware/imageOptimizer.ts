@@ -16,7 +16,7 @@ export default function imageOptimizer(): express.Router {
   let imageCache = null;
 
   const redisUrl = process.env.REDISCLOUD_URL;
-  console.log(redisUrl)
+  console.log(redisUrl);
   if (process.env.REDISCLOUD_URL) {
     let redis: Redis;
     let keyvRedis: KeyvAnyRedis;
