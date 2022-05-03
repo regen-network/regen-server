@@ -165,5 +165,82 @@ the staging or production environment. See `iri-gen/.env-example`.
 cd iri-gen && yarn gen --insert json_file_path
 ```
 
+## Manual Deployment
+
+If you need to deploy the app manually, you can download [the Heroku CLI][4] and
+use the following commands to deploy from your local environment.
+
+### Authenticate the Heroku CLI
+```
+$ heroku login
+```
+
+Optional: Test the above by viewing the apps available to the our team.
+```
+$ heroku apps --team=regen-network
+=== Apps in team regen-network
+regen-analytics
+regen-dev-analytics
+regen-keystone-dev
+regen-registry-server
+regen-registry-server-staging
+regen-web-backend
+```
+
+### Checkout and synchronize the code you want to deploy
+
+If you are deploying to staging:
+```
+$ git checkout dev
+$ git pull
+```
+
+If you are deploying to production:
+```
+$ git checkout master
+$ git pull
+```
+
+### Set up a git remote for the heroku app you want to deploy
+
+If you are deploying to staging:
+```
+$ heroku git:remote -r regen-registry-server-staging -a regen-registry-server-staging
+```
+
+If you are deploying to production:
+```
+$ heroku git:remote -r regen-registry-server -a regen-registry-server
+```
+
+Your git remotes should like this:
+```
+$ git remote -v
+origin	git@github.com:regen-network/registry-server.git (fetch)
+origin	git@github.com:regen-network/registry-server.git (push)
+regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (fetch)
+regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (push)
+regen-registry-server	https://git.heroku.com/regen-registry-server.git (fetch)
+regen-registry-server	https://git.heroku.com/regen-registry-server.git (push)
+```
+
+### Deploy the dev or master branch to heroku
+
+To finish a deploy to staging, we need to push the `dev` branch:
+```
+$ git push regen-registry-server-staging dev:main
+```
+
+To finish a deploy to production, we need to push the `master` branch:
+```
+$ git push regen-registry-server master:main
+```
+
+Note: When you are deploying a branch, Heroku requires it to be `<branch>:main`.
+
+For more on this manual process, see [the Heroku docs][3].
+
 [1]: https://eslint.org/docs/user-guide/getting-started
 [2]: https://prettier.io/docs/en/integrating-with-linters.html 
+[3]: https://devcenter.heroku.com/articles/git
+[4]: https://devcenter.heroku.com/articles/heroku-cli
