@@ -34,7 +34,7 @@ export default function imageOptimizer(): express.Router {
       keyvRedis = new KeyvAnyRedis(redis);
     } else {
       throw new InvalidRedisURLError(
-        `REDIS_URL must start with redis:// or rediss://, it's value was ${redisUrl}`,
+        `REDISCLOUD_URL must start with redis:// or rediss://, it's value was ${redisUrl}`,
       );
     }
     redis.on('error', function (err) {
