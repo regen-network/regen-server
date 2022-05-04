@@ -43,7 +43,7 @@ psql postgresql://postgres:postgres@localhost:5432/regen_registry
 
 #### Redis info
 
-[Redis](https://redis.io//) is used for caching. See `REDIS_URL` in `server/.env.example`.
+[Redis](https://redis.io//) is used for caching. See `REDISCLOUD_URL` in `server/.env.example`.
 You can connect to redis using the `redis-cli`:
 
 ```

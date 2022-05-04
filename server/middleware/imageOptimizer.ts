@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { expressSharp, HttpAdapter, S3Adapter } from 'express-sharp';
-import KeyvRedis from '@keyv/redis';
+import { KeyvAnyRedis } from 'keyv-anyredis';
 import Keyv from 'keyv';
 import Redis from 'ioredis';
 
@@ -15,10 +15,11 @@ export default function imageOptimizer(): express.Router {
   let imageAdapter;
   let imageCache = null;
 
-  const redisUrl = process.env.REDIS_URL;
-  if (process.env.REDIS_URL) {
+  const redisUrl = process.env.REDISCLOUD_URL;
+  console.log(redisUrl);
+  if (process.env.REDISCLOUD_URL) {
     let redis: Redis;
-    let keyvRedis: KeyvRedis;
+    let keyvRedis: KeyvAnyRedis;
     if (redisUrl.startsWith('rediss://')) {
       console.log('Attempting to connect to Redis with TLS..');
       const options = { tls: { rejectUnauthorized: false } };
@@ -27,13 +28,13 @@ export default function imageOptimizer(): express.Router {
       // pass tls options there, otherwise it gets overridden.
       // without this, you will see ECONNRESET errors when the
       // application tries to connect to redis.
-      keyvRedis = new KeyvRedis(redis, options);
+      keyvRedis = new KeyvAnyRedis(redis);
     } else if (redisUrl.startsWith('redis://')) {
       redis = new Redis(redisUrl);
-      keyvRedis = new KeyvRedis(redis);
+      keyvRedis = new KeyvAnyRedis(redis);
     } else {
       throw new InvalidRedisURLError(
-        `REDIS_URL must start with redis:// or rediss://, it's value was ${redisUrl}`,
+        `REDISCLOUD_URL must start with redis:// or rediss://, it's value was ${redisUrl}`,
       );
     }
     redis.on('error', function (err) {
