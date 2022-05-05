@@ -33,4 +33,10 @@ describe('generateIRI', () => {
       'regen:13toVgutDdVPL4Q3s8hqgSSm7ZwfhiCtmXFpNn9vevxyLFFUT6HN1QD.rdf',
     );
   });
+  it('throws an error for an invalid JSON-LD document', async () => {
+    const doc = {
+      foo: 'bar',
+    };
+    await expect(generateIRI(doc)).rejects.toThrow('Invalid JSON-LD document');
+  });
 });
