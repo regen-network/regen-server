@@ -40,7 +40,7 @@
     "ts-jest": "^26.4.4"
   },
   "engines": {
-    "node": ">=10.15.3"
+    "node": "16.x"
   },
   "resolutions": {
     "pg-connection-string": "2.x"
