@@ -110,6 +110,12 @@ export const withAdminUserDb = <T>(
     } = await client.query('select * from party where id=$1', [
       organization.party_id,
     ]);
+    const {
+      rows: [{ get_wallet_id: walletId }],
+    } = await client.query('select public.get_wallet_id($1)', [
+      organization.party_id,
+    ]);
+    party.wallet_id = walletId;
     await client.query('SELECT private.create_app_user_if_needed($1)', [sub]);
     await client.query('INSERT INTO admin (auth0_sub) VALUES ($1)', [sub]);
 

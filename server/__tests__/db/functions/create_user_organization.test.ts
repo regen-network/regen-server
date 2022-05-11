@@ -39,12 +39,11 @@ it('creates user and org successfully', () =>
     expect(orgParty.name).toEqual(orgName);
     expect(orgParty.type).toEqual('organization');
     expect(orgParty.roles).toEqual(roles);
-    expect(orgParty.wallet_id).not.toBeNull();
     expect(orgParty.address_id).not.toBeNull();
 
     const { rows: wallets } = await client.query(
-      'select * from wallet where id=$1',
-      [orgParty.wallet_id],
+      'select * from wallet where party_id=$1',
+      [orgParty.id],
     );
 
     expect(wallets).toHaveLength(1);
@@ -87,5 +86,9 @@ it('creates user and org successfully', () =>
     expect(party.name).toEqual(name);
     expect(party.type).toEqual('user');
     expect(party.roles).toBeNull();
-    expect(party.wallet_id).toBeNull();
+    const { rows: userWallets } = await client.query(
+      'select * from wallet where party_id=$1',
+      [users[0].party_id],
+    );
+    expect(userWallets).toHaveLength(0);
   }));

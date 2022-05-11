@@ -51,13 +51,6 @@ declare
   v_address address;
 begin
 
-  -- Insert the new organization's wallet
-  insert into wallet
-    (addr)
-  values
-    (wallet_addr)
-  returning * into v_wallet;
-
   -- Insert the organization's address if not null
   if org_address is not null then
     insert into address
@@ -69,10 +62,17 @@ begin
 
   -- Insert the new party corresponding to the organization
   insert into party
-    (type, name, image, wallet_id, roles, address_id, description)
+    (type, name, image, roles, address_id, description)
   values
-    ('organization', display_name, image, v_wallet.id, roles, v_address.id, description)
+    ('organization', display_name, image, roles, v_address.id, description)
   returning * into v_party;
+
+  -- Insert the new organization's wallet
+  insert into wallet
+    (addr, party_id, wallet_type)
+  values
+    (wallet_addr, v_party.id, 'organization')
+  returning * into v_wallet;
 
   -- Insert the new organization
   insert into organization

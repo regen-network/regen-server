@@ -147,7 +147,7 @@ it('issues credits', () =>
 
     expect(balances).toHaveLength(2);
     const { rows: devParties } = await client.query(
-      'select wallet_id from party where id=$1',
+      'select public.get_wallet_id($1) as wallet_id',
       [project.developer_id],
     );
     expect(devParties).toHaveLength(1);
@@ -158,7 +158,7 @@ it('issues credits', () =>
     expect(parseFloat(balances[0].burnt_balance)).toEqual(0);
 
     const { rows: stewardParties } = await client.query(
-      'select wallet_id from party where id=$1',
+      'select public.get_wallet_id($1) as wallet_id',
       [project.steward_id],
     );
     expect(stewardParties).toHaveLength(1);
@@ -447,7 +447,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(balances).toHaveLength(4);
 
     const { rows: devParties } = await client.query(
-      'select wallet_id from party where id=$1',
+      'select public.get_wallet_id($1) as wallet_id',
       [project.developer_id],
     );
     expect(devParties).toHaveLength(1);
@@ -458,7 +458,7 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(parseFloat(balances[0].burnt_balance)).toEqual(0);
 
     const { rows: stewardParties } = await client.query(
-      'select wallet_id from party where id=$1',
+      'select public.get_wallet_id($1) as wallet_id',
       [project.steward_id],
     );
     expect(stewardParties).toHaveLength(1);
@@ -469,8 +469,9 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(parseFloat(balances[1].burnt_balance)).toEqual(0);
 
     const { rows: bufferParties } = await client.query(
-      `select wallet_id from party
+      `select wallet.id as wallet_id from party
       inner join "user" on "user".email = 'bufferpool-registry@regen.network'
+      inner join wallet on wallet.party_id = party.id
       where party.id = "user".party_id`,
     );
     expect(bufferParties).toHaveLength(1);
@@ -481,8 +482,9 @@ it('issues credits with buffer pool and permanence reversal pool', () =>
     expect(parseFloat(balances[2].burnt_balance)).toEqual(0);
 
     const { rows: permanenceParties } = await client.query(
-      `select wallet_id from party
+      `select wallet.id as wallet_id from party
       inner join "user" on "user".email = 'permanence-registry@regen.network'
+      inner join wallet on wallet.party_id = party.id
       where party.id = "user".party_id`,
     );
     expect(permanenceParties).toHaveLength(1);
