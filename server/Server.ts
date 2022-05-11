@@ -108,6 +108,8 @@ app.use(
     watchPg: true,
     dynamicJson: true,
     graphileBuildOptions: {
+      connectionFilterAllowedFieldTypes: ['JSON'],
+      connectionFilterAllowedOperators: ['contains'],
       connectionFilterComputedColumns: false,
       connectionFilterArrays: false,
       connectionFilterSetofFunctions: false,
