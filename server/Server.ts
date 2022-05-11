@@ -3,17 +3,17 @@ import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-
-import { UserIncomingMessage } from './types';
-import getJwt from './middleware/jwt';
-import imageOptimizer from './middleware/imageOptimizer';
-
 // To get this many-to-many plugin import statement working, we
 // needed to add esModuleInterop to the tsconfig compiler settings.
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
+import ConnectionFilterPlugin from 'postgraphile-plugin-connection-filter';
 import url from 'url';
 import dotenv from 'dotenv';
+
+import { UserIncomingMessage } from './types';
+import getJwt from './middleware/jwt';
+import imageOptimizer from './middleware/imageOptimizer';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -107,7 +107,12 @@ app.use(
     graphiql: true,
     watchPg: true,
     dynamicJson: true,
-    appendPlugins: [PgManyToManyPlugin],
+    graphileBuildOptions: {
+      connectionFilterComputedColumns: false,
+      connectionFilterArrays: false,
+      connectionFilterSetofFunctions: false,
+    },
+    appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
     pgSettings: (req: UserIncomingMessage) => {
       if (req.user && req.user.sub) {
         const { sub } = req.user;
