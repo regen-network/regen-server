@@ -62,6 +62,18 @@ Based on `server/.env.example`, create some `server/.env` file with appropriate 
 
 ## Database
 
+### Configuring postgres logging
+
+Need verbose logging? Run this SQL command in `psql` or similar:
+```sql
+alter database regen_registry set log_statement = 'all';
+```
+
+Need to log in your SQL? Because we use a lot of SQL in this project this is
+likely to be important for you at some point. See [the postgres errors and
+messages documentation][5] and search our code for examples (hint: use `raise
+log`).
+
 ### Migrations
 
 [Flyway](https://flywaydb.org) is used to run migrations:
@@ -244,3 +256,4 @@ For more on this manual process, see [the Heroku docs][3].
 [2]: https://prettier.io/docs/en/integrating-with-linters.html 
 [3]: https://devcenter.heroku.com/articles/git
 [4]: https://devcenter.heroku.com/articles/heroku-cli
+[5]: https://www.postgresql.org/docs/current/plpgsql-errors-and-messages.html
