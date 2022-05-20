@@ -152,29 +152,28 @@ app.use(metadataGraph);
 
 const swaggerOptions = {
   definition: {
-    openapi: "3.0.n",
+    openapi: '3.0.n',
     info: {
-      title: "registry-server",
-      version: "0.1.0",
-      description:
-        "API docs for the registry-server",
+      title: 'registry-server',
+      version: '0.1.0',
+      description: 'API docs for the registry-server',
       contact: {
-        name: "regen-network/registry-server",
-        url: "https://github.com/regen-network/registry-server",
+        name: 'regen-network/registry-server',
+        url: 'https://github.com/regen-network/registry-server',
       },
     },
   },
-  apis: ["./routes/*.ts"],
+  apis: ['./routes/*.ts'],
 };
 const specs = swaggerJsdoc(swaggerOptions);
 app.use(
-  "/api-docs",
+  '/api-docs',
   swaggerUi.serve,
   swaggerUi.setup(specs, {
     swaggerOptions: {
-      supportedSubmitMethods: [] // disable the "try it out" button for all methods
-    }
-  })
+      supportedSubmitMethods: [], // disable the "try it out" button for all methods
+    },
+  }),
 );
 
 app.use((err, req, res, next) => {

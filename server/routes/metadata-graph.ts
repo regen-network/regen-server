@@ -24,7 +24,7 @@ const router = express.Router();
  *         description: the iri for a given resource, of the form regen:<iri-hash>.rdf
  *     responses:
  *       200:
- *         description: the metadata object associated to the given iri 
+ *         description: the metadata object associated to the given iri
  *         content:
  *           application/json:
  *             schema:
@@ -38,7 +38,7 @@ const router = express.Router();
  *       400:
  *         description: invalid iri, it must be of the form regen:<iri-hash>.rdf
  *       404:
- *         description: no metadata found for the given iri 
+ *         description: no metadata found for the given iri
  *         content:
  *           application/json:
  *             schema:
@@ -76,9 +76,9 @@ router.get('/metadata-graph/:iri', async (req, res, next) => {
  * @openapi
  * /iri-gen:
  *   get:
- *     summary: generate an iri for a given JSON-LD metadata graph 
+ *     summary: generate an iri for a given JSON-LD metadata graph
  *     tags:
- *     - iri gen 
+ *     - iri gen
  *     requestBody:
  *       required: true
  *       content:
@@ -102,7 +102,7 @@ router.get('/metadata-graph/:iri', async (req, res, next) => {
  *               iri:
  *                 type: string
  *             example:
- *               iri: regen:13toVh9VgHfMJUDXSFTMQiDwRtiWQvhyeBpZe3jYpGMRnkZZB7jQyN8.rdf 
+ *               iri: regen:13toVh9VgHfMJUDXSFTMQiDwRtiWQvhyeBpZe3jYpGMRnkZZB7jQyN8.rdf
  *       400:
  *         description: bad request, check that you have submitted valid JSON-LD
  *         content:
@@ -130,7 +130,7 @@ router.get('/iri-gen', async (req, res, next) => {
  *   post:
  *     summary: generate and save an iri and JSON-LD metadata graph pair
  *     tags:
- *     - iri gen 
+ *     - iri gen
  *     requestBody:
  *       required: true
  *       content:
@@ -156,7 +156,7 @@ router.get('/iri-gen', async (req, res, next) => {
  *               metadata:
  *                 type: object
  *             example:
- *               iri: regen:13toVh9VgHfMJUDXSFTMQiDwRtiWQvhyeBpZe3jYpGMRnkZZB7jQyN8.rdf 
+ *               iri: regen:13toVh9VgHfMJUDXSFTMQiDwRtiWQvhyeBpZe3jYpGMRnkZZB7jQyN8.rdf
  *               metadata:
  *                 "@context": "https://json-ld.org/contexts/person.jsonld"
  *                 "@id": "http://dbpedia.org/resource/John_Lennon"
