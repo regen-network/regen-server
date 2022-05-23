@@ -40,26 +40,10 @@ declare
   v_user "user";
   v_org organization;
 begin
-  v_user := public.really_create_user(
-    email,
-    name,
-    image,
-    null,
-    roles,
-    null,
-    null,
-    false
-  );
-  v_org := public.really_create_organization(
-    org_name,
-    org_name,
-    wallet_addr,
-    v_user.id,
-    image,
-    null,
-    roles,
-    org_address
-  );
+  v_user := public.really_create_user
+(email, name, image, null, roles, null, null, false);
+  v_org := public.really_create_organization
+(org_name, org_name, wallet_addr, v_user.id, image, null, roles, org_address);
 
 return v_org;
 end;

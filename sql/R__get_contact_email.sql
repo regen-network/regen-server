@@ -7,16 +7,10 @@ declare
   v_organization organization;
   v_email text;
 begin
-  select
-    * into v_party
-  from
-    party
-  join
-    wallet
-  on
-    wallet.party_id = party.id
-  where
-    wallet.id = v_wallet_id;
+  select *
+  into v_party
+  from party
+  where wallet_id = v_wallet_id;
 
   if v_party.type = 'user' then
     select email

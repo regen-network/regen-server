@@ -185,16 +185,7 @@ begin
 
   -- buyer's name
   if buyer_name = '' then
-    select
-      p.name into v_buyer_name
-    from
-      party p
-    join
-      wallet w
-    on
-      w.party_id = p.id
-    where
-      w.id = buyer_wallet_id;
+    select name into v_buyer_name from party where wallet_id = buyer_wallet_id;
   else
     v_buyer_name = buyer_name;
   end if;

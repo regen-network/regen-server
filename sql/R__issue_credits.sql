@@ -17,31 +17,6 @@ $$ language plpgsql strict volatile
 set search_path
 to pg_catalog, public, pg_temp;
 
-drop function if exists get_wallet_id;
-create or replace function get_wallet_id(
-  party_id uuid
-) returns uuid as $$
-declare
-  wallet_id uuid;
-  _party_id uuid = party_id;
-begin
-  SELECT
-      w.id
-  FROM
-      party AS p
-  INTO
-      wallet_id
-  JOIN wallet AS w ON
-      p.id = w.party_id
-  WHERE
-      p.id = _party_id
-  ORDER BY
-      w.created_at ASC
-  LIMIT 1;
-  RETURN wallet_id;
-end;
-$$ language plpgsql;
-
 drop function if exists issue_credits;
 create or replace function issue_credits(
   project_id uuid,
@@ -73,48 +48,40 @@ declare
   v_deduction numeric default 1;
   v_account_balances jsonb default '[]'::jsonb;
 begin
-  raise log 'public.get_current_user() = %', public.get_current_user();
   if public.get_current_user() is null then
     raise exception 'You must log in to issue credits' using errcode = 'LOGIN';
   end if;
 
-  -- find user
-  raise log 'finding the current user details based on auth0_sub...';
   select *
   into v_tokenizer
   from "user"
   where auth0_sub = public.get_current_user();
-  raise log 'v_tokenizer = %', v_tokenizer;
 
   if v_tokenizer.id is null then
     raise exception 'User not found' using errcode = 'NTFND';
   end if;
 
   -- find org the current user is member of (take first one for now as it'll always be Regen Network)
-  raise log 'finding the first org that is associated with this user...';
   v_tokenizer_organization := get_user_first_organization(v_tokenizer.id);
-  raise log 'v_tokenizer_organization = %', v_tokenizer_organization;
 
   if v_tokenizer_organization.party_id is null then
     raise exception 'User should be part of an organization to issue credits in the name of this organization' using errcode = 'DNIED';
   end if;
 
   -- find project
-  raise log 'finding the project... project_id = %', project_id;
   select *
   into v_project
   from project
   where id = project_id;
-  raise log 'v_project = %', v_project;
 
   if v_project.id is null then
     raise exception 'Project not found' using errcode = 'NTFND';
   end if;
 
   -- get issuer's wallet id
-  raise log 'finding the issuers wallet id.... party_id = %', v_tokenizer_organization.party_id;
-  v_tokenizer_wallet_id := public.get_wallet_id(v_tokenizer_organization.party_id);
-  raise log 'result for v_tokenizer_wallet_id = %', v_tokenizer_wallet_id;
+  select wallet_id
+  from party
+  into v_tokenizer_wallet_id where id = v_tokenizer_organization.party_id;
 
   if v_tokenizer_wallet_id is null then
     raise exception 'Issuer must have a wallet' using errcode = 'NTFND';
@@ -154,16 +121,14 @@ begin
       loop
         if v_value != 0 then
           if v_key = 'http://regen.network/bufferPool' then
-            select wallet.id from party into v_issuee_id
+            select wallet_id from party into v_issuee_id
             inner join "user" on "user".email = 'bufferpool-registry@regen.network'
-            inner join wallet on wallet.party_id = party.id 
             where party.id = "user".party_id;
           end if;
 
           if v_key = 'http://regen.network/permanenceReversalBuffer' then
-            select wallet.id from party into v_issuee_id
+            select wallet_id from party into v_issuee_id
             inner join "user" on "user".email = 'permanence-registry@regen.network'
-            inner join wallet on wallet.party_id = party.id 
             where party.id = "user".party_id;
           end if;
 
@@ -193,24 +158,24 @@ begin
             if v_project.developer_id is null then
               raise exception 'Project does not have any project developer' using errcode = 'NTFND';
             end if;
-            v_issuee_id := public.get_wallet_id(v_project.developer_id);
-            raise log 'v_issuee_id %', v_issuee_id;
+            -- select get_party_wallet_id(v_project.developer_id) into v_issuee_id;
+            select wallet_id from party into v_issuee_id where id = v_project.developer_id;
           end if;
 
           if v_key = 'http://regen.network/landOwnerDistribution' then
             if v_project.land_owner_id is null then
               raise exception 'Project does not have any land owner' using errcode = 'NTFND';
             end if;
-            v_issuee_id := public.get_wallet_id(v_project.land_owner_id);
-            raise log 'v_issuee_id %', v_issuee_id;
+            -- select get_party_wallet_id(v_project.land_owner_id) into v_issuee_id;
+            select wallet_id from party into v_issuee_id where id = v_project.land_owner_id;
           end if;
 
           if v_key = 'http://regen.network/landStewardDistribution' then
             if v_project.steward_id is null then
               raise exception 'Project does not have any land steward' using errcode = 'NTFND';
             end if;
-            v_issuee_id := public.get_wallet_id(v_project.steward_id);
-            raise log 'v_issuee_id %', v_issuee_id;
+            -- select get_party_wallet_id(v_project.steward_id) into v_issuee_id;
+            select wallet_id from party into v_issuee_id where id = v_project.steward_id;
           end if;
 
           insert into account_balance
