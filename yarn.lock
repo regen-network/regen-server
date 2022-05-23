@@ -1643,7 +1643,7 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
-"@types/express-unless@*":
+"@types/express-unless@*", "@types/express-unless@^0.5.3":
   version "0.5.3"
   resolved "https://registry.npmjs.org/@types/express-unless/-/express-unless-0.5.3.tgz"
   integrity sha512-TyPLQaF6w8UlWdv4gj8i46B+INBVzURBNRahCozCSXfsK2VTlL1wNyTlMKw817VHygBtlcl5jfnPadlydr06Yw==
@@ -1735,7 +1735,7 @@
   resolved "https://registry.npmjs.org/@types/jsonld/-/jsonld-1.5.6.tgz"
   integrity sha512-OUcfMjRie5IOrJulUQwVNvV57SOdKcTfBj3pjXNxzXqeOIrY2aGDNGW/Tlp83EQPkz4tCE6YWVrGuc/ZeaAQGg==
 
-"@types/jsonwebtoken@^8.3.2":
+"@types/jsonwebtoken@^8.3.2", "@types/jsonwebtoken@^8.5.8":
   version "8.5.8"
   resolved "https://registry.npmjs.org/@types/jsonwebtoken/-/jsonwebtoken-8.5.8.tgz"
   integrity sha512-zm6xBQpFDIDM6o9r6HSgDeIcLy82TKWctCXEPbJJcXb5AKmi5BNNdLXneixK4lplX3PqIVcwLBCGE/kAGnlD4A==
@@ -2319,11 +2319,6 @@ assign-symbols@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/assign-symbols/-/assign-symbols-1.0.0.tgz"
   integrity sha1-WWZ/QfrdTyDMvCu5a41Pf3jsA2c=
-
-async@^1.5.0:
-  version "1.5.2"
-  resolved "https://registry.npmjs.org/async/-/async-1.5.2.tgz"
-  integrity sha1-7GphrlZIDAw8skHJVhjiCJL5Zyo=
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -4229,15 +4224,15 @@ express-fileupload@^1.1.10:
   dependencies:
     busboy "^0.3.1"
 
-express-jwt@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.npmjs.org/express-jwt/-/express-jwt-6.0.0.tgz"
-  integrity sha512-C26y9myRjx7CyhZ+BAT3p+gQyRCoDZ7qo8plCvLDaRT6je6ALIAQknT6XLVQGFKwIy/Ux7lvM2MNap5dt0T7gA==
+express-jwt@7.7.2:
+  version "7.7.2"
+  resolved "https://registry.yarnpkg.com/express-jwt/-/express-jwt-7.7.2.tgz#5f4bc1ec9c4d23dd77ba30974adeb463288f3ab6"
+  integrity sha512-NTNciChI54hnfzOh0XNjfsF6zY4W6t1BE4MfrylYrdlzTipMFzCmUaI4ebUac7e4ZBpai5CwrID661o+TwYsRQ==
   dependencies:
-    async "^1.5.0"
-    express-unless "^0.3.0"
-    jsonwebtoken "^8.1.0"
-    lodash.set "^4.0.0"
+    "@types/express-unless" "^0.5.3"
+    "@types/jsonwebtoken" "^8.5.8"
+    express-unless "^1.0.0"
+    jsonwebtoken "^8.5.1"
 
 express-sharp@^4.2.41:
   version "4.2.41"
@@ -4254,10 +4249,10 @@ express-sharp@^4.2.41:
     sharp "^0.30.0"
     tsyringe "^4.6.0"
 
-express-unless@^0.3.0:
-  version "0.3.1"
-  resolved "https://registry.npmjs.org/express-unless/-/express-unless-0.3.1.tgz"
-  integrity sha1-JVfBRudb65A+LSR/m1ugFFJpbiA=
+express-unless@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/express-unless/-/express-unless-1.0.0.tgz#ecd1c354c5ccf7709a8a17ece617934e037cccd8"
+  integrity sha512-zXSSClWBPfcSYjg0hcQNompkFN/MxQQ53eyrzm9BYgik2ut2I7PxAf2foVqBRMYCwWaZx/aWodi+uk76npdSAw==
 
 express@4.17.3:
   version "4.17.3"
@@ -6305,7 +6300,7 @@ jsonparse@^1.2.0, jsonparse@^1.3.1:
   resolved "https://registry.yarnpkg.com/jsonparse/-/jsonparse-1.3.1.tgz#3f4dae4a91fac315f71062f8521cc239f1366280"
   integrity sha1-P02uSpH6wxX3EGL4UhzCOfE2YoA=
 
-jsonwebtoken@^8.0.0, jsonwebtoken@^8.1.0, jsonwebtoken@^8.5.1:
+jsonwebtoken@^8.0.0, jsonwebtoken@^8.5.1:
   version "8.5.1"
   resolved "https://registry.npmjs.org/jsonwebtoken/-/jsonwebtoken-8.5.1.tgz"
   integrity sha512-XjwVfRS6jTMsqYs0EsuJ4LGxXV14zQybNd4L2r0UvbVnSF9Af8x7p5MzbJ90Ioz/9TI41/hTCvznF/loiSzn8w==
@@ -6641,11 +6636,6 @@ lodash.once@^4.0.0:
   version "4.1.1"
   resolved "https://registry.npmjs.org/lodash.once/-/lodash.once-4.1.1.tgz"
   integrity sha1-DdOXEhPHxW34gJd9UEyI+0cal6w=
-
-lodash.set@^4.0.0:
-  version "4.3.2"
-  resolved "https://registry.npmjs.org/lodash.set/-/lodash.set-4.3.2.tgz"
-  integrity sha1-2HV7HagH3eJIFrDWqEvqGnYjCyM=
 
 lodash.template@^4.5.0:
   version "4.5.0"
@@ -8241,7 +8231,7 @@ performance-now@^2.1.0:
   resolved "https://registry.npmjs.org/performance-now/-/performance-now-2.1.0.tgz"
   integrity sha1-Ywn04OX6kT7BxpMHrjZLSzd8nns=
 
-pg-connection-string@^2.0.0, pg-connection-string@^2.5.0:
+pg-connection-string@2.x, pg-connection-string@^2.0.0, pg-connection-string@^2.5.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.5.0.tgz#538cadd0f7e603fc09a12590f3b8a452c2c0cf34"
   integrity sha512-r5o/V/ORTA6TmUnyWZR9nCj1klXCO2CEKNRlVuJptZe85QuhFayC7WeMic7ndayT5IRIR0S0xFxFi2ousartlQ==
