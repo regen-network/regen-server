@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION create_new_account (addr text)
-    RETURNS void
+    RETURNS uuid
     AS $$
 DECLARE
     _addr text = addr;
@@ -19,6 +19,10 @@ BEGIN
 
         INSERT INTO wallet (addr)
             VALUES (_addr)
+        ON CONFLICT ON CONSTRAINT
+            wallet_addr_key
+        DO UPDATE SET
+            addr = _addr
         RETURNING
             id INTO _wallet_id;
 
@@ -30,6 +34,7 @@ BEGIN
         RAISE NOTICE 'new account_id %', _account_id;
         RAISE NOTICE 'new party_id %', _party_id;
         RAISE NOTICE 'new wallet_id %', _wallet_id;
+	RETURN _account_id;
     END IF;
 END;
 $$
