@@ -52,6 +52,7 @@ begin
     raise exception 'You must log in to issue credits' using errcode = 'LOGIN';
   end if;
 
+  -- find user
   select *
   into v_tokenizer
   from "user"
