@@ -22,7 +22,7 @@
     "express-sharp": "^4.2.41",
     "got": "^11.8.2",
     "graphile-build-pg": "^4.5.0",
-    "graphile-worker": "^0.6.0",
+    "graphile-worker": "^0.13.0",
     "html-to-text": "^5.1.1",
     "http-proxy-middleware": "^1.0.6",
     "ioredis": "^5.0.4",
