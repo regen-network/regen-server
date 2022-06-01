@@ -166,6 +166,7 @@ const swaggerOptions = {
   apis: ['./routes/*.ts'],
 };
 const specs = swaggerJsdoc(swaggerOptions);
+app.get('/api-docs/swagger.json', (req, res) => res.json(specs));
 app.use(
   '/api-docs',
   swaggerUi.serve,
