@@ -10,6 +10,8 @@ import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import ConnectionFilterPlugin from 'postgraphile-plugin-connection-filter';
 import url from 'url';
 import dotenv from 'dotenv';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
@@ -147,6 +149,33 @@ app.use(auth);
 app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.n',
+    info: {
+      title: 'registry-server',
+      version: '0.1.0',
+      description: 'API docs for the registry-server',
+      contact: {
+        name: 'regen-network/registry-server',
+        url: 'https://github.com/regen-network/registry-server',
+      },
+    },
+  },
+  apis: ['./routes/*.ts'],
+};
+const specs = swaggerJsdoc(swaggerOptions);
+app.get('/api-docs/swagger.json', (req, res) => res.json(specs));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    swaggerOptions: {
+      supportedSubmitMethods: [], // disable the "try it out" button for all methods
+    },
+  }),
+);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
