@@ -71,7 +71,7 @@ alter database regen_registry set log_statement = 'all';
 
 Need to log in your SQL? Because we use a lot of SQL in this project this is
 likely to be important for you at some point. See [the postgres errors and
-messages documentation][5] and search our code for examples (hint: use `raise
+messages documentation][6] and search our code for examples (hint: use `raise
 log`).
 
 ### Migrations
@@ -152,6 +152,15 @@ To automatically apply fixes where possible use `--fix`:
 ```sh
 yarn run eslint <path-to-files> --fix
 ```
+
+## API Documentation
+
+We make use of swagger-ui-express and swagger-jsdoc to generate documentation
+for certain API endpoints within the routes folder. Any openapi specifications
+that are found within routes in jsdoc style comments will be automatically
+converted into swagger-style API documentation. i.e. search for `@openapi` to
+find samples of openapi docs that we use in the project. [This tutorial][5] covers
+the basic concepts involved in writing an openapi specification.
 
 ## SHACL Graphs
 
@@ -256,4 +265,5 @@ For more on this manual process, see [the Heroku docs][3].
 [2]: https://prettier.io/docs/en/integrating-with-linters.html 
 [3]: https://devcenter.heroku.com/articles/git
 [4]: https://devcenter.heroku.com/articles/heroku-cli
-[5]: https://www.postgresql.org/docs/current/plpgsql-errors-and-messages.html
+[5]: https://support.smartbear.com/swaggerhub/docs/tutorials/openapi-3-tutorial.html
+[6]: https://www.postgresql.org/docs/current/plpgsql-errors-and-messages.html
