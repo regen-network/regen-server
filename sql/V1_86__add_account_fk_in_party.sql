@@ -5,9 +5,9 @@ BEGIN
 EXCEPTION
     WHEN duplicate_column THEN
         RAISE NOTICE 'Field already exists. Ignoring...';
-    END$$;
-    DO
-$$
+END$$;
+
+DO $$
 BEGIN
     ALTER TABLE party
         ADD CONSTRAINT party_account_id_fkey FOREIGN KEY (account_id) REFERENCES account (id) ON DELETE CASCADE;

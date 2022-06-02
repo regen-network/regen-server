@@ -3,17 +3,19 @@ import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-
-import { UserIncomingMessage } from './types';
-import getJwt from './middleware/jwt';
-import imageOptimizer from './middleware/imageOptimizer';
-
 // To get this many-to-many plugin import statement working, we
 // needed to add esModuleInterop to the tsconfig compiler settings.
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
+import ConnectionFilterPlugin from 'postgraphile-plugin-connection-filter';
 import url from 'url';
 import dotenv from 'dotenv';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+
+import { UserIncomingMessage } from './types';
+import getJwt from './middleware/jwt';
+import imageOptimizer from './middleware/imageOptimizer';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -107,7 +109,14 @@ app.use(
     graphiql: true,
     watchPg: true,
     dynamicJson: true,
-    appendPlugins: [PgManyToManyPlugin],
+    graphileBuildOptions: {
+      connectionFilterAllowedFieldTypes: ['JSON'],
+      connectionFilterAllowedOperators: ['contains'],
+      connectionFilterComputedColumns: false,
+      connectionFilterArrays: false,
+      connectionFilterSetofFunctions: false,
+    },
+    appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
     pgSettings: (req: UserIncomingMessage) => {
       if (req.user && req.user.sub) {
         const { sub } = req.user;
@@ -140,6 +149,33 @@ app.use(auth);
 app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.n',
+    info: {
+      title: 'registry-server',
+      version: '0.1.0',
+      description: 'API docs for the registry-server',
+      contact: {
+        name: 'regen-network/registry-server',
+        url: 'https://github.com/regen-network/registry-server',
+      },
+    },
+  },
+  apis: ['./routes/*.ts'],
+};
+const specs = swaggerJsdoc(swaggerOptions);
+app.get('/api-docs/swagger.json', (req, res) => res.json(specs));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    swaggerOptions: {
+      supportedSubmitMethods: [], // disable the "try it out" button for all methods
+    },
+  }),
+);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

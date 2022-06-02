@@ -1,2 +1,1 @@
-ALTER TABLE party
-ADD CONSTRAINT ux_party_wallet_id UNIQUE (wallet_id);
+ALTER TABLE party ADD UNIQUE (wallet_id);
