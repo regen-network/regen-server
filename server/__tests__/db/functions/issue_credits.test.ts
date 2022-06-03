@@ -43,7 +43,7 @@ export async function issueCredits(
   issuerId: string | null,
   resellerId: string | null,
   batchDenom: string | null = null,
-) {
+): Promise<IssueCredits> {
   const {
     rows: [row],
   } = await client.query(
