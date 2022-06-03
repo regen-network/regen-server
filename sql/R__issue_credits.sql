@@ -153,7 +153,7 @@ begin
     select *
     from jsonb_each_text(initial_distribution)
       loop
-        -- raise notice '%: %', v_key, v_value;
+        -- raise log '%: %', v_key, v_value;
         if v_value != 0 then
           if v_key = 'http://regen.network/projectDeveloperDistribution' then
             if v_project.developer_id is null then
