@@ -23,6 +23,19 @@ describe('add_addr_to_account', () => {
       ).rejects.toThrow();
     });
   });
+  it('should throw an error if the address already belongs to a different users account', async () => {
+    await withRootDb(async client => {
+      const user1WalletAddr = 'regen123';
+      const user2WalletAddr = 'regen456';
+      const user1AccountId = await createAccount(client, user1WalletAddr);
+      await createAccount(client, user2WalletAddr);
+      expect(
+        client.query(
+          `select * from add_addr_to_account('${user1AccountId}', '${user2WalletAddr}')`,
+        ),
+      ).rejects.toThrow();
+    });
+  });
   it('allows the user to add a new, unused addr', async () => {
     await withRootDb(async client => {
       const accountId = await createAccount(client, walletAddr);
