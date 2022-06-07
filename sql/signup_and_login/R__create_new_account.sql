@@ -2,39 +2,39 @@ CREATE OR REPLACE FUNCTION create_new_account (addr text)
     RETURNS uuid
     AS $$
 DECLARE
-    _addr text = addr;
+    v_addr text = addr;
     can_be_added boolean;
-    _account_id uuid;
-    _wallet_id uuid;
-    _party_id uuid;
+    v_account_id uuid;
+    v_wallet_id uuid;
+    v_party_id uuid;
 BEGIN
-    can_be_added := addr_can_be_added (_addr);
+    can_be_added := addr_can_be_added (v_addr);
     IF can_be_added THEN
         RAISE NOTICE 'trying to create new account for this addr';
 
         INSERT INTO account DEFAULT
             VALUES
             RETURNING
-                id INTO _account_id;
+                id INTO v_account_id;
 
         INSERT INTO wallet (addr)
-            VALUES (_addr)
+            VALUES (v_addr)
         ON CONFLICT ON CONSTRAINT
             wallet_addr_key
         DO UPDATE SET
-            addr = _addr
+            addr = v_addr
         RETURNING
-            id INTO _wallet_id;
+            id INTO v_wallet_id;
 
         INSERT INTO party (account_id, TYPE, name, wallet_id)
-            VALUES (_account_id, 'user', 'Default Name', _wallet_id)
+            VALUES (v_account_id, 'user', 'Default Name', v_wallet_id)
         RETURNING
-            id INTO _party_id;
+            id INTO v_party_id;
 
-        RAISE NOTICE 'new account_id %', _account_id;
-        RAISE NOTICE 'new party_id %', _party_id;
-        RAISE NOTICE 'new wallet_id %', _wallet_id;
-	RETURN _account_id;
+        RAISE NOTICE 'new account_id %', v_account_id;
+        RAISE NOTICE 'new party_id %', v_party_id;
+        RAISE NOTICE 'new wallet_id %', v_wallet_id;
+	RETURN v_account_id;
     END IF;
 END;
 $$

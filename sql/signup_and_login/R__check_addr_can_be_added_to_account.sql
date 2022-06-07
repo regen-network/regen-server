@@ -1,8 +1,8 @@
 CREATE OR REPLACE FUNCTION addr_can_be_added (account_id uuid, addr text, OUT can_be_added boolean)
 AS $$
 DECLARE
-    _account_id uuid = account_id;
-    _addr text = addr;
+    v_account_id uuid = account_id;
+    v_addr text = addr;
     associated_account_id uuid;
 BEGIN
     PERFORM
@@ -10,12 +10,12 @@ BEGIN
     FROM
         account
     WHERE
-        id = _account_id;
+        id = v_account_id;
     IF NOT found THEN
         RAISE EXCEPTION
             USING message = 'no account found for given account_id', hint = 'check the account_id';
     END IF;
-    associated_account_id := public.get_account_by_addr (addr);
+    associated_account_id := public.get_account_by_addr (v_addr);
     IF associated_account_id IS NULL THEN
         can_be_added := 'true';
     ELSE
@@ -32,7 +32,7 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION addr_can_be_added (addr text, OUT can_be_added boolean)
 AS $$
 DECLARE
-    _addr text = addr;
+    v_addr text = addr;
     associated_account_id uuid;
 BEGIN
     associated_account_id := public.get_account_by_addr (addr);

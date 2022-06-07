@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION get_addrs_by_account_id (account_id uuid)
     )
     AS $$
 DECLARE
-    _account_id uuid = account_id;
+    v_account_id uuid = account_id;
 BEGIN
     RETURN query
     SELECT
@@ -14,7 +14,7 @@ BEGIN
         JOIN party ON party.account_id = account.id
         JOIN wallet ON party.wallet_id = wallet.id
     WHERE
-        account.id = _account_id;
+        account.id = v_account_id;
 END;
 $$
 LANGUAGE plpgsql;
