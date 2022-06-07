@@ -5,7 +5,7 @@ BEGIN
 EXCEPTION
     WHEN duplicate_column THEN
         RAISE NOTICE 'Field already exists. Ignoring...';
-    END$$;
+END$$;
 
 DO $$
 BEGIN
