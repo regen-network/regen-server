@@ -375,3 +375,14 @@ export async function reallyCreateOrganizationIfNeeded(
   );
   return row;
 }
+
+export async function createAccount(
+  client: PoolClient,
+  walletAddr: string,
+): Promise<string> {
+  const result = await client.query(
+    `select * from create_new_account('${walletAddr}') as account_id`,
+  );
+  const [{ account_id }] = result.rows;
+  return account_id;
+}
