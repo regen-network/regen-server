@@ -14,5 +14,5 @@ BEGIN
         CREATE INDEX IF NOT EXISTS project_wallet_id_idx ON project (wallet_id);
 EXCEPTION
     WHEN duplicate_object THEN
-        RAISE NOTICE 'Constraint already exists. Ignoring...';
+        RAISE NOTICE 'Constraint or index already exists. Ignoring...';
 END$$;
