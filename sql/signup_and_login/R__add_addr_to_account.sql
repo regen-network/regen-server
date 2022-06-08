@@ -12,6 +12,8 @@ BEGIN
     IF can_be_added THEN
         INSERT INTO wallet (addr)
             VALUES (v_addr)
+        ON CONFLICT ON CONSTRAINT wallet_addr_key DO UPDATE SET
+            addr = v_addr
         RETURNING
             id INTO v_wallet_id;
         RAISE NOTICE '_wallet_id %', v_wallet_id;
