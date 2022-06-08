@@ -10,7 +10,7 @@ END$$;
 DO $$
 BEGIN
     ALTER TABLE party
-        ADD CONSTRAINT party_account_id_fkey FOREIGN KEY (account_id) REFERENCES account (id) ON DELETE CASCADE;
+        ADD CONSTRAINT party_account_id_fkey FOREIGN KEY (account_id) REFERENCES account (id);
 
 EXCEPTION
     WHEN duplicate_object THEN
