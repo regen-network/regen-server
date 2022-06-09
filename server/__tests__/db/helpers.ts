@@ -48,6 +48,13 @@ const withDbFromUrl = async <T>(
   await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE;');
 
   try {
+    // because this callback function has a client that has had a
+    // postgresql transaction initiated, you need to be aware that
+    // in downstream code, if your SQL raises any exception, this
+    // transaction will be put into an aborted state. if you wish
+    // to avoid these abort states downstream, you will need to make
+    // use of SAVEPOINT and ROLLBACK TO.
+    // ref: https://www.postgresql.org/docs/current/tutorial-transactions.html
     await fn(client);
   } catch (e) {
     // Error logging can be helpful:
@@ -394,4 +401,20 @@ export async function createAccount(
   );
   const [{ account_id }] = result.rows;
   return account_id;
+}
+
+export async function addrBelongsToAccount(
+  client: PoolClient,
+  accountId: string,
+  walletAddr: string,
+): Promise<boolean> {
+  const result = await client.query(
+    `select addr from get_addrs_by_account_id('${accountId}')`,
+  );
+  const found = result.rows.reduce((_, row) => {
+    if (row.addr == walletAddr) {
+      return true;
+    }
+  }, false);
+  return found;
 }
