@@ -118,6 +118,14 @@ export const withAdminUserDb = <T>(
     await fn(client, user, party);
   });
 
+export const withAppUserDb = <T>(
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<void> =>
+  withRootDb(async client => {
+    await becomeUser(client, "app_user");
+    await fn(client);
+  });
+
 export async function createUser(
   client: PoolClient,
   email: string | null,

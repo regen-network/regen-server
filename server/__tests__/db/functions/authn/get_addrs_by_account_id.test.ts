@@ -1,10 +1,10 @@
-import { createAccount, withRootDb } from '../../helpers';
+import { createAccount, withAppUserDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
 describe('get_addrs_by_account_id', () => {
   it('returns all addresses associated to a given account id', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       const accountId = await createAccount(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       await client.query(
