@@ -1,10 +1,11 @@
-import { createAccount, addrBelongsToAccount, withRootDb } from '../../helpers';
+import { createAccount, addrBelongsToAccount, withRootDb, becomeUser } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
 describe('remove_addr_from_account', () => {
   it('throws an error if address is not associated to the user', async () => {
     await withRootDb(async client => {
+      await becomeUser(client, 'app_user'); 
       const accountId = await createAccount(client, walletAddr);
       await client.query('savepoint clean');
       expect(
