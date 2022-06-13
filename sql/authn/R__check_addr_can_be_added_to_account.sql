@@ -13,7 +13,7 @@ BEGIN
         id = v_account_id;
     IF NOT found THEN
         RAISE EXCEPTION
-            USING message = 'no account found for given account_id', hint = 'check the account_id';
+            USING message = 'no account found for given account_id', hint = 'check the account_id', errcode = 'NTFND';
     END IF;
     associated_account_id := public.get_account_by_addr (v_addr);
     IF associated_account_id IS NULL THEN
