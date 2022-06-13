@@ -122,7 +122,7 @@ export const withAppUserDb = <T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<void> =>
   withRootDb(async client => {
-    await becomeUser(client, "app_user");
+    await becomeUser(client, 'app_user');
     await fn(client);
   });
 
@@ -387,7 +387,7 @@ export async function reallyCreateOrganizationIfNeeded(
 export async function createAccount(
   client: PoolClient,
   walletAddr: string,
-  partyType: 'user'|'organization' = 'user',
+  partyType: 'user' | 'organization' = 'user',
 ): Promise<string> {
   const result = await client.query(
     `select * from create_new_account('${walletAddr}', '${partyType}') as account_id`,

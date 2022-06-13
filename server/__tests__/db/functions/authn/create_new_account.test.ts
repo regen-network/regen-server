@@ -1,4 +1,4 @@
-import { becomeUser, createAccount, withAppUserDb } from '../../helpers';
+import { createAccount, withAppUserDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
