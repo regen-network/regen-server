@@ -17,7 +17,7 @@ BEGIN
     END IF;
     associated_account_id := public.get_account_by_addr (v_addr);
     IF associated_account_id IS NULL THEN
-        can_be_added := 'true';
+        can_be_added := true;
     ELSE
         IF associated_account_id = account_id THEN
             RAISE EXCEPTION 'this addr already belongs to this account';
@@ -37,7 +37,7 @@ DECLARE
 BEGIN
     associated_account_id := public.get_account_by_addr (addr);
     IF associated_account_id IS NULL THEN
-        can_be_added := 'true';
+        can_be_added := true;
     ELSE
         RAISE EXCEPTION 'this addr belongs to a user';
     END IF;
