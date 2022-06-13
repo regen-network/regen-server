@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_new_account (addr text)
+CREATE OR REPLACE FUNCTION create_new_account (addr text, v_party_type party_type)
     RETURNS uuid
     AS $$
 DECLARE
@@ -26,8 +26,8 @@ BEGIN
         RETURNING
             id INTO v_wallet_id;
 
-        INSERT INTO party (account_id, TYPE, name, wallet_id)
-            VALUES (v_account_id, 'user', 'Default Name', v_wallet_id)
+        INSERT INTO party (account_id, TYPE, wallet_id)
+            VALUES (v_account_id, v_party_type, v_wallet_id)
         RETURNING
             id INTO v_party_id;
 
