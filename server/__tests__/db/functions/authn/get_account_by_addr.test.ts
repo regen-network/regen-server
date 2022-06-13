@@ -1,10 +1,10 @@
-import { createAccount, withRootDb } from '../../helpers';
+import { createAccount, withAppUserDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
 describe('get_account_by_addr', () => {
   it('gets the same account for a user with multiple addresses', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       const accountId = await createAccount(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       await client.query(
