@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION addr_can_be_added (account_id uuid, addr text, OUT can_be_added boolean)
+CREATE OR REPLACE FUNCTION private.addr_can_be_added (account_id uuid, addr text, OUT can_be_added boolean)
 AS $$
 DECLARE
     v_account_id uuid = account_id;
@@ -29,7 +29,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION addr_can_be_added (addr text, OUT can_be_added boolean)
+CREATE OR REPLACE FUNCTION private.addr_can_be_added (addr text, OUT can_be_added boolean)
 AS $$
 DECLARE
     v_addr text = addr;
