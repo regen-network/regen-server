@@ -8,7 +8,7 @@ DECLARE
     v_wallet_id uuid;
     v_party_id uuid;
 BEGIN
-    can_be_added := addr_can_be_added (v_addr);
+    can_be_added := private.addr_can_be_added (v_addr);
     IF can_be_added THEN
         RAISE NOTICE 'trying to create new account for this addr';
 

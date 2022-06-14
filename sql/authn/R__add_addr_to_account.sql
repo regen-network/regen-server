@@ -8,7 +8,7 @@ DECLARE
     v_wallet_id uuid;
     v_party_id uuid;
 BEGIN
-    can_be_added := public.addr_can_be_added (v_account_id, v_addr);
+    can_be_added := private.addr_can_be_added (v_account_id, v_addr);
     IF can_be_added THEN
         INSERT INTO wallet (addr)
             VALUES (v_addr)
