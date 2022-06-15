@@ -1,7 +1,7 @@
 import {
   createAccount,
   addrBelongsToAccount,
-  withRootDb,
+  withAppUserDb,
   becomeUser,
 } from '../../helpers';
 
@@ -9,7 +9,7 @@ const walletAddr = 'regen123456789';
 
 describe('remove_addr_from_account', () => {
   it('throws an error if address is not associated to the user', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       await becomeUser(client, 'app_user');
       const accountId = await createAccount(client, walletAddr);
       await client.query('savepoint clean');
@@ -25,7 +25,7 @@ describe('remove_addr_from_account', () => {
     });
   });
   it('throws an error if account does not exist', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       const accountId = '44b26018-e2ab-11ec-983d-0242ac160003';
       expect(
         client.query(
@@ -35,7 +35,7 @@ describe('remove_addr_from_account', () => {
     });
   });
   it('does not remove an address from the wrong user', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       const addr1 = 'regen123';
       const addr2 = 'regenABC';
       const accountId1 = await createAccount(client, addr1);
@@ -46,6 +46,7 @@ describe('remove_addr_from_account', () => {
           `select * from remove_addr_from_account('${accountId1}', '${addr2}')`,
         );
       } catch (e) {
+        console.log(e);
         await client.query('rollback to clean');
       }
       expect(addrBelongsToAccount(client, accountId1, addr1)).resolves.toBe(
@@ -57,12 +58,15 @@ describe('remove_addr_from_account', () => {
     });
   });
   it('successfully removes an address from an account', async () => {
-    await withRootDb(async client => {
+    await withAppUserDb(async client => {
       const accountId = await createAccount(client, walletAddr);
-      await client.query(
+      const resp = await client.query(
         `select * from remove_addr_from_account('${accountId}', '${walletAddr}')`,
       );
-      expect(addrBelongsToAccount(client, accountId, walletAddr)).resolves.toBe(
+      console.log(resp);
+      const check = await client.query("select a.id as aid, p.id as pid, w.addr as addr from account a join party p on p.account_id = a.id join wallet w on p.wallet_id = w.id");
+      console.log(check);
+      expect(true).toBe(
         false,
       );
     });

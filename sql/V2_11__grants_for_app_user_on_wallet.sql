@@ -1,1 +1,1 @@
-GRANT UPDATE, INSERT ON wallet TO app_user;
+GRANT SELECT, UPDATE, INSERT ON wallet TO app_user;
