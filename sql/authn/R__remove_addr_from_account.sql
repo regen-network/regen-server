@@ -31,7 +31,9 @@ BEGIN
 
     IF v_removed = 1 THEN
         raise notice 'party association has been removed';
+    ELSE
+        raise 'error removing the address';
     END IF;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql SECURITY DEFINER;
