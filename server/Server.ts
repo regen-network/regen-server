@@ -104,6 +104,26 @@ if (process.env.EXP_LEDGER_REST_ENDPOINT) {
   );
 }
 
+if (process.env.V4_LEDGER_TENDERMINT_RPC) {
+  app.use(
+    '/v4-ledger',
+    createProxyMiddleware({
+      target: process.env.V4_LEDGER_TENDERMINT_RPC,
+      pathRewrite: { '^/v4-ledger': '/' },
+    }),
+  );
+}
+
+if (process.env.V4_LEDGER_REST_ENDPOINT) {
+  app.use(
+    '/v4-ledger-rest',
+    createProxyMiddleware({
+      target: process.env.V4_LEDGER_REST_ENDPOINT,
+      pathRewrite: { '^/v4-ledger-rest': '/' },
+    }),
+  );
+}
+
 app.use(
   postgraphile(pgPool, 'public', {
     graphiql: true,
