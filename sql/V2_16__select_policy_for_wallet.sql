@@ -48,5 +48,13 @@ CREATE POLICY select_accounts ON account
                 id
             FROM
                 current_account));
+DROP POLICY IF EXISTS delete_accounts ON account;
+CREATE POLICY delete_accounts ON account
+    FOR DELETE TO app_user
+        USING (id IN (
+            SELECT
+                id
+            FROM
+                current_account));
 
 ALTER TABLE account ENABLE ROW LEVEL SECURITY;
