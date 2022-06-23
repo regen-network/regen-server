@@ -1,10 +1,10 @@
-import { createAccount, withRootDb } from '../../helpers';
+import { createAccount, withRootDb, withAuthUserDb, getAccount } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
 describe('add_addr_to_account', () => {
   it('cannot add an addr to a non-existent account', async () => {
-    await withRootDb(async client => {
+    await withAuthUserDb(walletAddr, async client => {
       const accountId = '44b26018-e2ab-11ec-983d-0242ac160003';
       expect(
         client.query(
@@ -14,9 +14,8 @@ describe('add_addr_to_account', () => {
     });
   });
   it('does not allow user to add an addr that already has an association', async () => {
-    await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
-      await client.query(`set role ${walletAddr}`);
+    await withAuthUserDb(walletAddr, async client => {
+      const accountId = await getAccount(client); 
       expect(
         client.query(
           `select * from add_addr_to_account('${accountId}', '${walletAddr}')`,
@@ -39,14 +38,14 @@ describe('add_addr_to_account', () => {
     });
   });
   it('allows the user to add a new, unused addr', async () => {
-    await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
-      await client.query(`set role ${walletAddr}`);
+    await withAuthUserDb(walletAddr, async client => {
       const newWalletAddr = 'regenABC123';
       const result = await client.query(
-        `select * from add_addr_to_account('${accountId}', '${newWalletAddr}')`,
+        `select * from add_addr_to_account('${newWalletAddr}')`,
       );
       expect(result.rowCount).toBe(1);
+      const addrs = await client.query('select * from get_current_addrs()');
+      expect(addrs.rowCount).toBe(2);
     });
   });
 });

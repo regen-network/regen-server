@@ -125,11 +125,13 @@ export const withAdminUserDb = <T>(
     await fn(client, user, party);
   });
 
-export const withAppUserDb = <T>(
+export const withAuthUserDb = <T>(
+  addr: string,
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<void> =>
   withRootDb(async client => {
-    await becomeUser(client, 'app_user');
+    await createAccount(client, addr);
+    await becomeUser(client, addr);
     await fn(client);
   });
 
@@ -404,18 +406,10 @@ export async function createAccount(
   return account_id;
 }
 
-export async function addrBelongsToAccount(
+export async function getAccount(
   client: PoolClient,
-  accountId: string,
-  walletAddr: string,
-): Promise<boolean> {
-  const result = await client.query(
-    `select addr from get_addrs_by_account_id('${accountId}')`,
-  );
-  const found = result.rows.reduce((_, row) => {
-    if (row.addr == walletAddr) {
-      return true;
-    }
-  }, false);
-  return found;
+): Promise<string> {
+  const result = await client.query('select * from get_current_account()');
+  const [{ account_id }] = result.rows;
+  return account_id;
 }

@@ -1,4 +1,4 @@
-import { createAccount, withAppUserDb, withRootDb } from '../../helpers';
+import { createAccount, withRootDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -9,16 +9,20 @@ describe('get_account_by_addr', () => {
       await client.query(`set role ${walletAddr}`);
       const newWalletAddr = 'regenABC123';
       await client.query(
-        `select * from add_addr_to_account('${accountId}', '${newWalletAddr}')`,
+        `select * from add_addr_to_account('${newWalletAddr}')`,
       );
+      // for now we set the role back to postgres. the FUT (function under test)
+      // is private in the database, and as such auth_user accounts don't have
+      // access.
+      await client.query('set role postgres');
       // at this point account_id has two wallets associated to it, so we should
       // be able to lookup this account with either of these two wallets.
       const result1 = await client.query(
-        `select account_id from get_account_by_addr('${walletAddr}')`,
+        `select account_id from private.get_account_by_addr('${walletAddr}')`,
       );
       const [{ account_id: accountId1 }] = result1.rows;
       const result2 = await client.query(
-        `select account_id from get_account_by_addr('${walletAddr}')`,
+        `select account_id from private.get_account_by_addr('${walletAddr}')`,
       );
       const [{ account_id: accountId2 }] = result2.rows;
       // make sure that either wallet returns the original accountId

@@ -1,7 +1,5 @@
 import {
   createAccount,
-  addrBelongsToAccount,
-  becomeUser,
   withRootDb,
 } from '../../helpers';
 
@@ -19,9 +17,11 @@ describe('remove_addr_from_account', () => {
         ),
       ).rejects.toThrow();
       await client.query('rollback to clean');
-      expect(addrBelongsToAccount(client, accountId, walletAddr)).resolves.toBe(
-        true,
-      );
+      client.query(
+        `select * from get_current_addrs()`,
+      ).then((result) => {
+        expect(result.rowCount).toBe(1);
+      })
     });
   });
   it('throws an error if account does not exist', async () => {
@@ -41,7 +41,6 @@ describe('remove_addr_from_account', () => {
       const accountId1 = await createAccount(client, addr1);
       const accountId2 = await createAccount(client, addr2);
       await client.query('savepoint clean');
-      await client.query(`set role ${addr1}`);
       try {
         await client.query(
           `select * from remove_addr_from_account('${accountId1}', '${addr2}')`,
@@ -49,24 +48,26 @@ describe('remove_addr_from_account', () => {
       } catch (e) {
         await client.query('rollback to clean');
       }
-      expect(addrBelongsToAccount(client, accountId1, addr1)).resolves.toBe(
-        true,
-      );
-      expect(addrBelongsToAccount(client, accountId2, addr2)).resolves.toBe(
-        true,
-      );
+      client.query(
+        `select * from private.get_addrs_by_account_id('${accountId1}')`,
+      ).then((result) => {
+        expect(result.rowCount).toBe(1);
+      })
+      client.query(
+        `select * from private.get_addrs_by_account_id('${accountId2}')`,
+      ).then((result) => {
+        expect(result.rowCount).toBe(1);
+      })
     });
   });
   it('successfully removes an address from an account', async () => {
     await withRootDb(async client => {
       const accountId = await createAccount(client, walletAddr);
-      //await client.query(`set role ${walletAddr}`);
       await client.query(
         `select * from remove_addr_from_account('${accountId}', '${walletAddr}')`,
       );
-      //console.log(resp);
       const result = await client.query(
-        `select * from get_addrs_by_account_id('${accountId}')`,
+        `select * from get_current_addrs()`,
       );
       expect(result.rowCount).toBe(0);
     });
