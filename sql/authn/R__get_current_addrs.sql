@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION get_current_addrs ()
     RETURNS TABLE (
         addr text
     )
-    AS 88545
+    AS $$ 
 DECLARE
     v_account_id uuid;
 BEGIN
@@ -17,5 +17,5 @@ BEGIN
     WHERE
         account.id = v_account_id;
 END;
-88545
+$$
 LANGUAGE plpgsql;
