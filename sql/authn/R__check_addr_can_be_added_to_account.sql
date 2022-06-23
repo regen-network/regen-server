@@ -26,7 +26,7 @@ BEGIN
         END IF;
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION addr_can_be_added (addr text, OUT can_be_added boolean)
 AS $$
@@ -41,4 +41,4 @@ BEGIN
         RAISE EXCEPTION 'this addr belongs to a user';
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

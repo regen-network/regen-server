@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_new_account (addr text, v_party_type party_type)
+CREATE OR REPLACE FUNCTION private.create_new_account (addr text, v_party_type party_type)
     RETURNS uuid
     AS $$
 DECLARE
@@ -38,4 +38,4 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql SECURITY DEFINER;
+LANGUAGE plpgsql;

@@ -26,4 +26,4 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql SECURITY DEFINER;
+LANGUAGE plpgsql;
