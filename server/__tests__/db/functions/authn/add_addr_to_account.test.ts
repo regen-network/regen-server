@@ -1,4 +1,9 @@
-import { createAccount, withRootDb, withAuthUserDb, getAccount } from '../../helpers';
+import {
+  createAccount,
+  withRootDb,
+  withAuthUserDb,
+  getAccount,
+} from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -15,7 +20,7 @@ describe('add_addr_to_account', () => {
   });
   it('does not allow user to add an addr that already has an association', async () => {
     await withAuthUserDb(walletAddr, async client => {
-      const accountId = await getAccount(client); 
+      const accountId = await getAccount(client);
       expect(
         client.query(
           `select * from add_addr_to_account('${accountId}', '${walletAddr}')`,

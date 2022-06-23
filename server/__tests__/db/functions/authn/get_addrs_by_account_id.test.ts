@@ -11,9 +11,7 @@ describe('get_addrs_by_account_id', () => {
       );
       // given that we have multiple addrs associated to this particular accountId
       // we should be able to look up all of these addresses.
-      const result = await client.query(
-        `select * from get_current_addrs()`,
-      );
+      const result = await client.query(`select * from get_current_addrs()`);
       expect(result.rowCount).toBe(2);
     });
   });

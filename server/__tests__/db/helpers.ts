@@ -406,9 +406,7 @@ export async function createAccount(
   return account_id;
 }
 
-export async function getAccount(
-  client: PoolClient,
-): Promise<string> {
+export async function getAccount(client: PoolClient): Promise<string> {
   const result = await client.query('select * from get_current_account()');
   const [{ account_id }] = result.rows;
   return account_id;

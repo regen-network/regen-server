@@ -1,7 +1,4 @@
-import {
-  createAccount,
-  withRootDb,
-} from '../../helpers';
+import { createAccount, withRootDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -17,11 +14,9 @@ describe('remove_addr_from_account', () => {
         ),
       ).rejects.toThrow();
       await client.query('rollback to clean');
-      client.query(
-        `select * from get_current_addrs()`,
-      ).then((result) => {
+      client.query(`select * from get_current_addrs()`).then(result => {
         expect(result.rowCount).toBe(1);
-      })
+      });
     });
   });
   it('throws an error if account does not exist', async () => {
@@ -48,16 +43,16 @@ describe('remove_addr_from_account', () => {
       } catch (e) {
         await client.query('rollback to clean');
       }
-      client.query(
-        `select * from private.get_addrs_by_account_id('${accountId1}')`,
-      ).then((result) => {
-        expect(result.rowCount).toBe(1);
-      })
-      client.query(
-        `select * from private.get_addrs_by_account_id('${accountId2}')`,
-      ).then((result) => {
-        expect(result.rowCount).toBe(1);
-      })
+      client
+        .query(`select * from private.get_addrs_by_account_id('${accountId1}')`)
+        .then(result => {
+          expect(result.rowCount).toBe(1);
+        });
+      client
+        .query(`select * from private.get_addrs_by_account_id('${accountId2}')`)
+        .then(result => {
+          expect(result.rowCount).toBe(1);
+        });
     });
   });
   it('successfully removes an address from an account', async () => {
@@ -66,9 +61,7 @@ describe('remove_addr_from_account', () => {
       await client.query(
         `select * from remove_addr_from_account('${accountId}', '${walletAddr}')`,
       );
-      const result = await client.query(
-        `select * from get_current_addrs()`,
-      );
+      const result = await client.query(`select * from get_current_addrs()`);
       expect(result.rowCount).toBe(0);
     });
   });
