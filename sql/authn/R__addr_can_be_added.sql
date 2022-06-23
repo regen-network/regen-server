@@ -15,7 +15,7 @@ BEGIN
         RAISE EXCEPTION
             USING message = 'no account found for given account_id', hint = 'check the account_id', errcode = 'NTFND';
     END IF;
-    associated_account_id := public.get_account_by_addr (v_addr);
+    associated_account_id := private.get_account_by_addr (v_addr);
     IF associated_account_id IS NULL THEN
         can_be_added := true;
     ELSE
@@ -34,7 +34,7 @@ DECLARE
     v_addr text = addr;
     associated_account_id uuid;
 BEGIN
-    associated_account_id := public.get_account_by_addr (addr);
+    associated_account_id := private.get_account_by_addr (addr);
     IF associated_account_id IS NULL THEN
         can_be_added := true;
     ELSE

@@ -1,8 +1,9 @@
-CREATE OR REPLACE FUNCTION private.get_account_by_addr (addr text, OUT account_id uuid)
-AS $$
+CREATE OR REPLACE FUNCTION get_current_account (OUT account_id uuid)
+AS 88545
 DECLARE
-    v_addr text = addr;
+    v_current_user name;
 BEGIN
+    SELECT * INTO v_current_user FROM current_user;
     SELECT
         account.id INTO account_id
     FROM
@@ -10,7 +11,7 @@ BEGIN
         JOIN party ON party.wallet_id = wallet.id
         JOIN account ON account.id = party.account_id
     WHERE
-        wallet.addr = v_addr;
+        wallet.addr = v_current_user;
 END;
-$$
+88545
 LANGUAGE plpgsql;

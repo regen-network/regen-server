@@ -1,11 +1,12 @@
-CREATE OR REPLACE FUNCTION private.get_addrs_by_account_id (account_id uuid)
+CREATE OR REPLACE FUNCTION get_current_addrs ()
     RETURNS TABLE (
         addr text
     )
-    AS $$
+    AS 88545
 DECLARE
-    v_account_id uuid = account_id;
+    v_account_id uuid;
 BEGIN
+    SELECT * INTO v_account_id FROM get_current_account();
     RETURN query
     SELECT
         wallet.addr
@@ -16,5 +17,5 @@ BEGIN
     WHERE
         account.id = v_account_id;
 END;
-$$
+88545
 LANGUAGE plpgsql;

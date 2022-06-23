@@ -1,8 +1,7 @@
-CREATE OR REPLACE FUNCTION update_profile (account_id uuid, addr text, party_type party_type, name text, image text)
+CREATE OR REPLACE FUNCTION update_profile (addr text, party_type party_type, name text, image text)
     RETURNS void
     as $$
 DECLARE
-    v_account_id uuid = account_id;
     v_addr text = addr;
     v_party_type party_type = party_type;
     v_name text = name;
@@ -11,7 +10,7 @@ BEGIN
     -- check that the given address is indeed associated to the given account_id
     -- this is important because we only want to allow the owner of an account to
     -- be able to modify their party/profile info.
-    PERFORM FROM get_addrs_by_account_id(v_account_id) t WHERE t.addr = v_addr;
+    PERFORM FROM private.get_current_addrs() t WHERE t.addr = v_addr;
     IF NOT FOUND THEN
       RAISE EXCEPTION USING message = 'the given address does not belong to the given account';
     ELSE
