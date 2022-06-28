@@ -8,7 +8,7 @@ describe('update party', () => {
       await createAccount(client, walletAddr);
       await client.query(`set role ${walletAddr}`);
       const result = await client.query(
-          `update party set name = 'my updated name'`,
+        `update party set name = 'my updated name'`,
       );
       expect(result.rowCount).toBe(1);
     });
@@ -19,7 +19,7 @@ describe('update party', () => {
       await createAccount(client, 'otherUsersAddr');
       await client.query(`set role ${walletAddr}`);
       const result = await client.query(
-          `update party set name = 'my updated name'`,
+        `update party set name = 'my updated name'`,
       );
       expect(result.rowCount).toBe(1);
     });
