@@ -7,7 +7,7 @@ describe('get_addrs_by_account_id', () => {
     await withAuthUserDb(walletAddr, async client => {
       const newWalletAddr = 'regenABC123';
       await client.query(
-        `select * from add_addr_to_account('${newWalletAddr}')`,
+        `select * from add_addr_to_account('${newWalletAddr}', 'user')`,
       );
       // given that we have multiple addrs associated to this particular accountId
       // we should be able to look up all of these addresses.

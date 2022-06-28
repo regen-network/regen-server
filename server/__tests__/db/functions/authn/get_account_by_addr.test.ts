@@ -9,7 +9,7 @@ describe('get_account_by_addr', () => {
       await client.query(`set role ${walletAddr}`);
       const newWalletAddr = 'regenABC123';
       await client.query(
-        `select * from add_addr_to_account('${newWalletAddr}')`,
+        `select * from add_addr_to_account('${newWalletAddr}', 'user')`,
       );
       // for now we set the role back to postgres. the FUT (function under test)
       // is private in the database, and as such auth_user accounts don't have
