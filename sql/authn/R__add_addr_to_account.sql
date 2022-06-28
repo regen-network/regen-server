@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION add_addr_to_account (addr text)
+CREATE OR REPLACE FUNCTION add_addr_to_account (addr text, v_party_type party_type)
     RETURNS void
     AS $$
 DECLARE
@@ -20,10 +20,9 @@ BEGIN
         RETURNING
             id INTO v_wallet_id;
         RAISE NOTICE '_wallet_id %', v_wallet_id;
-        -- TODO: parametrize 'user'
         SELECT * INTO v_party_id from uuid_generate_v1();
         INSERT INTO party (id, account_id, TYPE, name, wallet_id)
-            VALUES (v_party_id, v_account_id, 'user', 'Default Name', v_wallet_id);
+            VALUES (v_party_id, v_account_id, v_party_type, 'Default Name', v_wallet_id);
         RAISE NOTICE '_party_id %', v_party_id;
     END IF;
 END;
