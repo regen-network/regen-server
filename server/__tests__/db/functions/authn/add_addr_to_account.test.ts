@@ -2,28 +2,16 @@ import {
   createAccount,
   withRootDb,
   withAuthUserDb,
-  getAccount,
 } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
 describe('add_addr_to_account', () => {
-  it('cannot add an addr to a non-existent account', async () => {
-    await withAuthUserDb(walletAddr, async client => {
-      const accountId = '44b26018-e2ab-11ec-983d-0242ac160003';
-      expect(
-        client.query(
-          `select * from add_addr_to_account('${accountId}', '${walletAddr}')`,
-        ),
-      ).rejects.toThrow();
-    });
-  });
   it('does not allow user to add an addr that already has an association', async () => {
     await withAuthUserDb(walletAddr, async client => {
-      const accountId = await getAccount(client);
       expect(
         client.query(
-          `select * from add_addr_to_account('${accountId}', '${walletAddr}')`,
+          `select * from add_addr_to_account('${walletAddr}', 'user')`,
         ),
       ).rejects.toThrow();
     });
@@ -32,12 +20,12 @@ describe('add_addr_to_account', () => {
     await withRootDb(async client => {
       const user1WalletAddr = 'regen123';
       const user2WalletAddr = 'regen456';
-      const user1AccountId = await createAccount(client, user1WalletAddr);
+      await createAccount(client, user1WalletAddr);
       await createAccount(client, user2WalletAddr);
       await client.query(`set role ${user1WalletAddr}`);
       expect(
         client.query(
-          `select * from add_addr_to_account('${user1AccountId}', '${user2WalletAddr}')`,
+          `select * from add_addr_to_account('${user2WalletAddr}')`,
         ),
       ).rejects.toThrow();
     });
@@ -46,7 +34,7 @@ describe('add_addr_to_account', () => {
     await withAuthUserDb(walletAddr, async client => {
       const newWalletAddr = 'regenABC123';
       const result = await client.query(
-        `select * from add_addr_to_account('${newWalletAddr}')`,
+        `select * from add_addr_to_account('${newWalletAddr}', 'user')`,
       );
       expect(result.rowCount).toBe(1);
       const addrs = await client.query('select * from get_current_addrs()');
