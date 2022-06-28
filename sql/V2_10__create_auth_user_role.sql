@@ -5,6 +5,12 @@
 --- only be used by these users. This secures the /graphiql endpoint
 --- and of course secures the graphql server from public use of these
 --- functions.
-CREATE ROLE auth_user;
-GRANT app_user TO auth_user;
-COMMENT ON ROLE auth_user IS 'This is the user role that the keplr-based login system uses.'
+DO $$
+BEGIN
+    CREATE ROLE auth_user;
+    GRANT app_user TO auth_user;
+    COMMENT ON ROLE auth_user IS 'This is the user role that the keplr-based login system uses.';
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE '%, skipping', SQLERRM USING ERRCODE = SQLSTATE;
+END$$;
