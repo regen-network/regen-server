@@ -1,1 +1,0 @@
-GRANT SELECT, UPDATE, INSERT ON wallet TO app_user;

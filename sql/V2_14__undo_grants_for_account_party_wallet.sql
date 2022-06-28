@@ -1,4 +1,0 @@
-REVOKE SELECT, INSERT ON account FROM app_user;
-REVOKE SELECT, UPDATE, INSERT ON wallet FROM app_user;
-REVOKE SELECT, DELETE ON party FROM app_user;
-REVOKE USAGE ON SCHEMA private FROM app_user; 
