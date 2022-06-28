@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION remove_addr_from_account (v_account_id uuid, v_addr text)
+CREATE OR REPLACE FUNCTION private.remove_addr_from_account (v_account_id uuid, v_addr text)
     RETURNS VOID 
     AS $$
 DECLARE
@@ -39,4 +39,4 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql SECURITY DEFINER;
+LANGUAGE plpgsql;
