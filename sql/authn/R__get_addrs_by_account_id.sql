@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS private.get_addrs_by_account_id;
 CREATE OR REPLACE FUNCTION private.get_addrs_by_account_id (account_id uuid)
     RETURNS TABLE (
         addr text

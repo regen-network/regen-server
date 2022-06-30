@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS addr_can_be_added(uuid, text);
 CREATE OR REPLACE FUNCTION addr_can_be_added (account_id uuid, addr text, OUT can_be_added boolean)
 AS $$
 DECLARE
@@ -28,6 +29,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP FUNCTION IF EXISTS addr_can_be_added(text);
 CREATE OR REPLACE FUNCTION addr_can_be_added (addr text, OUT can_be_added boolean)
 AS $$
 DECLARE

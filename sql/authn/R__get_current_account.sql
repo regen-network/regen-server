@@ -4,7 +4,7 @@ DECLARE
     v_current_user name;
 BEGIN
     SELECT * INTO v_current_user FROM current_user;
-    RAISE NOTICE '%', v_current_user;
+    RAISE LOG '%', v_current_user;
     SELECT
         account.id INTO account_id
     FROM

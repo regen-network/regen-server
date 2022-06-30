@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS private.create_new_account;
 CREATE OR REPLACE FUNCTION private.create_new_account (addr text, v_party_type party_type)
     RETURNS uuid
     AS $$
@@ -10,7 +11,7 @@ DECLARE
 BEGIN
     can_be_added := public.addr_can_be_added (v_addr);
     IF can_be_added THEN
-        RAISE NOTICE 'trying to create new account for this addr';
+        RAISE LOG 'trying to create new account for this addr';
 
         INSERT INTO account DEFAULT
             VALUES
@@ -31,9 +32,9 @@ BEGIN
         RETURNING
             id INTO v_party_id;
 
-        RAISE NOTICE 'new account_id %', v_account_id;
-        RAISE NOTICE 'new party_id %', v_party_id;
-        RAISE NOTICE 'new wallet_id %', v_wallet_id;
+        RAISE LOG 'new account_id %', v_account_id;
+        RAISE LOG 'new party_id %', v_party_id;
+        RAISE LOG 'new wallet_id %', v_wallet_id;
 	RETURN v_account_id;
     END IF;
 END;

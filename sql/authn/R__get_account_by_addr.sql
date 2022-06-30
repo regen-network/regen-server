@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS private.get_account_by_addr;
 CREATE OR REPLACE FUNCTION private.get_account_by_addr (addr text, OUT account_id uuid)
 AS $$
 DECLARE
