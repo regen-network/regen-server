@@ -1,9 +1,7 @@
 import * as jwks from 'jwks-rsa';
 import { expressjwt } from 'express-jwt';
 
-export default function getJwt(
-  credentialsRequired: boolean,
-) {
+export default function getJwt(credentialsRequired: boolean): any {
   return expressjwt({
     secret: jwks.expressJwtSecret({
       cache: true,
