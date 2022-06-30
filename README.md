@@ -81,6 +81,7 @@ understanding how to work with postgraphile:
 
 - https://www.graphile.org/postgraphile/required-knowledge/
 - https://www.graphile.org/postgraphile/quick-start-guide/
+- https://learn.graphile.org/docs/PostgreSQL_Row_Level_Security_Infosheet.pdf
 
 ### Migrations
 
