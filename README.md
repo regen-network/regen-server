@@ -74,6 +74,14 @@ set client_min_messages to 'debug';
 
 See [the postgres errors and messages documentation][6] for more info.
 
+### Postgraphile
+
+We make use of postgraphile to autogenerate a graphql API. Here are some references for
+understanding how to work with postgraphile:
+
+- https://www.graphile.org/postgraphile/required-knowledge/
+- https://www.graphile.org/postgraphile/quick-start-guide/
+
 ### Migrations
 
 [Flyway](https://flywaydb.org) is used to run migrations:
