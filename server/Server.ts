@@ -31,6 +31,7 @@ const REGISTRY_REDWOOD_HOSTNAME_PATTERN =
   /redwood--regen-registry\.netlify\.app$/;
 const REGISTRY_HAMBACH_HOSTNAME_PATTERN =
   /hambach--regen-registry\.netlify\.app$/;
+const REGISTRY_V4_HOSTNAME_PATTERN = /v4--regen-registry\.netlify\.app$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
 const corsOptions = (req, callback): void => {
@@ -46,6 +47,7 @@ const corsOptions = (req, callback): void => {
         originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_REDWOOD_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_HAMBACH_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(REGISTRY_V4_HOSTNAME_PATTERN) ||
         originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))
     ) {
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
@@ -100,6 +102,26 @@ if (process.env.EXP_LEDGER_REST_ENDPOINT) {
     createProxyMiddleware({
       target: process.env.EXP_LEDGER_REST_ENDPOINT,
       pathRewrite: { '^/exp-ledger-rest': '/' },
+    }),
+  );
+}
+
+if (process.env.V4_LEDGER_TENDERMINT_RPC) {
+  app.use(
+    '/v4-ledger',
+    createProxyMiddleware({
+      target: process.env.V4_LEDGER_TENDERMINT_RPC,
+      pathRewrite: { '^/v4-ledger': '/' },
+    }),
+  );
+}
+
+if (process.env.V4_LEDGER_REST_ENDPOINT) {
+  app.use(
+    '/v4-ledger-rest',
+    createProxyMiddleware({
+      target: process.env.V4_LEDGER_REST_ENDPOINT,
+      pathRewrite: { '^/v4-ledger-rest': '/' },
     }),
   );
 }
