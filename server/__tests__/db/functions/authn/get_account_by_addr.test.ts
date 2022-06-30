@@ -1,4 +1,4 @@
-import { createAccount, withRootDb } from '../../helpers';
+import { becomeUser, createAccount, withRootDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -6,7 +6,7 @@ describe('get_account_by_addr', () => {
   it('gets the same account for a user with multiple addresses', async () => {
     await withRootDb(async client => {
       const accountId = await createAccount(client, walletAddr);
-      await client.query(`set role ${walletAddr}`);
+      await becomeUser(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       await client.query(
         `select * from add_addr_to_account('${newWalletAddr}', 'user')`,
@@ -14,7 +14,7 @@ describe('get_account_by_addr', () => {
       // for now we set the role back to postgres. the FUT (function under test)
       // is private in the database, and as such auth_user accounts don't have
       // access.
-      await client.query('set role postgres');
+      await becomeUser(client, 'postgres');
       // at this point account_id has two wallets associated to it, so we should
       // be able to lookup this account with either of these two wallets.
       const result1 = await client.query(

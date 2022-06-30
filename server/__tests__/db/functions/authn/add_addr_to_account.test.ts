@@ -1,4 +1,4 @@
-import { createAccount, withRootDb, withAuthUserDb } from '../../helpers';
+import { createAccount, withRootDb, withAuthUserDb, becomeUser } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -18,7 +18,7 @@ describe('add_addr_to_account', () => {
       const user2WalletAddr = 'regen456';
       await createAccount(client, user1WalletAddr);
       await createAccount(client, user2WalletAddr);
-      await client.query(`set role ${user1WalletAddr}`);
+      await becomeUser(client, user1WalletAddr);
       expect(
         client.query(`select * from add_addr_to_account('${user2WalletAddr}')`),
       ).rejects.toThrow();
