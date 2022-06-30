@@ -1,10 +1,10 @@
 import * as jwks from 'jwks-rsa';
-import jwt from 'express-jwt';
+import { expressjwt } from 'express-jwt';
 
 export default function getJwt(
   credentialsRequired: boolean,
-): jwt.RequestHandler {
-  return jwt({
+) {
+  return expressjwt({
     secret: jwks.expressJwtSecret({
       cache: true,
       rateLimit: true,
