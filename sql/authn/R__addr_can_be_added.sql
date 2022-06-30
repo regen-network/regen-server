@@ -23,7 +23,7 @@ BEGIN
         IF associated_account_id = account_id THEN
             RAISE EXCEPTION 'this addr already belongs to this account';
         ELSE
-            RAISE EXCEPTION 'this addr belongs to a different user';
+            RAISE EXCEPTION 'this addr belongs to a different account';
         END IF;
     END IF;
 END;
@@ -40,7 +40,7 @@ BEGIN
     IF associated_account_id IS NULL THEN
         can_be_added := true;
     ELSE
-        RAISE EXCEPTION 'this addr belongs to a user';
+        RAISE EXCEPTION 'this addr belongs to a different account';
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
