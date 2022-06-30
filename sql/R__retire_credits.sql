@@ -9,6 +9,9 @@ create or replace function retire_credits(
 declare
   v_retirement retirement;
 begin
+
+  raise warning 'retire_credits is a deprecated function';
+
   -- Update buyer account balance
   update account_balance
   set liquid_balance = liquid_balance - units, burnt_balance = burnt_balance + units
