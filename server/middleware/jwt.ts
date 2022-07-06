@@ -1,7 +1,8 @@
 import * as jwks from 'jwks-rsa';
 import { expressjwt } from 'express-jwt';
 
-export default function getJwt(credentialsRequired: boolean): any {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export default function getJwt(credentialsRequired: boolean) {
   return expressjwt({
     secret: jwks.expressJwtSecret({
       cache: true,
