@@ -1,10 +1,9 @@
 import * as jwks from 'jwks-rsa';
-import jwt from 'express-jwt';
+import { expressjwt } from 'express-jwt';
 
-export default function getJwt(
-  credentialsRequired: boolean,
-): jwt.RequestHandler {
-  return jwt({
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export default function getJwt(credentialsRequired: boolean) {
+  return expressjwt({
     secret: jwks.expressJwtSecret({
       cache: true,
       rateLimit: true,
