@@ -11,7 +11,9 @@ describe('remove_addr_from_account', () => {
         client.query(
           `select * from private.remove_addr_from_account('${accountId}', 'regenABC123')`,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(
+        'cannot remove, this address is not associated to the given account id',
+      );
       await client.query('rollback to clean');
       client
         .query(`select * from private.get_addrs_by_account_id('${accountId}')`)
@@ -27,7 +29,9 @@ describe('remove_addr_from_account', () => {
         client.query(
           `select * from private.remove_addr_from_account('${accountId}', '${walletAddr}')`,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow(
+        'cannot remove, this address is not associated to the given account id',
+      );
     });
   });
   it('does not remove an address from the wrong user', async () => {
@@ -42,6 +46,9 @@ describe('remove_addr_from_account', () => {
           `select * from private.remove_addr_from_account('${accountId1}', '${addr2}')`,
         );
       } catch (e) {
+        expect(e.message).toBe(
+          'cannot remove, this address is not associated to the given account id',
+        );
         await client.query('rollback to clean');
       }
       client

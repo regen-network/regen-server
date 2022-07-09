@@ -17,9 +17,9 @@ describe('create_new_account', () => {
       await createAccount(client, walletAddr);
       expect(
         client.query(
-          `select * from private.create_new_account('${walletAddr}') as accountId`,
+          `select * from private.create_new_account('${walletAddr}', 'user') as accountId`,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow('this addr belongs to a different account');
     });
   });
 });

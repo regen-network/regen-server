@@ -14,7 +14,7 @@ describe('add_addr_to_account', () => {
         client.query(
           `select * from add_addr_to_account('${walletAddr}', 'user')`,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow('this addr already belongs to this account');
     });
   });
   it('should throw an error if the address already belongs to a different users account', async () => {
@@ -25,8 +25,10 @@ describe('add_addr_to_account', () => {
       await createAccount(client, user2WalletAddr);
       await becomeUser(client, user1WalletAddr);
       expect(
-        client.query(`select * from add_addr_to_account('${user2WalletAddr}')`),
-      ).rejects.toThrow();
+        client.query(
+          `select * from add_addr_to_account('${user2WalletAddr}', 'user')`,
+        ),
+      ).rejects.toThrow('this addr belongs to a different account');
     });
   });
   it('allows the user to add a new, unused addr', async () => {
