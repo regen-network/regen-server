@@ -22,7 +22,7 @@ describe('get_account_by_addr', () => {
       );
       const [{ account_id: accountId1 }] = result1.rows;
       const result2 = await client.query(
-        `select account_id from private.get_account_by_addr('${walletAddr}')`,
+        `select account_id from private.get_account_by_addr('${newWalletAddr}')`,
       );
       const [{ account_id: accountId2 }] = result2.rows;
       // make sure that either wallet returns the original accountId
