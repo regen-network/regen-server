@@ -48,6 +48,9 @@ declare
   v_deduction numeric default 1;
   v_account_balances jsonb default '[]'::jsonb;
 begin
+
+  raise warning 'issue_credits is a deprecated functionality';
+
   if public.get_current_user() is null then
     raise exception 'You must log in to issue credits' using errcode = 'LOGIN';
   end if;
