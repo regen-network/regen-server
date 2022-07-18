@@ -39,6 +39,9 @@ declare
   v_email text;
   v_reseller_wallet_id uuid;
 begin
+
+  raise warning 'transfer_credits is a deprecated functionality';
+
   -- get number of available credits left for transfer
   -- (ie credits that are still part of the project stakeholders' liquid balances)
   select * from get_available_credits_record(vintage_id)

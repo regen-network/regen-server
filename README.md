@@ -66,13 +66,22 @@ Based on `server/.env.example`, create some `server/.env` file with appropriate 
 
 Need verbose logging? Run this SQL command in `psql` or similar:
 ```sql
+# the line below adjusts log level of the postgres daemon to include a lot of info..
 alter database regen_registry set log_statement = 'all';
+# the line below adjusts the client (psql) to display level debug or higher messages..
+set client_min_messages to 'debug';
 ```
 
-Need to log in your SQL? Because we use a lot of SQL in this project this is
-likely to be important for you at some point. See [the postgres errors and
-messages documentation][6] and search our code for examples (hint: use `raise
-log`).
+See [the postgres errors and messages documentation][6] for more info.
+
+### Postgraphile
+
+We make use of postgraphile to autogenerate a graphql API. Here are some references for
+understanding how to work with postgraphile:
+
+- https://www.graphile.org/postgraphile/required-knowledge/
+- https://www.graphile.org/postgraphile/quick-start-guide/
+- https://learn.graphile.org/docs/PostgreSQL_Row_Level_Security_Infosheet.pdf
 
 ### Migrations
 

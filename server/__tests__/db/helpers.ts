@@ -48,6 +48,13 @@ const withDbFromUrl = async <T>(
   await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE;');
 
   try {
+    // because this callback function has a client that has had a
+    // postgresql transaction initiated, you need to be aware that
+    // in downstream code, if your SQL raises any exception, this
+    // transaction will be put into an aborted state. if you wish
+    // to avoid these abort states downstream, you will need to make
+    // use of SAVEPOINT and ROLLBACK TO.
+    // ref: https://www.postgresql.org/docs/current/tutorial-transactions.html
     await fn(client);
   } catch (e) {
     // Error logging can be helpful:
@@ -116,6 +123,16 @@ export const withAdminUserDb = <T>(
     const user = await createUser(client, email, name, '', sub, null);
     await becomeUser(client, sub);
     await fn(client, user, party);
+  });
+
+export const withAuthUserDb = <T>(
+  addr: string,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<void> =>
+  withRootDb(async client => {
+    await createAccount(client, addr);
+    await becomeUser(client, addr);
+    await fn(client);
   });
 
 export async function createUser(
@@ -374,4 +391,23 @@ export async function reallyCreateOrganizationIfNeeded(
     ],
   );
   return row;
+}
+
+export async function createAccount(
+  client: PoolClient,
+  walletAddr: string,
+  partyType: 'user' | 'organization' = 'user',
+): Promise<string> {
+  await client.query(`create role ${walletAddr} in role auth_user`);
+  const result = await client.query(
+    `select * from private.create_new_account('${walletAddr}', '${partyType}') as account_id`,
+  );
+  const [{ account_id }] = result.rows;
+  return account_id;
+}
+
+export async function getAccount(client: PoolClient): Promise<string> {
+  const result = await client.query('select * from get_current_account()');
+  const [{ account_id }] = result.rows;
+  return account_id;
 }
