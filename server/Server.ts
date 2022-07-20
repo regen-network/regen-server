@@ -15,9 +15,14 @@ import swaggerUi from 'swagger-ui-express';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 
+import cookieParser from 'cookie-parser';
+import cookieSession from 'cookie-session';
+import passport from 'passport';
+
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
+import { initializePassport } from './middleware/passport';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -60,7 +65,7 @@ const corsOptions = (req, callback): void => {
       options = { origin: false }; // disable CORS for this request
     }
   }
-
+  options['credentials'] = true;
   callback(null, options); // callback expects two parameters: error and options
 };
 
@@ -93,7 +98,17 @@ if (process.env.SENTRY_ENABLED) {
 }
 
 app.use(fileUpload());
+const ONE_DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
+app.use(cookieSession({
+  name: 'session',
+  keys: ['supersecrets'],
+  maxAge: ONE_DAY_IN_MILLIS,
+  sameSite: 'lax',
+  secure: false,
+}));
+initializePassport(app, passport);
 app.use(cors(corsOptions));
+app.use(cookieParser());
 
 app.use(getJwt(false));
 
@@ -195,6 +210,7 @@ import files from './routes/files';
 import metadataGraph from './routes/metadata-graph';
 import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
+import { web3auth } from './routes/web3auth';
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -203,6 +219,7 @@ app.use(auth);
 app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
+app.use('/web3auth', web3auth);
 
 const swaggerOptions = {
   definition: {
