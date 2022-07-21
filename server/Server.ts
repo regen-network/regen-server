@@ -254,7 +254,10 @@ app.get('/nonce', async (req, res, next) => {
     let client: PoolClient;
     try {
       client = await pgPool.connect();
-      const result = await client.query('select a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id', [req.query.userAddress]);
+      const result = await client.query(
+        'select a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        [req.query.userAddress],
+      );
       if (result.rowCount === 0) {
         const msg = 'User not found for the given address';
         console.error(msg);
@@ -267,7 +270,7 @@ app.get('/nonce', async (req, res, next) => {
         const [{ nonce }] = result.rows;
         return res.status(200).send({ nonce });
       }
-    } catch(err) {
+    } catch (err) {
       next(err);
     } finally {
       if (client) {
