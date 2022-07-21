@@ -59,7 +59,10 @@ function KeplrStrategy() {
       const { signature, profileType } = req.body;
       if (!signature) {
         throw new InvalidLoginParameter('invalid signature parameter');
-      } else if (!profileType || !['user', 'organization'].includes(profileType)) {
+      } else if (
+        !profileType ||
+        !['user', 'organization'].includes(profileType)
+      ) {
         throw new InvalidLoginParameter('invalid profileType parameter');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
@@ -88,7 +91,7 @@ function KeplrStrategy() {
               client = await pgPool.connect();
               try {
                 const create = await client.query(
-                  "select * from private.create_new_account($1, $2)",
+                  'select * from private.create_new_account($1, $2)',
                   [address, profileType],
                 );
                 console.log(create);
@@ -125,19 +128,19 @@ export function initializePassport(app, passport) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  passport.serializeUser(function(user, done) {
+  passport.serializeUser(function (user, done) {
     // todo: it's possible that code in serialize/deserialize
     // should be wrapped in process.nextTick (there's references
     // to this in the passport.js docs, probably just performance
     // related).
-    // 
+    //
     // serialize is about what will end up in the http-only session
     // cookie in terms of user data. very important to not include
     // private information here.
     done(null, { userId: user.id });
   });
-  
-  passport.deserializeUser(function(user, done) {
+
+  passport.deserializeUser(function (user, done) {
     // deserialize is about what ends up in req.user when the session
     // cookie gets parsed. private info should be carefully handled
     // here, as it could potentially expose that info if this is being

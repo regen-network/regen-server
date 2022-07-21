@@ -20,7 +20,10 @@ import passport from 'passport';
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
-import { initializePassport, InvalidLoginParameter } from './middleware/passport';
+import {
+  initializePassport,
+  InvalidLoginParameter,
+} from './middleware/passport';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -68,13 +71,15 @@ const app = express();
 
 app.use(fileUpload());
 const ONE_DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
-app.use(cookieSession({
-  name: 'session',
-  keys: ['supersecrets'],
-  maxAge: ONE_DAY_IN_MILLIS,
-  sameSite: 'lax',
-  secure: false,
-}));
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['supersecrets'],
+    maxAge: ONE_DAY_IN_MILLIS,
+    sameSite: 'lax',
+    secure: false,
+  }),
+);
 initializePassport(app, passport);
 app.use(cors(corsOptions));
 app.use(cookieParser());
@@ -217,7 +222,9 @@ app.use(
 );
 
 app.use((err, req, res, next) => {
-  if (err.stack) { console.error(err.stack); }
+  if (err.stack) {
+    console.error(err.stack);
+  }
   const { params, query, body, path } = req;
   console.error('req info:', { params, query, body, path });
   next(err);

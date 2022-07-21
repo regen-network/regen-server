@@ -11,6 +11,7 @@ web3auth.use('/login', passport.authenticate('keplr'), (req, res) => {
 });
 
 web3auth.post('/logout', (req, res) => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   req.logout();
   return res.send({
