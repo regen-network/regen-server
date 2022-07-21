@@ -10,14 +10,10 @@ web3auth.use('/login', passport.authenticate('keplr'), (req, res) => {
   });
 });
 
-web3auth.post('/logout', (req, res, next) => {
-  req.logout(function (err) {
-    if (err) {
-      return next(err);
-    } else {
-      return res.send({
-        message: 'You have been logged out!',
-      });
-    }
+web3auth.post('/logout', (req, res) => {
+  // @ts-ignore
+  req.logout();
+  return res.send({
+    message: 'You have been logged out!',
   });
 });
