@@ -22,7 +22,7 @@ import passport from 'passport';
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
-import { initializePassport } from './middleware/passport';
+import { initializePassport, InvalidLoginParameter } from './middleware/passport';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -205,7 +205,7 @@ app.use(
 );
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  if (err.stack) { console.error(err.stack); }
   const { params, query, body, path } = req;
   console.error('req info:', { params, query, body, path });
   next(err);
@@ -215,6 +215,8 @@ app.use((err, req, res, next) => {
   if (err instanceof MetadataNotFound) {
     res.status(404).send(errResponse);
   } else if (err instanceof InvalidJSONLD) {
+    res.status(400).send(errResponse);
+  } else if (err instanceof InvalidLoginParameter) {
     res.status(400).send(errResponse);
   } else {
     next(err);
