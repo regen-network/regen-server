@@ -18,13 +18,13 @@ describe('get_account_by_addr', () => {
       // at this point account_id has two wallets associated to it, so we should
       // be able to lookup this account with either of these two wallets.
       const result1 = await client.query(
-        `select account_id from private.get_account_by_addr('${walletAddr}')`,
+        `select id from private.get_account_by_addr('${walletAddr}')`,
       );
-      const [{ account_id: accountId1 }] = result1.rows;
+      const [{ id: accountId1 }] = result1.rows;
       const result2 = await client.query(
-        `select account_id from private.get_account_by_addr('${newWalletAddr}')`,
+        `select id from private.get_account_by_addr('${newWalletAddr}')`,
       );
-      const [{ account_id: accountId2 }] = result2.rows;
+      const [{ id: accountId2 }] = result2.rows;
       // make sure that either wallet returns the original accountId
       expect(accountId).toBe(accountId1);
       expect(accountId).toBe(accountId2);
