@@ -1,51 +1,8 @@
 import { pubkeyToAddress, decodeSignature } from '@cosmjs/amino';
-import { Random } from '@cosmjs/crypto';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { verifyADR36Amino } from '@keplr-wallet/cosmos';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
-
-const genNonce = () => {
-  const bytes = Random.getBytes(128);
-  const hex = Buffer.from(bytes).toString('hex');
-  return hex;
-};
-
-const users = [
-  {
-    id: 1,
-    username: 'kyle',
-    password: 'password',
-    address: 'regen1rn2mn8p0j3kqgglf7kpn8eshymgy5sm8w4wmj4',
-    nonce: genNonce(),
-  },
-];
-
-const fetchUserById = userId => {
-  for (const user of users) {
-    if (user.id === userId) {
-      return {
-        id: user.id,
-        username: user.username,
-        address: user.address,
-        nonce: user.nonce,
-      };
-    }
-  }
-};
-
-const fetchUserByAddress = userAddress => {
-  for (const user of users) {
-    if (user.address === userAddress) {
-      return {
-        id: user.id,
-        username: user.username,
-        address: user.address,
-        nonce: user.nonce,
-      };
-    }
-  }
-};
 
 export class InvalidLoginParameter extends Error {
   constructor(message: string) {
@@ -55,6 +12,7 @@ export class InvalidLoginParameter extends Error {
 
 function KeplrStrategy() {
   return new CustomStrategy(async function (req, done) {
+    let client: PoolClient;
     try {
       const { signature, profileType } = req.body;
       if (!signature) {
@@ -66,61 +24,85 @@ function KeplrStrategy() {
         throw new InvalidLoginParameter('invalid profileType parameter');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
-      for (const user of users) {
-        // assume 1-1 map between a given user and an address.
-        if (address === user.address) {
-          const { pubkey: decodedPubKey, signature: decodedSignature } =
-            decodeSignature(signature);
-          const data = JSON.stringify({
-            title: 'Regen Network Login',
-            description:
-              'This is a transaction that allows Regen Network to authenticate you with our application.',
-            nonce: user.nonce,
-          });
-          // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
-          const verified = verifyADR36Amino(
-            'regen',
-            address,
-            data,
-            decodedPubKey,
-            decodedSignature,
-          );
-          if (verified) {
-            let client: PoolClient;
-            try {
-              client = await pgPool.connect();
-              try {
-                const create = await client.query(
-                  'select * from private.create_new_account($1, $2)',
-                  [address, profileType],
-                );
-                console.log(create);
-              } catch (err) {
-                console.log(err);
-              }
-              const account = await client.query(
-                'select id from private.get_account_by_addr($1)',
-                [address],
-              );
-              console.log(account);
-            } finally {
-              if (client) {
-                client.release();
-              }
+      // is there an existing account for the given address?
+      client = await pgPool.connect();
+      const account = await client.query(
+        'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        [address],
+      );
+      if (account.rowCount === 1) {
+        // if yes, then we need to verify this signature accounting for the nonce.
+        const [{ id, nonce }] = account.rows;
+        const { pubkey: decodedPubKey, signature: decodedSignature } =
+          decodeSignature(signature);
+        const data = JSON.stringify({
+          title: 'Regen Network Login',
+          description:
+            'This is a transaction that allows Regen Network to authenticate you with our application.',
+          nonce: nonce,
+        });
+        // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
+        const verified = verifyADR36Amino(
+          'regen',
+          address,
+          data,
+          decodedPubKey,
+          decodedSignature,
+        );
+        if (verified) {
+          // generate a new nonce for the user to invalidate the current
+          // signature...
+          await client.query('update account set nonce = md5(random()::text) where id = $1', [id]);
+          return done(null, { id: id, address: address, nonce: nonce });
+        } else {
+          return done(null, false);
+        }
+      } else {
+        const { pubkey: decodedPubKey, signature: decodedSignature } =
+          decodeSignature(signature);
+        const data = JSON.stringify({
+          title: 'Regen Network Login',
+          description:
+            'This is a transaction that allows Regen Network to authenticate you with our application.',
+          nonce: "", // an empty string since this is an account creation login..
+        });
+        // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
+        const verified = verifyADR36Amino(
+          'regen',
+          address,
+          data,
+          decodedPubKey,
+          decodedSignature,
+        );
+        if (verified) {
+          // if no, then we need to create a new account, and then log them in.
+          try {
+            await client.query(
+              'select * from private.create_new_account($1, $2)',
+              [address, profileType],
+            );
+          } catch (err) {
+            if (err.toString() !== "error: this addr belongs to a different account") {
+              throw err;
             }
-            // generate a new nonce for the user to invalidate the current
-            // signature...
-            user.nonce = genNonce();
-            return done(null, fetchUserById(user.id));
-          } else {
-            return done(null, false);
           }
+          const newAccount = await client.query(
+            'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+            [address],
+          );
+          const [{ id, nonce }] = newAccount.rows;
+          return done(null, { id: id, address: address, nonce: nonce });
+        } else {
+          return done(null, false);
         }
       }
     } catch (err) {
       return done(err);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
-    return done(null, false);
   });
 }
 
@@ -137,7 +119,7 @@ export function initializePassport(app, passport) {
     // serialize is about what will end up in the http-only session
     // cookie in terms of user data. very important to not include
     // private information here.
-    done(null, { userId: user.id });
+    done(null, { id: user.id });
   });
 
   passport.deserializeUser(function (user, done) {
@@ -145,8 +127,9 @@ export function initializePassport(app, passport) {
     // cookie gets parsed. private info should be carefully handled
     // here, as it could potentially expose that info if this is being
     // used in a response.
-    const { userId } = user;
-    done(null, fetchUserById(userId));
+    const { id } = user;
+    // todo: add more fields here probably based on a lookup in db...
+    done(null, { id });
   });
 
   passport.use('keplr', KeplrStrategy());
