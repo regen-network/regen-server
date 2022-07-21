@@ -37,7 +37,7 @@
     "mailerlite-api-v2-node": "^1.1.2",
     "mjml": "^4.8.1",
     "nodemailer": "^6.6.3",
-    "passport": "^0.6.0",
+    "passport": "^0.5.0",
     "passport-custom": "^1.1.1",
     "postgraphile": "^4.7.0",
     "postgraphile-plugin-connection-filter": "^2.3.0",
