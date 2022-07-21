@@ -52,7 +52,10 @@ function KeplrStrategy() {
         if (verified) {
           // generate a new nonce for the user to invalidate the current
           // signature...
-          await client.query('update account set nonce = md5(random()::text) where id = $1', [id]);
+          await client.query(
+            'update account set nonce = md5(random()::text) where id = $1',
+            [id],
+          );
           return done(null, { id: id, address: address, nonce: nonce });
         } else {
           return done(null, false);
@@ -64,7 +67,7 @@ function KeplrStrategy() {
           title: 'Regen Network Login',
           description:
             'This is a transaction that allows Regen Network to authenticate you with our application.',
-          nonce: "", // an empty string since this is an account creation login..
+          nonce: '', // an empty string since this is an account creation login..
         });
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
@@ -82,7 +85,10 @@ function KeplrStrategy() {
               [address, profileType],
             );
           } catch (err) {
-            if (err.toString() !== "error: this addr belongs to a different account") {
+            if (
+              err.toString() !==
+              'error: this addr belongs to a different account'
+            ) {
               throw err;
             }
           }
