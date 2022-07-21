@@ -2,6 +2,8 @@ import { pubkeyToAddress, decodeSignature } from '@cosmjs/amino';
 import { Random } from '@cosmjs/crypto';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { verifyADR36Amino } from '@keplr-wallet/cosmos';
+import { PoolClient } from 'pg';
+import { pgPool } from 'common/pool';
 
 const genNonce = () => {
   const bytes = Random.getBytes(128);
@@ -45,12 +47,20 @@ const fetchUserByAddress = userAddress => {
   }
 };
 
+export class InvalidLoginParameter extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 function KeplrStrategy() {
   return new CustomStrategy(async function (req, done) {
     try {
-      const { signature } = req.body;
-      if (signature === undefined) {
-        return done('invalid signature request parameter');
+      const { signature, profileType } = req.body;
+      if (!signature) {
+        throw new InvalidLoginParameter('invalid signature parameter');
+      } else if (!profileType || !['user', 'organization'].includes(profileType)) {
+        throw new InvalidLoginParameter('invalid profileType parameter');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       for (const user of users) {
@@ -73,6 +83,28 @@ function KeplrStrategy() {
             decodedSignature,
           );
           if (verified) {
+            let client: PoolClient;
+            try {
+              client = await pgPool.connect();
+              try {
+                const create = await client.query(
+                  "select * from private.create_new_account($1, $2)",
+                  [address, profileType],
+                );
+                console.log(create);
+              } catch (err) {
+                console.log(err);
+              }
+              const account = await client.query(
+                'select id from private.get_account_by_addr($1)',
+                [address],
+              );
+              console.log(account);
+            } finally {
+              if (client) {
+                client.release();
+              }
+            }
             // generate a new nonce for the user to invalidate the current
             // signature...
             user.nonce = genNonce();
