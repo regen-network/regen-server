@@ -80,6 +80,7 @@ function KeplrStrategy() {
         if (verified) {
           // if no, then we need to create a new account, and then log them in.
           try {
+            await client.query(`create role ${address} in role auth_user`);
             await client.query(
               'select * from private.create_new_account($1, $2)',
               [address, profileType],
@@ -125,7 +126,7 @@ export function initializePassport(app, passport) {
     // serialize is about what will end up in the http-only session
     // cookie in terms of user data. very important to not include
     // private information here.
-    done(null, { id: user.id });
+    done(null, { id: user.id , address: user.address });
   });
 
   passport.deserializeUser(function (user, done) {
@@ -133,9 +134,9 @@ export function initializePassport(app, passport) {
     // cookie gets parsed. private info should be carefully handled
     // here, as it could potentially expose that info if this is being
     // used in a response.
-    const { id } = user;
+    const { id, address } = user;
     // todo: add more fields here probably based on a lookup in db...
-    done(null, { id });
+    done(null, { id, address });
   });
 
   passport.use('keplr', KeplrStrategy());

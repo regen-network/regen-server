@@ -169,6 +169,8 @@ app.use(
         //   settings['jwt.claims.' + k] = user[k]
         // );
         return settings;
+      } else if (req.user && req.user.address) {
+        return { role: req.user.address }
       } else return { role: 'app_user' };
     },
   }),
@@ -194,14 +196,12 @@ app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
 app.use('/web3auth', web3auth);
-app.get('/profile', (req, res) => {
+app.get('/profile', (req: UserIncomingMessage, res) => {
   if (req.user) {
     // this is just a dummy api endpoint that illustrates
     // how we can pull the users info out of `req.user` which
     // can subsequently be used for fetching data for this user.
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    return res.send(`Hi, ${req.user.id}!`);
+    return res.send(`Hi, ${req.user.address}!`);
   } else {
     return res.status(401).send("Sorry, you haven't signed in yet..");
   }
