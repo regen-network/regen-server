@@ -41,6 +41,12 @@ function KeplrStrategy() {
             'This is a transaction that allows Regen Network to authenticate you with our application.',
           nonce: nonce,
         });
+        // generate a new nonce for the user to invalidate the current
+        // signature...
+        await client.query(
+          'update account set nonce = md5(random()::text) where id = $1',
+          [id],
+        );
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
           'regen',
@@ -50,12 +56,6 @@ function KeplrStrategy() {
           decodedSignature,
         );
         if (verified) {
-          // generate a new nonce for the user to invalidate the current
-          // signature...
-          await client.query(
-            'update account set nonce = md5(random()::text) where id = $1',
-            [id],
-          );
           return done(null, { id: id, address: address, nonce: nonce });
         } else {
           return done(null, false);
@@ -126,6 +126,7 @@ export function initializePassport(app, passport) {
     // serialize is about what will end up in the http-only session
     // cookie in terms of user data. very important to not include
     // private information here.
+    console.log(`serializeUser user: ${JSON.stringify(user)}`)
     done(null, { id: user.id , address: user.address });
   });
 
@@ -134,6 +135,7 @@ export function initializePassport(app, passport) {
     // cookie gets parsed. private info should be carefully handled
     // here, as it could potentially expose that info if this is being
     // used in a response.
+    console.log(`deserializeUser user: ${JSON.stringify(user)}`);
     const { id, address } = user;
     // todo: add more fields here probably based on a lookup in db...
     done(null, { id, address });
