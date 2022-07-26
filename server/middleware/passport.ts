@@ -80,7 +80,13 @@ function KeplrStrategy() {
         if (verified) {
           // if no, then we need to create a new account, and then log them in.
           try {
-            await client.query(`create role ${address} in role auth_user`);
+            try {
+              await client.query(`create role ${address} in role auth_user`);
+            } catch (err) {
+              if (err.message !== `role "${address}" already exists`) {
+                throw err;
+              }
+            }
             await client.query(
               'select * from private.create_new_account($1, $2)',
               [address, profileType],
