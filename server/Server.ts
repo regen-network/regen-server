@@ -25,8 +25,8 @@ import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
 import {
   initializePassport,
-  InvalidLoginParameter,
 } from './middleware/passport';
+import { BaseHTTPError } from './errors';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -235,11 +235,11 @@ app.use((err, req, res, next) => {
 });
 app.use((err, req, res, next) => {
   const errResponse = { error: err.message };
-  if (err instanceof MetadataNotFound) {
+  if (err instanceof BaseHTTPError) {
+    res.status(err.status_code).send(errResponse);
+  } else if (err instanceof MetadataNotFound) {
     res.status(404).send(errResponse);
   } else if (err instanceof InvalidJSONLD) {
-    res.status(400).send(errResponse);
-  } else if (err instanceof InvalidLoginParameter) {
     res.status(400).send(errResponse);
   } else {
     next(err);
