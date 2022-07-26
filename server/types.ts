@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import { IncomingMessage } from 'http';
 
-interface User {
+export interface User {
   id?: number;
   sub?: string;
   address?: string;
