@@ -10,6 +10,7 @@ import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import ConnectionFilterPlugin from 'postgraphile-plugin-connection-filter';
 import url from 'url';
 import dotenv from 'dotenv';
+import * as env from 'env-var';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
@@ -70,16 +71,29 @@ const corsOptions = (req, callback): void => {
 const app = express();
 
 app.use(fileUpload());
-const ONE_DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
+
+const SESSION_MAX_AGE_IN_HOURS = env.get("SESSION_MAX_AGE_IN_HOURS").default("24").asIntPositive();
+const SESSION_MAX_AGE_IN_MILLIS = SESSION_MAX_AGE_IN_HOURS * 60 * 60 * 1000;
+const SESSION_SECRET_KEY = env.get("SESSION_SECRET_KEY").default("supersecret").asString(); 
+const _SESSION_SAMESITE = env.get("SESSION_SAMESITE").default("lax").asEnum(["true", "false", "lax", "strict", "none"]); 
+let SESSION_SAMESITE: boolean|"lax"|"strict"|"none";
+if (_SESSION_SAMESITE === "true" || _SESSION_SAMESITE === "false") {
+  SESSION_SAMESITE = _SESSION_SAMESITE === "true";
+} else {
+  SESSION_SAMESITE = _SESSION_SAMESITE;
+} 
+const SESSION_SECURE = env.get("SESSION_SECURE").default("false").asBoolStrict(); 
+const cookieSessionConfig = {
+  name: 'session',
+  keys: [SESSION_SECRET_KEY],
+  maxAge: SESSION_MAX_AGE_IN_MILLIS,
+  sameSite: SESSION_SAMESITE,
+  secure: SESSION_SECURE,
+};
 app.use(
-  cookieSession({
-    name: 'session',
-    keys: ['supersecrets'],
-    maxAge: ONE_DAY_IN_MILLIS,
-    sameSite: 'lax',
-    secure: false,
-  }),
+  cookieSession(cookieSessionConfig),
 );
+
 initializePassport(app, passport);
 app.use(cors(corsOptions));
 app.use(cookieParser());

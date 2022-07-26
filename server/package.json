@@ -21,6 +21,7 @@
     "cookie-parser": "^1.4.6",
     "cookie-session": "^2.0.0",
     "cors": "^2.8.5",
+    "env-var": "^7.1.1",
     "express": "4.17.3",
     "express-fileupload": "^1.1.10",
     "express-jwt": "7.7.5",
