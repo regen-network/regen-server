@@ -23,9 +23,7 @@ import passport from 'passport';
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
-import {
-  initializePassport,
-} from './middleware/passport';
+import { initializePassport } from './middleware/passport';
 import { BaseHTTPError } from './errors';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -99,17 +97,29 @@ if (process.env.SENTRY_ENABLED) {
 
 app.use(fileUpload());
 
-const SESSION_MAX_AGE_IN_HOURS = env.get("SESSION_MAX_AGE_IN_HOURS").default("24").asIntPositive();
+const SESSION_MAX_AGE_IN_HOURS = env
+  .get('SESSION_MAX_AGE_IN_HOURS')
+  .default('24')
+  .asIntPositive();
 const SESSION_MAX_AGE_IN_MILLIS = SESSION_MAX_AGE_IN_HOURS * 60 * 60 * 1000;
-const SESSION_SECRET_KEY = env.get("SESSION_SECRET_KEY").default("supersecret").asString(); 
-const _SESSION_SAMESITE = env.get("SESSION_SAMESITE").default("lax").asEnum(["true", "false", "lax", "strict", "none"]); 
-let SESSION_SAMESITE: boolean|"lax"|"strict"|"none";
-if (_SESSION_SAMESITE === "true" || _SESSION_SAMESITE === "false") {
-  SESSION_SAMESITE = _SESSION_SAMESITE === "true";
+const SESSION_SECRET_KEY = env
+  .get('SESSION_SECRET_KEY')
+  .default('supersecret')
+  .asString();
+const _SESSION_SAMESITE = env
+  .get('SESSION_SAMESITE')
+  .default('lax')
+  .asEnum(['true', 'false', 'lax', 'strict', 'none']);
+let SESSION_SAMESITE: boolean | 'lax' | 'strict' | 'none';
+if (_SESSION_SAMESITE === 'true' || _SESSION_SAMESITE === 'false') {
+  SESSION_SAMESITE = _SESSION_SAMESITE === 'true';
 } else {
   SESSION_SAMESITE = _SESSION_SAMESITE;
-} 
-const SESSION_SECURE = env.get("SESSION_SECURE").default("false").asBoolStrict(); 
+}
+const SESSION_SECURE = env
+  .get('SESSION_SECURE')
+  .default('false')
+  .asBoolStrict();
 const cookieSessionConfig = {
   name: 'session',
   keys: [SESSION_SECRET_KEY],
@@ -117,9 +127,7 @@ const cookieSessionConfig = {
   sameSite: SESSION_SAMESITE,
   secure: SESSION_SECURE,
 };
-app.use(
-  cookieSession(cookieSessionConfig),
-);
+app.use(cookieSession(cookieSessionConfig));
 
 initializePassport(app, passport);
 app.use(cors(corsOptions));
