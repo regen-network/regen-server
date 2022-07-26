@@ -10,7 +10,7 @@ export class InvalidLoginParameter extends Error {
   }
 }
 
-function KeplrStrategy() {
+function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
     let client: PoolClient;
     try {
@@ -119,7 +119,7 @@ function KeplrStrategy() {
   });
 }
 
-export function initializePassport(app, passport) {
+export function initializePassport(app, passport): void {
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -132,8 +132,8 @@ export function initializePassport(app, passport) {
     // serialize is about what will end up in the http-only session
     // cookie in terms of user data. very important to not include
     // private information here.
-    console.log(`serializeUser user: ${JSON.stringify(user)}`)
-    done(null, { id: user.id , address: user.address });
+    console.log(`serializeUser user: ${JSON.stringify(user)}`);
+    done(null, { id: user.id, address: user.address });
   });
 
   passport.deserializeUser(function (user, done) {
