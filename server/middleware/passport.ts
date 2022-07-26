@@ -3,12 +3,7 @@ import { Strategy as CustomStrategy } from 'passport-custom';
 import { verifyADR36Amino } from '@keplr-wallet/cosmos';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
-
-export class InvalidLoginParameter extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
+import { InvalidLoginParameter } from '../errors';
 
 function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
