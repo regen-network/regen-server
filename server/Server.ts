@@ -202,7 +202,7 @@ app.use(
         // );
         return settings;
       } else if (req.user && req.user.address) {
-        return { role: req.user.address }
+        return { role: req.user.address };
       } else return { role: 'app_user' };
     },
   }),
