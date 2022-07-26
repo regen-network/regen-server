@@ -2,6 +2,7 @@ import * as express from 'express';
 import passport from 'passport';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
+import { InvalidQueryParam, NotFoundError } from '../errors';
 
 export const web3auth = express.Router();
 
@@ -28,10 +29,7 @@ web3auth.get('/nonce', async (req, res, next) => {
   if (!req.query.userAddress) {
     const msg = 'Invalid or missing userAddress query parameter';
     console.error(msg);
-    const err = new Error(msg);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    err.status = 400;
+    const err = new InvalidQueryParam(msg);
     next(err);
   } else {
     let client: PoolClient;
@@ -44,10 +42,7 @@ web3auth.get('/nonce', async (req, res, next) => {
       if (result.rowCount === 0) {
         const msg = 'User not found for the given address';
         console.error(msg);
-        const err = new Error(msg);
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        err.status = 404;
+        const err = new NotFoundError(msg);
         next(err);
       } else {
         const [{ nonce }] = result.rows;
