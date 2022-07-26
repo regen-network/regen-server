@@ -42,6 +42,8 @@ const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
 const MAIN_APP_HOSTNAME_PATTERN = /[a-z0-9]+\.app\.regen\.network$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
+// docs for values in corsOptions:
+// https://github.com/expressjs/cors#configuration-options
 const corsOptions = (req, callback): void => {
   let options;
   if (process.env.NODE_ENV !== 'production') {
@@ -63,6 +65,8 @@ const corsOptions = (req, callback): void => {
       options = { origin: false }; // disable CORS for this request
     }
   }
+  // why the credentials option is added below:
+  // https://web.dev/cross-origin-resource-sharing/#share-credentials-with-cors
   options['credentials'] = true;
   callback(null, options); // callback expects two parameters: error and options
 };
@@ -120,6 +124,8 @@ const SESSION_SECURE = env
   .get('SESSION_SECURE')
   .default('false')
   .asBoolStrict();
+// docs for values in cookieSessionConfig:
+// https://github.com/expressjs/cookie-session#cookie-options
 const cookieSessionConfig = {
   name: 'session',
   keys: [SESSION_SECRET_KEY],
