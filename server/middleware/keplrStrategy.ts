@@ -26,7 +26,7 @@ export function KeplrStrategy(): CustomStrategy {
         [address],
       );
       if (account.rowCount === 1) {
-        // if yes, then we need to verify this signature accounting for the nonce.
+        // if there is an existing account, then we need to verify the signature and log them in.
         const [{ id, nonce }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
@@ -56,6 +56,7 @@ export function KeplrStrategy(): CustomStrategy {
           return done(null, false);
         }
       } else {
+        // if there was no existing account, then we need to verify the signature, create a new account, and then log them in.
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
         const data = JSON.stringify({
@@ -73,7 +74,6 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
-          // if no, then we need to create a new account, and then log them in.
           try {
             try {
               await client.query(`create role ${address} in role auth_user`);
