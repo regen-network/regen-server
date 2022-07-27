@@ -9,14 +9,9 @@ export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
     let client: PoolClient;
     try {
-      const { signature, profileType } = req.body;
+      const { signature } = req.body;
       if (!signature) {
         throw new InvalidLoginParameter('invalid signature parameter');
-      } else if (
-        !profileType ||
-        !['user', 'organization'].includes(profileType)
-      ) {
-        throw new InvalidLoginParameter('invalid profileType parameter');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       // is there an existing account for the given address?
@@ -74,6 +69,7 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
+          const DEFAULT_PROFILE_TYPE = 'user';
           try {
             try {
               await client.query(`create role ${address} in role auth_user`);
@@ -84,7 +80,7 @@ export function KeplrStrategy(): CustomStrategy {
             }
             await client.query(
               'select * from private.create_new_account($1, $2)',
-              [address, profileType],
+              [address, DEFAULT_PROFILE_TYPE],
             );
           } catch (err) {
             if (
