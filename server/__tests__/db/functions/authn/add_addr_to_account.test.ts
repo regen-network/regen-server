@@ -8,11 +8,12 @@ import {
 const walletAddr = 'regen123456789';
 
 describe('add_addr_to_account', () => {
-  it('does not allow user to add an addr that already has an association', async () => {
-    await withAuthUserDb(walletAddr, async client => {
+  it('does not allow adding an addr that already has an association', async () => {
+    await withRootDb(async client => {
+      const accountId = await createAccount(client, walletAddr);
       expect(
         client.query(
-          `select * from add_addr_to_account('${walletAddr}', 'user')`,
+          `select * from private.add_addr_to_account('${accountId}', '${walletAddr}', 'user')`,
         ),
       ).rejects.toThrow('this addr already belongs to this account');
     });
@@ -21,23 +22,24 @@ describe('add_addr_to_account', () => {
     await withRootDb(async client => {
       const user1WalletAddr = 'regen123';
       const user2WalletAddr = 'regen456';
-      await createAccount(client, user1WalletAddr);
+      const accountId = await createAccount(client, user1WalletAddr);
       await createAccount(client, user2WalletAddr);
-      await becomeUser(client, user1WalletAddr);
       expect(
         client.query(
-          `select * from add_addr_to_account('${user2WalletAddr}', 'user')`,
+          `select * from private.add_addr_to_account('${accountId}', '${user2WalletAddr}', 'user')`,
         ),
       ).rejects.toThrow('this addr belongs to a different account');
     });
   });
-  it('allows the user to add a new, unused addr', async () => {
-    await withAuthUserDb(walletAddr, async client => {
+  it('allows adding a new, unused addr', async () => {
+    await withRootDb(async client => {
+      const accountId = await createAccount(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       const result = await client.query(
-        `select * from add_addr_to_account('${newWalletAddr}', 'user')`,
+        `select * from private.add_addr_to_account('${accountId}', '${newWalletAddr}', 'user')`,
       );
       expect(result.rowCount).toBe(1);
+      await becomeUser(client, walletAddr);
       const addrs = await client.query('select * from get_current_addrs()');
       expect(addrs.rowCount).toBe(2);
     });

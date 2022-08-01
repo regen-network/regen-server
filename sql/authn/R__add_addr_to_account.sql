@@ -1,16 +1,15 @@
-DROP FUNCTION IF EXISTS add_addr_to_account;
-CREATE OR REPLACE FUNCTION add_addr_to_account (addr text, v_party_type party_type)
+DROP FUNCTION IF EXISTS private.add_addr_to_account;
+CREATE OR REPLACE FUNCTION private.add_addr_to_account (account_id uuid, addr text, v_party_type party_type)
     RETURNS void
     AS $$
 DECLARE
-    v_account_id uuid;
+    v_account_id uuid = account_id;
     v_addr text = addr;
     can_be_added boolean;
     v_wallet_id uuid;
     v_party_id uuid;
     v_current_user name;
 BEGIN
-    SELECT * INTO v_account_id FROM get_current_account();
     RAISE LOG 'v_account_id %', v_account_id;
     can_be_added := public.addr_can_be_added (v_account_id, v_addr);
     IF can_be_added THEN
