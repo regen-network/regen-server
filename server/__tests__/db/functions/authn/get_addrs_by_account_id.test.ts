@@ -19,6 +19,11 @@ describe('get_addrs_by_account_id', () => {
       // we should be able to look up all of these addresses.
       const result = await client.query(`select * from get_current_addrs()`);
       expect(result.rowCount).toBe(2);
+      // assert that addr and profile_type should be present in data from get_current_addrs
+      const colsRetrieved = result.fields.map(x => x.name);
+      expect(colsRetrieved).toEqual(
+        expect.arrayContaining(['addr', 'profile_type']),
+      );
     });
   });
 });
