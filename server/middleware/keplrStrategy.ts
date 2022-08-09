@@ -5,7 +5,7 @@ import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { InvalidLoginParameter } from '../errors';
 
-function genArbitraryData(nonce: string) {
+function genArbitraryData(nonce: string): string {
   const data = JSON.stringify({
     title: 'Regen Network Login',
     description:
@@ -59,7 +59,7 @@ export function KeplrStrategy(): CustomStrategy {
         // if there was no existing account, then we need to verify the signature, create a new account, and then log them in.
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
-        const data = genArbitraryData('') //  an empty string since this is an account creation login.. 
+        const data = genArbitraryData(''); //  an empty string since this is an account creation login..
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
           'regen',
