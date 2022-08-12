@@ -6,5 +6,6 @@ module.exports = function () {
       user: process.env.FLYWAY_USER || 'postgres',
       password: process.env.FLYWAY_PASSWORD || 'postgres',
     },
+    version: '9.0.4',
   };
 };
