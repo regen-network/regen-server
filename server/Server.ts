@@ -2,7 +2,7 @@ import express from 'express';
 import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 // To get this many-to-many plugin import statement working, we
 // needed to add esModuleInterop to the tsconfig compiler settings.
 // Per this issue: https://github.com/graphile-contrib/pg-many-to-many/issues/64
@@ -98,6 +98,7 @@ app.use(
   createProxyMiddleware({
     target: process.env.LEDGER_TENDERMINT_RPC,
     pathRewrite: { '^/ledger': '/' },
+    onProxyReq: fixRequestBody,
   }),
 );
 
