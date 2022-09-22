@@ -20,24 +20,26 @@ class InvalidCacheBackendError extends Error {
 }
 
 export default function imageOptimizer(): express.Router {
-  let imageAdapter: S3Adapter|HttpAdapter;
+  let imageAdapter: S3Adapter | HttpAdapter;
   let imageCache = null;
   const imageCachingBackend = process.env.IMAGE_CACHING_BACKEND || 'postgres';
+  const redisUrl = process.env.REDISCLOUD_URL;
+  let redis: Redis;
+  let keyvRedis: KeyvAnyRedis;
   switch (imageCachingBackend) {
-    case "postgres":
-      console.log("using postgres as the backend for image caching")
-      console.log("the cache info will be stored in the 'keyv' table")
-      imageCache = new Keyv(process.env.DATABASE_URL, { compression: new KeyvBrotli() });
+    case 'postgres':
+      console.log('using postgres as the backend for image caching');
+      console.log("the cache info will be stored in the 'keyv' table");
+      imageCache = new Keyv(process.env.DATABASE_URL, {
+        compression: new KeyvBrotli(),
+      });
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
       });
       break;
-    case "redis":
-      const redisUrl = process.env.REDISCLOUD_URL;
-      console.log("using redis as the backend for image caching")
+    case 'redis':
+      console.log('using redis as the backend for image caching');
       console.log(redisUrl);
-      let redis: Redis;
-      let keyvRedis: KeyvAnyRedis;
       if (redisUrl.startsWith('rediss://')) {
         console.log('Attempting to connect to Redis with TLS..');
         const options = { tls: { rejectUnauthorized: false } };
@@ -58,14 +60,20 @@ export default function imageOptimizer(): express.Router {
       redis.on('error', function (err) {
         console.error('Error from ioredis.Redis:', err);
       });
-      imageCache = new Keyv({ store: keyvRedis, namespace: 'image', compression: new KeyvBrotli() });
+      imageCache = new Keyv({
+        store: keyvRedis,
+        namespace: 'image',
+        compression: new KeyvBrotli(),
+      });
       // Handle DB connection errors
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
       });
       break;
     default:
-      throw new InvalidCacheBackendError(`${imageCachingBackend} is not supported, use redis or postgres.`)
+      throw new InvalidCacheBackendError(
+        `${imageCachingBackend} is not supported, use redis or postgres.`,
+      );
   }
 
   if (process.env.AWS_ACCESS_KEY_ID) {
