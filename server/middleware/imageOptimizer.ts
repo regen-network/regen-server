@@ -3,6 +3,7 @@ import { expressSharp, HttpAdapter, S3Adapter } from 'express-sharp';
 import { KeyvAnyRedis } from 'keyv-anyredis';
 import Keyv from 'keyv';
 import Redis from 'ioredis';
+import KeyvBrotli from '@keyv/compress-brotli';
 
 class InvalidRedisURLError extends Error {
   constructor(message) {
@@ -26,7 +27,7 @@ export default function imageOptimizer(): express.Router {
     case "postgres":
       console.log("using postgres as the backend for image caching")
       console.log("the cache info will be stored in the 'keyv' table")
-      imageCache = new Keyv(process.env.DATABASE_URL);
+      imageCache = new Keyv(process.env.DATABASE_URL, { compression: new KeyvBrotli() });
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
       });
@@ -57,7 +58,7 @@ export default function imageOptimizer(): express.Router {
       redis.on('error', function (err) {
         console.error('Error from ioredis.Redis:', err);
       });
-      imageCache = new Keyv({ store: keyvRedis, namespace: 'image' });
+      imageCache = new Keyv({ store: keyvRedis, namespace: 'image', compression: new KeyvBrotli() });
       // Handle DB connection errors
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
