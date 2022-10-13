@@ -223,9 +223,6 @@ app.use(
   }),
 );
 
-// The error handler must be before any other error middleware and after all controllers
-app.use(Sentry.Handlers.errorHandler());
-
 app.use((err, req, res, next) => {
   console.error(err.stack);
   const { params, query, body, path } = req;
@@ -242,6 +239,11 @@ app.use((err, req, res, next) => {
     next(err);
   }
 });
+
+// this is the last error handler to register we only want the
+// uncaught exceptions to be sent to sentry. otherwise we end
+// up with a lot of noise in sentry.
+app.use(Sentry.Handlers.errorHandler());
 
 const port = process.env.PORT || 5000;
 
