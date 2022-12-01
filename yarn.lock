@@ -629,9 +629,9 @@
   integrity sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==
 
 "@keyv/compress-brotli@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@keyv/compress-brotli/-/compress-brotli-1.0.0.tgz#ee64ad122c15025cb6d5499e08231432bb0f6866"
-  integrity sha512-d6IajunwmMzGdnzwJInwtif7zvWVLeSNx/QGyX8DbSPmx0bqpTjxDkBIf5sG4XcHO8ieVG7oU8s9yHfea3Z/ZQ==
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@keyv/compress-brotli/-/compress-brotli-1.1.1.tgz#494eb595e7ccd94027e6a476f1965d3669f62585"
+  integrity sha512-lJtUqjAT4q9CT6l5lsXOPlRh9+tYqlinNMgHx+o5La2nUhwaC4AxJxm4PIhFC/B8sWAQeDXjPXaqGEIF2yCwOQ==
   dependencies:
     compress-brotli "^1.3.8"
 
