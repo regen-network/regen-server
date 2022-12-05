@@ -60,6 +60,17 @@ Based on `server/.env.example`, create some `server/.env` file with appropriate 
 2. Start a development server with `yarn dev`. This runs in parallel the node `server` and watches/builds code in the `worker` (used for sending emails at the moment).
 3. Start coding!!
 
+### Alternative method for starting server
+
+This method is useful if you don't want to run the watch process.
+The tradeoff is that you must manually restart the command after making code changes.
+The example below shows how to increase the log verbosity for certain parts of the app.
+
+```
+$ cd registry-server
+$ DEBUG='express:*,express-sharp*' yarn start
+```
+
 ## Database
 
 ### Configuring postgres logging

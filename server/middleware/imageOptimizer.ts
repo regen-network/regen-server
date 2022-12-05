@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as express from 'express';
 import { expressSharp, HttpAdapter, S3Adapter } from 'express-sharp';
 import { KeyvAnyRedis } from 'keyv-anyredis';
@@ -30,9 +31,25 @@ export default function imageOptimizer(): express.Router {
     case 'postgres':
       console.log('using postgres as the backend for image caching');
       console.log("the cache info will be stored in the 'keyv' table");
-      imageCache = new Keyv(process.env.DATABASE_URL, {
-        compression: new KeyvBrotli(),
-      });
+      // the production postgres database requires an ssl certificate to
+      // connect to it. whereas the staging database does not. arguably,
+      // we might want to impose the same restriction in the staging env
+      // for parity and less surprise
+      if (process.env.NODE_ENV === 'production') {
+        console.log('connecting to postgres for image caching with ssl...');
+        imageCache = new Keyv(process.env.DATABASE_URL, {
+          compression: new KeyvBrotli(),
+          ssl: {
+            ca: fs.readFileSync(
+              `${__dirname}/../config/rds-combined-ca-bundle.pem`,
+            ),
+          },
+        });
+      } else {
+        imageCache = new Keyv(process.env.DATABASE_URL, {
+          compression: new KeyvBrotli(),
+        });
+      }
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
       });

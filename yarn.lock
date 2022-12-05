@@ -642,6 +642,13 @@
   dependencies:
     pg "8.8.0"
 
+"@keyv/postgres@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/@keyv/postgres/-/postgres-1.4.1.tgz#f100a8b3c83adf01f04b4a04df45661d225433ef"
+  integrity sha512-aMfMqm+Sl96V/praFWtYl3KNexgs9lWNcJUNm464U9PShXdUVY4smidNlnl+I4l6Kr9jetIeX0AQJa7kiCKp7w==
+  dependencies:
+    pg "8.8.0"
+
 "@keyv/redis@^2.1.2":
   version "2.3.6"
   resolved "https://registry.yarnpkg.com/@keyv/redis/-/redis-2.3.6.tgz#462991af60b5b35af4e9ac8d05ad99a08ae2cfc2"
