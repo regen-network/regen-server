@@ -34,6 +34,7 @@ const REGISTRY_REDWOOD_HOSTNAME_PATTERN =
 const REGISTRY_HAMBACH_HOSTNAME_PATTERN =
   /hambach--regen-registry\.netlify\.app$/;
 const REGISTRY_V4_HOSTNAME_PATTERN = /v4--regen-registry\.netlify\.app$/;
+const MAIN_PREVIEW_HOSTNAME_PATTERN = /\d+--regen-registry\.netlify\.app$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
 const corsOptions = (req, callback): void => {
@@ -50,6 +51,7 @@ const corsOptions = (req, callback): void => {
         originURL.hostname.match(REGISTRY_REDWOOD_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_HAMBACH_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_V4_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))
     ) {
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
