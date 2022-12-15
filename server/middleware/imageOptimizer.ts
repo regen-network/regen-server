@@ -30,11 +30,16 @@ export default function imageOptimizer(): express.Router {
   switch (imageCachingBackend) {
     case 'postgres':
       console.log('using postgres as the backend for image caching');
-      console.log("the cache info will be stored in the 'keyv' table");
-      // the production postgres database requires an ssl certificate to
-      // connect to it. whereas the staging database does not. arguably,
-      // we might want to impose the same restriction in the staging env
-      // for parity and less surprise
+      console.log(
+        "the cache info will be stored in the 'utilities.keyv' table",
+      );
+      // the production postgres database requires a ca certificate in order to
+      // connect to it. whereas the staging database does not require
+      // verify-ca. arguably, we might want to impose the same restriction in
+      // the staging env for parity and less surprise.
+      //
+      // more info available here:
+      // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html
       if (process.env.NODE_ENV === 'production') {
         console.log('connecting to postgres for image caching with ssl...');
         imageCache = new Keyv(process.env.DATABASE_URL, {
@@ -44,10 +49,12 @@ export default function imageOptimizer(): express.Router {
               `${__dirname}/../config/rds-combined-ca-bundle.pem`,
             ),
           },
+          table: 'utilities.keyv',
         });
       } else {
         imageCache = new Keyv(process.env.DATABASE_URL, {
           compression: new KeyvBrotli(),
+          table: 'utilities.keyv',
         });
       }
       imageCache.on('error', function (err) {
