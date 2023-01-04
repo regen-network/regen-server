@@ -7,14 +7,14 @@ import Redis from 'ioredis';
 import KeyvBrotli from '@keyv/compress-brotli';
 
 class InvalidRedisURLError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = 'InvalidRedisURLError';
   }
 }
 
 class InvalidCacheBackendError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = 'InvalidCacheBackendError';
   }
