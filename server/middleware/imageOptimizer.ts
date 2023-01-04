@@ -33,10 +33,11 @@ export default function imageOptimizer(): express.Router {
       console.log(
         "the cache info will be stored in the 'utilities.keyv' table",
       );
-      // the production postgres database requires a ca certificate in order to
-      // connect to it. whereas the staging database does not require
-      // verify-ca. arguably, we might want to impose the same restriction in
-      // the staging env for parity and less surprise.
+      // the staging and production postgres database requires an SSL connection.
+      // therefore we must include ssl options to the Keyv constructor.
+      //
+      // you can view our database configurations in the parameter group for our databases in AWS RDS.
+      // i.e. you will be able to see client SSL settings that we are using.
       //
       // more info available here:
       // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html
