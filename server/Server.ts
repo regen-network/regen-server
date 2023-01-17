@@ -202,6 +202,7 @@ import metadataGraph from './routes/metadata-graph';
 import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
 import { web3auth } from './routes/web3auth';
+import { csrfRouter } from './routes/csrf';
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -211,6 +212,7 @@ app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
 app.use('/web3auth', web3auth);
+app.use(csrfRouter);
 
 const swaggerOptions = {
   definition: {
@@ -247,6 +249,9 @@ app.use((err, req, res, next) => {
   console.error('req info:', { params, query, body, path });
   next(err);
 });
+
+import { invalidCsrfTokenError } from './middleware/csrf';
+
 app.use((err, req, res, next) => {
   const errResponse = { error: err.message };
   if (err instanceof BaseHTTPError) {
@@ -255,6 +260,8 @@ app.use((err, req, res, next) => {
     res.status(404).send(errResponse);
   } else if (err instanceof InvalidJSONLD) {
     res.status(400).send(errResponse);
+  } else if (err == invalidCsrfTokenError) {
+    res.status(403).send(errResponse);
   } else {
     next(err);
   }
