@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as express from 'express';
 import { expressSharp, HttpAdapter, S3Adapter } from 'express-sharp';
 import { KeyvAnyRedis } from 'keyv-anyredis';
@@ -6,14 +7,14 @@ import Redis from 'ioredis';
 import KeyvBrotli from '@keyv/compress-brotli';
 
 class InvalidRedisURLError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = 'InvalidRedisURLError';
   }
 }
 
 class InvalidCacheBackendError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = 'InvalidCacheBackendError';
   }
@@ -29,10 +30,34 @@ export default function imageOptimizer(): express.Router {
   switch (imageCachingBackend) {
     case 'postgres':
       console.log('using postgres as the backend for image caching');
-      console.log("the cache info will be stored in the 'keyv' table");
-      imageCache = new Keyv(process.env.DATABASE_URL, {
-        compression: new KeyvBrotli(),
-      });
+      console.log(
+        "the cache info will be stored in the 'utilities.keyv' table",
+      );
+      // the staging and production postgres database requires an SSL connection.
+      // therefore we must include ssl options to the Keyv constructor.
+      //
+      // you can view our database configurations in the parameter group for our databases in AWS RDS.
+      // i.e. you will be able to see client SSL settings that we are using.
+      //
+      // more info available here:
+      // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html
+      if (process.env.NODE_ENV === 'production') {
+        console.log('connecting to postgres for image caching with ssl...');
+        imageCache = new Keyv(process.env.DATABASE_URL, {
+          compression: new KeyvBrotli(),
+          ssl: {
+            ca: fs.readFileSync(
+              `${__dirname}/../config/rds-combined-ca-bundle.pem`,
+            ),
+          },
+          table: 'utilities.keyv',
+        });
+      } else {
+        imageCache = new Keyv(process.env.DATABASE_URL, {
+          compression: new KeyvBrotli(),
+          table: 'utilities.keyv',
+        });
+      }
       imageCache.on('error', function (err) {
         console.log('Error from keyv.Keyv:', err);
       });
