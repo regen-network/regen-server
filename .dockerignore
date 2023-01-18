@@ -1,0 +1,14 @@
+server/.postgres
+**/.env
+.gitignore
+**/*.sw*
+.editorconfig
+.gitignore
+.git
+.github
+.gitlab-ci.yml
+.idea
+.nvmrc
+.prettierrc.json
+node_modules
+yarn-error.log

@@ -11,8 +11,15 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./.postgres:/var/lib/postgresql/data
-      # - ./scripts:/docker-entrypoint-initdb.d
+      - ./server/.postgres:/var/lib/postgresql/data
+      # - ./server/scripts:/docker-entrypoint-initdb.d
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env-test
+    platform: linux/x86_64
   redis:
     image: redis:latest
     restart: always

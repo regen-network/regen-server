@@ -145,22 +145,26 @@ app.use(express.json());
 
 app.use('/image', imageOptimizer());
 
-app.use(
-  '/ledger',
-  createProxyMiddleware({
-    target: process.env.LEDGER_TENDERMINT_RPC,
-    pathRewrite: { '^/ledger': '/' },
-    onProxyReq: fixRequestBody,
-  }),
-);
+if (process.env.LEDGER_TENDERMINT_RPC) {
+  app.use(
+    '/ledger',
+    createProxyMiddleware({
+      target: process.env.LEDGER_TENDERMINT_RPC,
+      pathRewrite: { '^/ledger': '/' },
+      onProxyReq: fixRequestBody,
+    }),
+  );
+}
 
-app.use(
-  '/ledger-rest',
-  createProxyMiddleware({
-    target: process.env.LEDGER_REST_ENDPOINT,
-    pathRewrite: { '^/ledger-rest': '/' },
-  }),
-);
+if (process.env.LEDGER_REST_ENDPOINT) {
+  app.use(
+    '/ledger-rest',
+    createProxyMiddleware({
+      target: process.env.LEDGER_REST_ENDPOINT,
+      pathRewrite: { '^/ledger-rest': '/' },
+    }),
+  );
+}
 
 app.use(
   postgraphile(pgPool, 'public', {
