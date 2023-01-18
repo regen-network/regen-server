@@ -63,4 +63,16 @@ jobs:
       - run: corepack enable
       - run: yarn
       - run: yarn migrate
+      - run: yarn build
+      - name: "start the registry-server"
+        env:
+          MAILERLITE_API_KEY: foobar
+          AIRTABLE_API_KEY: foobar
+          AUTH0_DOMAIN: foobar
+          AUTH0_CLIENT_ID: foobar
+          AUTH0_CLIENT_SECRET: foobar
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
+          CSRF_SECRET: foobar
+          CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
+        run: yarn serve &
       - run: yarn test
