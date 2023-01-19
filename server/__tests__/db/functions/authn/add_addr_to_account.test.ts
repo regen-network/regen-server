@@ -1,9 +1,4 @@
-import {
-  createAccount,
-  withRootDb,
-  withAuthUserDb,
-  becomeUser,
-} from '../../helpers';
+import { createAccount, withRootDb, becomeUser } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
