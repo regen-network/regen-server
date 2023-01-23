@@ -3,17 +3,23 @@ import passport from 'passport';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { InvalidQueryParam, NotFoundError } from '../errors';
+import { doubleCsrfProtection } from '../middleware/csrf';
 
 export const web3auth = express.Router();
 
-web3auth.use('/login', passport.authenticate('keplr'), (req, res) => {
-  return res.send({
-    user: req.user,
-    message: 'You have been signed in via keplr!',
-  });
-});
+web3auth.use(
+  '/login',
+  doubleCsrfProtection,
+  passport.authenticate('keplr'),
+  (req, res) => {
+    return res.send({
+      user: req.user,
+      message: 'You have been signed in via keplr!',
+    });
+  },
+);
 
-web3auth.post('/logout', (req, res) => {
+web3auth.post('/logout', doubleCsrfProtection, (req, res) => {
   req.logout();
   return res.send({
     message: 'You have been logged out!',
