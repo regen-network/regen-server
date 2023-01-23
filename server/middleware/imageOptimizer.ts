@@ -47,7 +47,7 @@ export default function imageOptimizer(): express.Router {
           compression: new KeyvBrotli(),
           ssl: {
             ca: fs.readFileSync(
-              `${__dirname}/../config/rds-combined-ca-bundle.pem`,
+              `${__dirname}/../../config/rds-combined-ca-bundle.pem`,
             ),
           },
           table: 'utilities.keyv',
