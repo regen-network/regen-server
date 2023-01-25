@@ -398,7 +398,7 @@ export async function createAccount(
   walletAddr: string,
   partyType: 'user' | 'organization' = 'user',
 ): Promise<string> {
-  await client.query(`create role ${walletAddr} in role auth_user`);
+  await client.query('select private.create_auth_user($1)', [walletAddr]);
   const result = await client.query(
     `select * from private.create_new_account('${walletAddr}', '${partyType}') as account_id`,
   );
