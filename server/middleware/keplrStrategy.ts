@@ -72,7 +72,9 @@ export function KeplrStrategy(): CustomStrategy {
           const DEFAULT_PROFILE_TYPE = 'user';
           try {
             try {
-              await client.query(`create role ${address} in role auth_user`);
+              await client.query('select private.create_auth_user($1)', [
+                address,
+              ]);
             } catch (err) {
               if (err.message !== `role "${address}" already exists`) {
                 throw err;
