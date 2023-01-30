@@ -8,8 +8,6 @@ csrfRouter.get('/csrfToken', (req, res) => {
   return res.send({ token });
 });
 
-csrfRouter.post('/csrfToken', doubleCsrfProtection, (req, res) => {
-  console.log(req);
-  console.log(res);
+csrfRouter.post('/csrfToken', doubleCsrfProtection, (_, res) => {
   return res.status(200).send();
 });
