@@ -26,11 +26,26 @@ import imageOptimizer from './middleware/imageOptimizer';
 import { initializePassport } from './middleware/passport';
 import { BaseHTTPError } from './errors';
 
+import { pgPool } from 'common/pool';
+
+import mailerlite from './routes/mailerlite';
+import contact from './routes/contact';
+import buyersInfo from './routes/buyers-info';
+import stripe from './routes/stripe';
+import auth from './routes/auth';
+import recaptcha from './routes/recaptcha';
+import files from './routes/files';
+import metadataGraph from './routes/metadata-graph';
+import { MetadataNotFound } from 'common/metadata_graph';
+import { InvalidJSONLD } from 'iri-gen/iri-gen';
+import { web3auth } from './routes/web3auth';
+import { csrfRouter } from './routes/csrf';
+
+import { invalidCsrfTokenError } from './middleware/csrf';
+
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
-
-import { pgPool } from 'common/pool';
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;
@@ -194,19 +209,6 @@ app.use(
     },
   }),
 );
-
-import mailerlite from './routes/mailerlite';
-import contact from './routes/contact';
-import buyersInfo from './routes/buyers-info';
-import stripe from './routes/stripe';
-import auth from './routes/auth';
-import recaptcha from './routes/recaptcha';
-import files from './routes/files';
-import metadataGraph from './routes/metadata-graph';
-import { MetadataNotFound } from 'common/metadata_graph';
-import { InvalidJSONLD } from 'iri-gen/iri-gen';
-import { web3auth } from './routes/web3auth';
-import { csrfRouter } from './routes/csrf';
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -253,8 +255,6 @@ app.use((err, req, res, next) => {
   console.error('req info:', { params, query, body, path });
   next(err);
 });
-
-import { invalidCsrfTokenError } from './middleware/csrf';
 
 app.use((err, req, res, next) => {
   const errResponse = { error: err.message };
