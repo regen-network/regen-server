@@ -6,6 +6,8 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -19,5 +21,6 @@ module.exports = {
     'no-console': 'off',
     'no-useless-escape': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
+    'import/first': 2,
   },
 };
