@@ -6,6 +6,8 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -24,5 +26,6 @@ module.exports = {
         allowExpressions: true,
       },
     ],
+    'import/first': 2,
   },
 };
