@@ -10,7 +10,10 @@ describe('web3auth logout endpoint', () => {
   });
 
   it('does not return 403 if double csrf is used', async () => {
-    const req = await CSRFRequest('http://localhost:5000/web3auth/logout');
+    const req = await CSRFRequest(
+      'http://localhost:5000/web3auth/logout',
+      'POST',
+    );
     const resp = await fetch(req);
     expect(resp.status !== 403).toBe(true);
   });

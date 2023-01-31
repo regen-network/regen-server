@@ -6,7 +6,7 @@
     "@cosmjs/amino": "^0.28.11",
     "@cosmjs/crypto": "^0.28.11",
     "@graphile-contrib/pg-many-to-many": "^1.0.1",
-    "@keplr-wallet/cosmos": "^0.10.13",
+    "@keplr-wallet/cosmos": "^0.11.38",
     "@keyv/compress-brotli": "^1.0.0",
     "@keyv/postgres": "^1.3.1",
     "@keyv/redis": "^2.1.2",

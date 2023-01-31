@@ -9,13 +9,17 @@ export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   return { cookie, token };
 }
 
-export async function CSRFRequest(endpoint: string): Promise<Request> {
+export async function CSRFRequest(
+  endpoint: string,
+  method: string,
+): Promise<Request> {
   const { cookie, token } = await fetchCsrf();
   const request = new Request(endpoint, {
-    method: 'POST',
+    method: method,
     headers: {
       'X-CSRF-TOKEN': token,
       Cookie: cookie,
+      'Content-Type': 'application/json',
     },
   });
   return request;
