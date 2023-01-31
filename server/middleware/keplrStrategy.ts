@@ -5,7 +5,7 @@ import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { InvalidLoginParameter } from '../errors';
 
-function genArbitraryData(nonce: string): string {
+export function genArbitraryData(nonce: string): string {
   const data = JSON.stringify({
     title: 'Regen Network Login',
     description:
@@ -20,16 +20,19 @@ export function KeplrStrategy(): CustomStrategy {
     let client: PoolClient;
     try {
       const { signature } = req.body;
+      console.log('signature', signature);
       if (!signature) {
         throw new InvalidLoginParameter('invalid signature parameter');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
+      console.log('address', address);
       // is there an existing account for the given address?
       client = await pgPool.connect();
       const account = await client.query(
         'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
         [address],
       );
+      console.log('account', account);
       if (account.rowCount === 1) {
         // if there is an existing account, then we need to verify the signature and log them in.
         const [{ id, nonce }] = account.rows;

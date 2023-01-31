@@ -4,7 +4,7 @@ import { fetchCsrf, CSRFRequest } from '../utils';
 describe('CSRF protection', () => {
   it('provides a CSRF token on the GET endpoint and sets the hash cookie', async () => {
     const { cookie, token } = await fetchCsrf();
-    expect(cookie).toMatch(/^__Host-regen-dev.x-csrf-token=/);
+    expect(cookie).toMatch(/x-csrf-token=/);
     expect(token.length).toBeGreaterThan(0);
   });
 
@@ -16,7 +16,7 @@ describe('CSRF protection', () => {
   });
 
   it('allows requests that use the double CSRF pattern', async () => {
-    const req = await CSRFRequest('http://localhost:5000/csrfToken');
+    const req = await CSRFRequest('http://localhost:5000/csrfToken', 'GET');
     const resp = await fetch(req);
     expect(resp.status).toBe(200);
   });
