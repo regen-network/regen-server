@@ -28,6 +28,14 @@ import { BaseHTTPError } from './errors';
 
 import { pgPool } from 'common/pool';
 
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
+
+/* eslint-disable import/first */
+// we disable this lint rule for these import statements
+// w/o this the application does not start locally
+// these imports require env vars which are available only after dotenv.config is called
 import mailerlite from './routes/mailerlite';
 import contact from './routes/contact';
 import buyersInfo from './routes/buyers-info';
@@ -42,10 +50,8 @@ import { web3auth } from './routes/web3auth';
 import { csrfRouter } from './routes/csrf';
 
 import { invalidCsrfTokenError } from './middleware/csrf';
+/* eslint-enable import/first */
 
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config();
-}
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;
