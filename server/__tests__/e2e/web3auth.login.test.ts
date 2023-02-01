@@ -1,15 +1,40 @@
 import fetch from 'node-fetch';
-import { CSRFRequest } from '../utils';
 import {
-  Bech32Address,
-  makeADR36AminoSignDoc,
-  serializeSignDoc,
-  encodeSecp256k1Signature,
-} from '@keplr-wallet/cosmos';
-import { PrivKeySecp256k1, Hash } from '@keplr-wallet/crypto';
-import { genArbitraryData } from '../../middleware/keplrStrategy';
+  CSRFRequest,
+  performLogin,
+  loginResponseAssertions,
+  parseSessionCookies,
+} from '../utils';
+import { Bech32Address } from '@keplr-wallet/cosmos';
+import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
+
+const TEST_ACCOUNT_MNEMONIC =
+  'culture photo express fantasy draft world dress waste side mask page valve';
+
+async function setUpTestAccount(mnemonic: string): Promise<void> {
+  const privKey = new PrivKeySecp256k1(
+    Mnemonic.generateWalletFromMnemonic(mnemonic),
+  );
+  const pubKey = privKey.getPubKey();
+  const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
+
+  const resp = await fetch(
+    `http://localhost:5000/web3auth/nonce?userAddress=${signer}`,
+  );
+  // if the nonce was not found then the account does not yet exist
+  if (resp.status === 404) {
+    // create the account if it did not exist
+    const emptyNonce = '';
+    const loginResp = await performLogin(privKey, pubKey, signer, emptyNonce);
+    expect(loginResp.status).toBe(200);
+  }
+}
 
 describe('web3auth login endpoint', () => {
+  beforeAll(async () => {
+    await setUpTestAccount(TEST_ACCOUNT_MNEMONIC);
+  });
+
   it('returns 403 if double csrf is not used', async () => {
     const resp = await fetch('http://localhost:5000/web3auth/login', {
       method: 'POST',
@@ -37,46 +62,71 @@ describe('web3auth login endpoint', () => {
     expect(resp.status).toBe(500);
   });
 
-  // note: if we need a key pair that comes from a mnemonic:
-  // https://github.com/chainapsis/keplr-wallet/blob/c6ea69512ee7487fe3dcd9ce89f928a96dbf44a2/packages/crypto/src/mnemonic.spec.ts#L6-L11
   it('authenticates a new user successfully and creates a session...', async () => {
     // set up a key pair and sign the required login transaction..
     const privKey = PrivKeySecp256k1.generateRandomKey();
     const pubKey = privKey.getPubKey();
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-    const data = genArbitraryData('');
-    const signDoc = makeADR36AminoSignDoc(signer, data);
-    const msg = serializeSignDoc(signDoc);
-    const signatureBytes = privKey.signDigest32(Hash.sha256(msg));
-    const signature = encodeSecp256k1Signature(
-      pubKey.toBytes(false),
-      signatureBytes,
-    );
+    // use an empty nonce since this is a request to create a new user account
+    const nonce = '';
 
-    // send the request to login..
-    const req = await CSRFRequest(
-      'http://localhost:5000/web3auth/login',
-      'POST',
-    );
-    const resp = await fetch(req, {
-      body: JSON.stringify({ signature: signature }),
+    const loginResp = await performLogin(privKey, pubKey, signer, nonce);
+    loginResponseAssertions(loginResp, signer);
+
+    const cookie = parseSessionCookies(loginResp);
+
+    // check that an authenticated user use an authenticated graphql query
+    const resp = await fetch('http://localhost:5000/graphql', {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query:
+          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+      }),
     });
+    const data = await resp.json();
+    // expect that the response contains the users current addresses
+    // because this test is for a new user they should only have one address
+    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+      { addr: signer },
+    ]);
+  });
 
-    expect(resp.status).toBe(200);
+  it('authenticates an existing user successfully and creates a session...', async () => {
+    const privKey = new PrivKeySecp256k1(
+      Mnemonic.generateWalletFromMnemonic(TEST_ACCOUNT_MNEMONIC),
+    );
+    const pubKey = privKey.getPubKey();
+    const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
+    expect(signer).toBe('regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm');
+    const nonceResp = await fetch(
+      `http://localhost:5000/web3auth/nonce?userAddress=${signer}`,
+    );
+    expect(nonceResp.status).toBe(200);
+    const { nonce } = await nonceResp.json();
 
-    // these assertions on the cookies check for important fields that should be set
-    // we expect that a session cookie is created here
-    // this session cookie is where the user session is stored
-    const cookies = resp.headers.get('set-cookie');
-    expect(cookies).toMatch(/session=(.*?);/);
-    expect(cookies).toMatch(/session.sig=(.*?);/);
-    expect(cookies).toMatch(/expires=(.*?);/);
+    const loginResp = await performLogin(privKey, pubKey, signer, nonce);
+    loginResponseAssertions(loginResp, signer);
 
-    // assertions on the base64 encoded user session..
-    const sessionString = cookies.match(/session=(.*?);/)[1];
-    const sessionData = JSON.parse(atob(sessionString));
-    expect(sessionData).toHaveProperty('passport.user.id');
-    expect(sessionData).toHaveProperty('passport.user.address');
-    expect(sessionData.passport.user.address).toBe(signer);
+    const cookie = parseSessionCookies(loginResp);
+
+    const resp = await fetch('http://localhost:5000/graphql', {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query:
+          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+      }),
+    });
+    const data = await resp.json();
+    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+      { addr: signer },
+    ]);
   });
 });
