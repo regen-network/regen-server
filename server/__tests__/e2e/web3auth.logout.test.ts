@@ -11,13 +11,13 @@ describe('web3auth logout endpoint', () => {
     expect(resp.status).toBe(403);
   });
 
-  it('does not return 403 if double csrf is used', async () => {
+  it('returns 401 if request is unauthorized', async () => {
     const req = await CSRFRequest(
       'http://localhost:5000/web3auth/logout',
       'POST',
     );
     const resp = await fetch(req);
-    expect(resp.status !== 403).toBe(true);
+    expect(resp.status).toBe(401);
   });
 
   it('closes the user session and a user can no longer make authd requests', async () => {
@@ -30,7 +30,6 @@ describe('web3auth logout endpoint', () => {
 
     const loginResp = await performLogin(privKey, pubKey, signer, nonce);
 
-    // TODO: mark the logout endpoint as "login required"
     const logoutReq = await CSRFRequest(
       'http://localhost:5000/web3auth/logout',
       'POST',
@@ -53,6 +52,12 @@ describe('web3auth logout endpoint', () => {
 
     // now we pass the combined headers for the logout request
     const logoutResp = await fetch(logoutReq, { headers: headers });
+    expect(logoutResp.status).toBe(200);
+    const logoutRespData = await logoutResp.json();
+    expect(logoutRespData).toHaveProperty(
+      'message',
+      'You have been logged out!',
+    );
     // the logout request alters the auth cookies
     // we must parse those here, and include these in subsequent requests
     const logoutCookie = parseSessionCookies(logoutResp);
