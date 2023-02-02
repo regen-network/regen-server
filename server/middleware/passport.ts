@@ -1,7 +1,8 @@
-import { Application } from 'express';
+import { Application, Request, Response, NextFunction } from 'express';
 import { PassportStatic } from 'passport';
 import { User } from '../types';
 import { KeplrStrategy } from './keplrStrategy';
+import { UnauthorizedError } from '../errors';
 
 export function initializePassport(
   app: Application,
@@ -35,4 +36,14 @@ export function initializePassport(
   });
 
   passport.use('keplr', KeplrStrategy());
+}
+
+export function ensureLoggedIn() {
+  // reference: https://github.com/jaredhanson/connect-ensure-login
+  return function (req: Request, res: Response, next: NextFunction) {
+    if (!req.isAuthenticated()) {
+      throw new UnauthorizedError('unauthorized');
+    }
+    next();
+  };
 }

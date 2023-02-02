@@ -4,6 +4,7 @@ import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { InvalidQueryParam, NotFoundError } from '../errors';
 import { doubleCsrfProtection } from '../middleware/csrf';
+import { ensureLoggedIn } from '../middleware/passport';
 
 export const web3auth = express.Router();
 
@@ -19,7 +20,7 @@ web3auth.use(
   },
 );
 
-web3auth.post('/logout', doubleCsrfProtection, (req, res) => {
+web3auth.post('/logout', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
   req.logout();
   return res.send({
     message: 'You have been logged out!',

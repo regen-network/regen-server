@@ -23,3 +23,9 @@ export class InvalidLoginParameter extends BaseHTTPError {
     super(message, 400);
   }
 }
+
+export class UnauthorizedError extends BaseHTTPError {
+  constructor(message: string) {
+    super(message, 401);
+  }
+}
