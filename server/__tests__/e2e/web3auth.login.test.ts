@@ -73,6 +73,9 @@ describe('web3auth login endpoint', () => {
     const loginResp = await performLogin(privKey, pubKey, signer, nonce);
     loginResponseAssertions(loginResp, signer);
 
+    // normally web browsers handle cookies by default
+    // a typical client in the web browser just needs to specify "with-credentials"
+    // because we are using a low-level http client we manually handle cookies
     const cookie = parseSessionCookies(loginResp);
 
     // check that an authenticated user use an authenticated graphql query
