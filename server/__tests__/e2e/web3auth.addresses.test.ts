@@ -1,5 +1,5 @@
-import fetch, { Headers } from 'node-fetch';
-import { CSRFRequest, performLogin, genSignature } from '../utils';
+import fetch from 'node-fetch';
+import { performLogin, genSignature } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { PrivKeySecp256k1 } from '@keplr-wallet/crypto';
 
@@ -12,7 +12,7 @@ describe('web3auth addresses endpoint', () => {
       'regen',
     );
     const emptyNonce = '';
-    const loginResp = await performLogin(
+    const { authHeaders } = await performLogin(
       userPrivKey,
       userPubKey,
       userAddr,
@@ -34,30 +34,9 @@ describe('web3auth addresses endpoint', () => {
     // use the nonce of the currently authenticated user
     const newSig = genSignature(newPrivKey, newPubKey, newAddr, nonce);
 
-    const csrfReq = await CSRFRequest(
-      'http://localhost:5000/web3auth/addresses',
-      'POST',
-    );
-
-    // we need to combine the auth cookies, and the csrf cookie
-    const authCookies = loginResp.headers.raw()['set-cookie'];
-    const csrfCookies = csrfReq.headers.raw()['Cookie'];
-    const cookies = authCookies.concat(csrfCookies);
-    const parsedCookies = cookies
-      .map(entry => {
-        const parts = entry.split(';');
-        const cookiePart = parts[0];
-        return cookiePart;
-      })
-      .join(';');
-    const headers = new Headers([...csrfReq.headers.entries()]);
-    headers.delete('cookie');
-    headers.append('cookie', parsedCookies);
-    headers.append('content-type', 'application/json');
-
-    const addrResp = await fetch(csrfReq, {
+    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
       method: 'POST',
-      headers: headers,
+      headers: authHeaders,
       body: JSON.stringify({ signature: newSig }),
     });
 
@@ -65,7 +44,7 @@ describe('web3auth addresses endpoint', () => {
 
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
-      headers: headers,
+      headers: authHeaders,
       body: JSON.stringify({
         query:
           'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
@@ -75,7 +54,7 @@ describe('web3auth addresses endpoint', () => {
     expect(data.data.getCurrentAddrs.results.length).toBe(2);
   });
 
-  it('can add a previously unused address to a user account...', async () => {
+  it('can add an unused address to a user account...', async () => {
     // create a new testing account
     const userPrivKey = PrivKeySecp256k1.generateRandomKey();
     const userPubKey = userPrivKey.getPubKey();
@@ -83,7 +62,7 @@ describe('web3auth addresses endpoint', () => {
       'regen',
     );
     const emptyNonce = '';
-    const loginResp = await performLogin(
+    const { authHeaders } = await performLogin(
       userPrivKey,
       userPubKey,
       userAddr,
@@ -105,30 +84,9 @@ describe('web3auth addresses endpoint', () => {
     // use the nonce of the currently authenticated user
     const newSig = genSignature(newPrivKey, newPubKey, newAddr, nonce);
 
-    const csrfReq = await CSRFRequest(
-      'http://localhost:5000/web3auth/addresses',
-      'POST',
-    );
-
-    // we need to combine the auth cookies, and the csrf cookie
-    const authCookies = loginResp.headers.raw()['set-cookie'];
-    const csrfCookies = csrfReq.headers.raw()['Cookie'];
-    const cookies = authCookies.concat(csrfCookies);
-    const parsedCookies = cookies
-      .map(entry => {
-        const parts = entry.split(';');
-        const cookiePart = parts[0];
-        return cookiePart;
-      })
-      .join(';');
-    const headers = new Headers([...csrfReq.headers.entries()]);
-    headers.delete('cookie');
-    headers.append('cookie', parsedCookies);
-    headers.append('content-type', 'application/json');
-
-    const addrResp = await fetch(csrfReq, {
+    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
       method: 'POST',
-      headers: headers,
+      headers: authHeaders,
       body: JSON.stringify({ signature: newSig }),
     });
 
@@ -136,7 +94,7 @@ describe('web3auth addresses endpoint', () => {
 
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
-      headers: headers,
+      headers: authHeaders,
       body: JSON.stringify({
         query:
           'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
