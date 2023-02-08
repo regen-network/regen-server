@@ -57,7 +57,7 @@
     "build": "yarn remove-dist && tsc -b",
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "tsc --watch",
-    "test": "jest"
+    "test": "jest --runInBand --detectOpenHandles"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",

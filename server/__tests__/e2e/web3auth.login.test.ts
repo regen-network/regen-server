@@ -3,32 +3,13 @@ import {
   CSRFRequest,
   performLogin,
   loginResponseAssertions,
-  parseSessionCookies,
+  setUpTestAccount,
 } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
 
 const TEST_ACCOUNT_MNEMONIC =
   'culture photo express fantasy draft world dress waste side mask page valve';
-
-async function setUpTestAccount(mnemonic: string): Promise<void> {
-  const privKey = new PrivKeySecp256k1(
-    Mnemonic.generateWalletFromMnemonic(mnemonic),
-  );
-  const pubKey = privKey.getPubKey();
-  const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-
-  const resp = await fetch(
-    `http://localhost:5000/web3auth/nonce?userAddress=${signer}`,
-  );
-  // if the nonce was not found then the account does not yet exist
-  if (resp.status === 404) {
-    // create the account if it did not exist
-    const emptyNonce = '';
-    const loginResp = await performLogin(privKey, pubKey, signer, emptyNonce);
-    expect(loginResp.status).toBe(200);
-  }
-}
 
 describe('web3auth login endpoint', () => {
   beforeAll(async () => {
@@ -70,21 +51,18 @@ describe('web3auth login endpoint', () => {
     // use an empty nonce since this is a request to create a new user account
     const nonce = '';
 
-    const loginResp = await performLogin(privKey, pubKey, signer, nonce);
+    const { response: loginResp, authHeaders } = await performLogin(
+      privKey,
+      pubKey,
+      signer,
+      nonce,
+    );
     loginResponseAssertions(loginResp, signer);
-
-    // normally web browsers handle cookies by default
-    // a typical client in the web browser just needs to specify "with-credentials"
-    // because we are using a low-level http client we manually handle cookies
-    const cookie = parseSessionCookies(loginResp);
 
     // check that an authenticated user use an authenticated graphql query
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
-      headers: {
-        Cookie: cookie,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders,
       body: JSON.stringify({
         query:
           'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
@@ -111,17 +89,17 @@ describe('web3auth login endpoint', () => {
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
 
-    const loginResp = await performLogin(privKey, pubKey, signer, nonce);
+    const { response: loginResp, authHeaders } = await performLogin(
+      privKey,
+      pubKey,
+      signer,
+      nonce,
+    );
     loginResponseAssertions(loginResp, signer);
-
-    const cookie = parseSessionCookies(loginResp);
 
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
-      headers: {
-        Cookie: cookie,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders,
       body: JSON.stringify({
         query:
           'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
@@ -146,7 +124,12 @@ describe('web3auth login endpoint', () => {
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
 
-    const loginResp = await performLogin(privKey, pubKey, signer, nonce);
+    const { response: loginResp } = await performLogin(
+      privKey,
+      pubKey,
+      signer,
+      nonce,
+    );
 
     // generate a new regen address
     // this address is the target of the attackers session hijacking
