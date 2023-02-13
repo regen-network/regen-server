@@ -31,8 +31,6 @@ const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-registry\.netlify\.app$/;
 const REGISTRY_REDWOOD_HOSTNAME_PATTERN =
   /redwood--regen-registry\.netlify\.app$/;
-const REGISTRY_HAMBACH_HOSTNAME_PATTERN =
-  /hambach--regen-registry\.netlify\.app$/;
 const REGISTRY_V4_HOSTNAME_PATTERN = /v4--regen-registry\.netlify\.app$/;
 const MAIN_PREVIEW_HOSTNAME_PATTERN =
   /[a-z0-9]+--regen-registry\.netlify\.app$/;
@@ -50,7 +48,6 @@ const corsOptions = (req, callback): void => {
         originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_REDWOOD_HOSTNAME_PATTERN) ||
-        originURL.hostname.match(REGISTRY_HAMBACH_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_V4_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))
@@ -117,26 +114,6 @@ app.use(
     pathRewrite: { '^/ledger-rest': '/' },
   }),
 );
-
-if (process.env.EXP_LEDGER_TENDERMINT_RPC) {
-  app.use(
-    '/exp-ledger',
-    createProxyMiddleware({
-      target: process.env.EXP_LEDGER_TENDERMINT_RPC,
-      pathRewrite: { '^/exp-ledger': '/' },
-    }),
-  );
-}
-
-if (process.env.EXP_LEDGER_REST_ENDPOINT) {
-  app.use(
-    '/exp-ledger-rest',
-    createProxyMiddleware({
-      target: process.env.EXP_LEDGER_REST_ENDPOINT,
-      pathRewrite: { '^/exp-ledger-rest': '/' },
-    }),
-  );
-}
 
 if (process.env.V4_LEDGER_TENDERMINT_RPC) {
   app.use(
