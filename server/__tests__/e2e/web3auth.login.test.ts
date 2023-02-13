@@ -59,7 +59,7 @@ describe('web3auth login endpoint', () => {
     );
     loginResponseAssertions(loginResp, signer);
 
-    // check that an authenticated user use an authenticated graphql query
+    // check that an authenticated user can use an authenticated graphql query
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
       headers: authHeaders,
@@ -69,7 +69,7 @@ describe('web3auth login endpoint', () => {
       }),
     });
     const data = await resp.json();
-    // expect that the response contains the users current addresses
+    // expect that the response contains the user's current addresses
     // because this test is for a new user they should only have one address
     expect(data).toHaveProperty('data.getCurrentAddrs.results', [
       { addr: signer },
