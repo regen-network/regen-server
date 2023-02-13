@@ -10,6 +10,7 @@ import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
 
 const TEST_ACCOUNT_MNEMONIC =
   'culture photo express fantasy draft world dress waste side mask page valve';
+const TEST_ADDRESS = 'regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm';
 
 describe('web3auth login endpoint', () => {
   beforeAll(async () => {
@@ -82,7 +83,7 @@ describe('web3auth login endpoint', () => {
     );
     const pubKey = privKey.getPubKey();
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-    expect(signer).toBe('regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm');
+    expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
       `http://localhost:5000/web3auth/nonce?userAddress=${signer}`,
     );
@@ -117,7 +118,7 @@ describe('web3auth login endpoint', () => {
     );
     const pubKey = privKey.getPubKey();
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-    expect(signer).toBe('regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm');
+    expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
       `http://localhost:5000/web3auth/nonce?userAddress=${signer}`,
     );
