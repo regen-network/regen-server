@@ -31,6 +31,7 @@ const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-registry\.netlify\.app$/;
 const MAIN_PREVIEW_HOSTNAME_PATTERN =
   /[a-z0-9]+--regen-registry\.netlify\.app$/;
+const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
 const MAIN_APP_HOSTNAME_PATTERN = /[a-z0-9]+\.app\.regen\.network$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
@@ -47,6 +48,7 @@ const corsOptions = (req, callback): void => {
         originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_APP_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN) ||
         originURL.hostname.match(AUTH0_HOSTNAME_PATTERN))
     ) {
       options = { origin: true }; // reflect (enable) the requested origin in the CORS response
