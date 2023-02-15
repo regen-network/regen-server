@@ -18,11 +18,6 @@ module.exports = {
     'no-empty': 'off',
     'no-console': 'off',
     'no-useless-escape': 'off',
-    '@typescript-eslint/explicit-function-return-type': [
-      'error',
-      {
-        allowExpressions: true,
-      },
-    ],
+    '@typescript-eslint/explicit-function-return-type': 'off',
   },
 };
