@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { performLogin, genSignature } from '../utils';
+import { performLogin, genAddAddressSignature } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { PrivKeySecp256k1 } from '@keplr-wallet/crypto';
 
@@ -32,7 +32,12 @@ describe('web3auth addresses endpoint', () => {
     await performLogin(newPrivKey, newPubKey, newAddr, emptyNonce);
     // prove ownership of the new testing account
     // use the nonce of the currently authenticated user
-    const newSig = genSignature(newPrivKey, newPubKey, newAddr, nonce);
+    const newSig = genAddAddressSignature(
+      newPrivKey,
+      newPubKey,
+      newAddr,
+      nonce,
+    );
 
     const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
       method: 'POST',
@@ -82,7 +87,12 @@ describe('web3auth addresses endpoint', () => {
     const newAddr = new Bech32Address(newPubKey.getAddress()).toBech32('regen');
     // prove ownership of the key pair
     // use the nonce of the currently authenticated user
-    const newSig = genSignature(newPrivKey, newPubKey, newAddr, nonce);
+    const newSig = genAddAddressSignature(
+      newPrivKey,
+      newPubKey,
+      newAddr,
+      nonce,
+    );
 
     const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
       method: 'POST',

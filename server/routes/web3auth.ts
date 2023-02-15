@@ -13,7 +13,7 @@ import {
 } from '../errors';
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
-import { genArbitraryData } from '../middleware/keplrStrategy';
+import { genArbitraryAddAddressData } from '../middleware/keplrStrategy';
 
 export const web3auth = express.Router();
 
@@ -53,7 +53,7 @@ web3auth.post(
       const [{ id, nonce }] = account.rows;
       const { pubkey: decodedPubKey, signature: decodedSignature } =
         decodeSignature(signature);
-      const data = genArbitraryData(nonce);
+      const data = genArbitraryAddAddressData(nonce);
       await client.query(
         'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
         [id],
