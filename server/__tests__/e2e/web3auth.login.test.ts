@@ -172,8 +172,8 @@ describe('web3auth login endpoint', () => {
     const data = await resp.json();
     const errMsgs = data.errors.map(x => x.message);
     // since the session cookie was manipulated, we expect that the user session is invalidated.
-    // the user session is invalidated is because the session is signed.
-    // because the session is signed with a secret that only the backend knows,
+    // the user session is invalidated because the session is signed
+    // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
     const expectedResult = ['permission denied for table account'];
     expect(errMsgs).toStrictEqual(expectedResult);
