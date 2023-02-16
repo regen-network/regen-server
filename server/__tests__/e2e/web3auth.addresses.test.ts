@@ -25,7 +25,7 @@ describe('web3auth addresses endpoint', () => {
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
 
-    // create another new testing account to add to the first account
+    // create another new testing account with another address to add to the first account
     const newPrivKey = PrivKeySecp256k1.generateRandomKey();
     const newPubKey = newPrivKey.getPubKey();
     const newAddr = new Bech32Address(newPubKey.getAddress()).toBech32('regen');
