@@ -28,7 +28,7 @@ export async function CSRFRequest(
 ): Promise<Request> {
   const { cookie, token } = await fetchCsrf();
   const request = new Request(endpoint, {
-    method: method,
+    method,
     headers: {
       'X-CSRF-TOKEN': token,
       Cookie: cookie,
