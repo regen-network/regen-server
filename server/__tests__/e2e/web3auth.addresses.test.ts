@@ -29,7 +29,12 @@ describe('web3auth addresses endpoint', () => {
     const newPrivKey = PrivKeySecp256k1.generateRandomKey();
     const newPubKey = newPrivKey.getPubKey();
     const newAddr = new Bech32Address(newPubKey.getAddress()).toBech32('regen');
-    await performLogin(newPrivKey, newPubKey, newAddr, emptyNonce);
+    const { authHeaders: testUserAuthHeaders } = await performLogin(
+      newPrivKey,
+      newPubKey,
+      newAddr,
+      emptyNonce,
+    );
     // prove ownership of the new testing account
     // use the nonce of the currently authenticated user
     const newSig = genAddAddressSignature(
@@ -57,6 +62,17 @@ describe('web3auth addresses endpoint', () => {
     });
     const data = await resp.json();
     expect(data.data.getCurrentAddrs.results.length).toBe(2);
+
+    const testUserResp = await fetch('http://localhost:5000/graphql', {
+      method: 'POST',
+      headers: testUserAuthHeaders,
+      body: JSON.stringify({
+        query:
+          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+      }),
+    });
+    const testUserData = await testUserResp.json();
+    expect(testUserData.data.getCurrentAddrs.results.length).toBe(0);
   });
 
   it('can add an unused address to a user account...', async () => {

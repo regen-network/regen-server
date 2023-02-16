@@ -58,8 +58,6 @@ describe('web3auth logout endpoint', () => {
       }),
     });
     const data = await resp.json();
-    const errMsgs = data.errors.map(x => x.message);
-    const expectedResult = ['permission denied for table account'];
-    expect(errMsgs).toStrictEqual(expectedResult);
+    expect(data.data.getCurrentAddrs).toBe(null);
   });
 });

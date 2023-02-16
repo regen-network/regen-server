@@ -1,4 +1,4 @@
-import { createAccount, withRootDb, becomeUser } from '../../helpers';
+import { createAccount, withRootDb, becomeAuthUser } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -34,7 +34,7 @@ describe('add_addr_to_account', () => {
         `select * from private.add_addr_to_account('${accountId}', '${newWalletAddr}', 'user')`,
       );
       expect(result.rowCount).toBe(1);
-      await becomeUser(client, walletAddr);
+      await becomeAuthUser(client, walletAddr, accountId);
       const addrs = await client.query('select * from get_current_addrs()');
       expect(addrs.rowCount).toBe(2);
     });
