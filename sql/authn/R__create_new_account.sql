@@ -1,9 +1,8 @@
 DROP FUNCTION IF EXISTS private.create_new_account;
-CREATE OR REPLACE FUNCTION private.create_new_account (addr text, v_party_type party_type)
+CREATE OR REPLACE FUNCTION private.create_new_account (v_addr text, v_party_type party_type)
     RETURNS uuid
     AS $$
 DECLARE
-    v_addr text = addr;
     can_be_added boolean;
     v_account_id uuid;
     v_wallet_id uuid;
