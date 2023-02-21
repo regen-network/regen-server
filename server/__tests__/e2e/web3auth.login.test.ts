@@ -65,14 +65,13 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
     // expect that the response contains the user's current addresses
     // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
       { addr: signer },
     ]);
   });
@@ -102,12 +101,11 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
       { addr: signer },
     ]);
   });
@@ -165,8 +163,7 @@ describe('web3auth login endpoint', () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();

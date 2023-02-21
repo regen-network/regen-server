@@ -5,4 +5,4 @@ BEGIN
     SELECT * INTO account_id FROM get_current_account_id();
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;

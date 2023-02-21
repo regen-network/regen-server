@@ -20,4 +20,4 @@ BEGIN
         account.id = v_account_id;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
