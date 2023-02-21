@@ -123,7 +123,7 @@ describe('web3auth login endpoint', () => {
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
 
-    const { response: loginResp } = await performLogin(
+    const { response: loginResp, authHeaders } = await performLogin(
       privKey,
       pubKey,
       signer,
@@ -155,13 +155,14 @@ describe('web3auth login endpoint', () => {
         return cookiePart;
       })
       .join(';');
+    const cookieParts = authHeaders.get('cookie')!.split(';');
+    const manipulatedParts = manipulatedCookie.split(';');
+    const newCookie = [...manipulatedParts, cookieParts[2]].join(';');
+    authHeaders.set('cookie', newCookie);
 
     const resp = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
-      headers: {
-        Cookie: manipulatedCookie,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders,
       body: JSON.stringify({
         query: '{getCurrentAddrs { nodes {addr}}}',
       }),

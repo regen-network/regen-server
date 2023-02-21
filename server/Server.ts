@@ -49,7 +49,7 @@ import { InvalidJSONLD } from 'iri-gen/iri-gen';
 import { web3auth } from './routes/web3auth';
 import { csrfRouter } from './routes/csrf';
 
-import { invalidCsrfTokenError } from './middleware/csrf';
+import { doubleCsrfProtection, invalidCsrfTokenError } from './middleware/csrf';
 /* eslint-enable import/first */
 
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
@@ -231,6 +231,7 @@ if (process.env.V4_LEDGER_REST_ENDPOINT) {
   );
 }
 
+app.use('/graphql', doubleCsrfProtection);
 app.use(
   postgraphile(pgPool, 'public', {
     graphiql: true,
