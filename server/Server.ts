@@ -209,9 +209,16 @@ app.use(
         //   settings['jwt.claims.' + k] = user[k]
         // );
         return settings;
-      } else if (req.user && req.user.address) {
-        return { role: req.user.address };
-      } else return { role: 'app_user' };
+      } else if (req.user && req.user.address && req.user.id) {
+        return {
+          role: req.user.address,
+          'account.id': req.user.id,
+        };
+      } else {
+        return {
+          role: 'app_user',
+        };
+      }
     },
   }),
 );

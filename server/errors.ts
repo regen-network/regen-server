@@ -24,6 +24,12 @@ export class InvalidLoginParameter extends BaseHTTPError {
   }
 }
 
+export class InvalidSignature extends BaseHTTPError {
+  constructor(message: string) {
+    super(message, 400);
+  }
+}
+
 export class UnauthorizedError extends BaseHTTPError {
   constructor(message: string) {
     super(message, 401);

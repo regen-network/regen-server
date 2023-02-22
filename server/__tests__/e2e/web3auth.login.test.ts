@@ -65,14 +65,13 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
     // expect that the response contains the user's current addresses
     // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
       { addr: signer },
     ]);
   });
@@ -102,12 +101,11 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentAddrs.results', [
+    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
       { addr: signer },
     ]);
   });
@@ -165,17 +163,14 @@ describe('web3auth login endpoint', () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
-    const errMsgs = data.errors.map(x => x.message);
     // since the session cookie was manipulated, we expect that the user session is invalidated.
     // the user session is invalidated because the session is signed
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
-    const expectedResult = ['permission denied for table account'];
-    expect(errMsgs).toStrictEqual(expectedResult);
+    expect(data.data.getCurrentAddrs).toBe(null);
   });
 });

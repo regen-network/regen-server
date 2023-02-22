@@ -5,11 +5,21 @@ import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { InvalidLoginParameter } from '../errors';
 
-export function genArbitraryData(nonce: string): string {
+export function genArbitraryLoginData(nonce: string): string {
   const data = JSON.stringify({
     title: 'Regen Network Login',
     description:
       'This is a transaction that allows Regen Network to authenticate you with our application.',
+    nonce: nonce,
+  });
+  return data;
+}
+
+export function genArbitraryAddAddressData(nonce: string): string {
+  const data = JSON.stringify({
+    title: 'Regen Network Login',
+    description:
+      'This is a transaction that allows Regen Network to add an address to your account.',
     nonce: nonce,
   });
   return data;
@@ -35,7 +45,7 @@ export function KeplrStrategy(): CustomStrategy {
         const [{ id, nonce }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
-        const data = genArbitraryData(nonce);
+        const data = genArbitraryLoginData(nonce);
         // generate a new nonce for the user to invalidate the current
         // signature...
         await client.query(
@@ -59,7 +69,7 @@ export function KeplrStrategy(): CustomStrategy {
         // if there was no existing account, then we need to verify the signature, create a new account, and then log them in.
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
-        const data = genArbitraryData(''); //  an empty string since this is an account creation login..
+        const data = genArbitraryLoginData(''); //  an empty string since this is an account creation login..
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
           'regen',

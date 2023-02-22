@@ -53,13 +53,10 @@ describe('web3auth logout endpoint', () => {
       method: 'POST',
       headers: newAuthHeaders,
       body: JSON.stringify({
-        query:
-          'mutation {getCurrentAddrs(input: {}) {clientMutationId results { addr } }}',
+        query: '{getCurrentAddrs { nodes {addr}}}',
       }),
     });
     const data = await resp.json();
-    const errMsgs = data.errors.map(x => x.message);
-    const expectedResult = ['permission denied for table account'];
-    expect(errMsgs).toStrictEqual(expectedResult);
+    expect(data.data.getCurrentAddrs).toBe(null);
   });
 });

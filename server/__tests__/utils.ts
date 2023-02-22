@@ -11,7 +11,10 @@ import {
   PrivKeySecp256k1,
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
-import { genArbitraryData } from '../middleware/keplrStrategy';
+import {
+  genArbitraryLoginData,
+  genArbitraryAddAddressData,
+} from '../middleware/keplrStrategy';
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch('http://localhost:5000/csrfToken', {
@@ -44,7 +47,25 @@ export function genSignature(
   signer: string,
   nonce: string,
 ) {
-  const data = genArbitraryData(nonce);
+  const data = genArbitraryLoginData(nonce);
+  const signDoc = makeADR36AminoSignDoc(signer, data);
+  const msg = serializeSignDoc(signDoc);
+  // these next lines are equivalent to the keplr.signArbitrary browser API
+  const signatureBytes = privKey.signDigest32(Hash.sha256(msg));
+  const signature = encodeSecp256k1Signature(
+    pubKey.toBytes(false),
+    signatureBytes,
+  );
+  return signature;
+}
+
+export function genAddAddressSignature(
+  privKey: PrivKeySecp256k1,
+  pubKey: PubKeySecp256k1,
+  signer: string,
+  nonce: string,
+) {
+  const data = genArbitraryAddAddressData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
