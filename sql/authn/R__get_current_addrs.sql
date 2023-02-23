@@ -1,4 +1,3 @@
-DROP FUNCTION IF EXISTS get_current_addrs;
 CREATE OR REPLACE FUNCTION get_current_addrs ()
     RETURNS TABLE (
         wallet_id uuid,
