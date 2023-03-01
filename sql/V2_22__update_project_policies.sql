@@ -3,7 +3,7 @@ ALTER TABLE project DROP COLUMN IF EXISTS creator_id CASCADE;
 DO $$
 BEGIN
     ALTER TABLE project
-        ADD COLUMN admin_id uuid;
+        ADD COLUMN admin_wallet_id uuid;
 EXCEPTION
     WHEN duplicate_column THEN
         RAISE NOTICE 'Field already exists. Ignoring...';
@@ -12,11 +12,16 @@ END$$;
 DO $$
 BEGIN
     ALTER TABLE project
-        ADD CONSTRAINT project_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES wallet (id);
+        ADD CONSTRAINT project_admin_wallet_id_fkey FOREIGN KEY (admin_wallet_id) REFERENCES wallet (id);
 EXCEPTION
     WHEN duplicate_object THEN
         RAISE NOTICE 'Constraint already exists. Ignoring...';
 END$$;
+
+-- Deprecate the wallet_id column in favor of the new admin_wallet_id column
+-- Before removing the column, copy any existing data from the existing wallet_id column:
+UPDATE project SET admin_wallet_id = wallet_id;
+ALTER TABLE project DROP COLUMN wallet_id;
 
 DROP POLICY IF EXISTS project_app_user_create ON project;
 DROP POLICY IF EXISTS project_insert_admin ON project;
@@ -58,7 +63,7 @@ LANGUAGE plpgsql STABLE;
 DROP POLICY IF EXISTS project_insert_policy ON project;
 CREATE POLICY project_insert_policy ON project
     FOR INSERT TO auth_user
-        WITH CHECK (admin_id in (
+        WITH CHECK (admin_wallet_id in (
             SELECT
                 wallet_id
             FROM
@@ -69,7 +74,7 @@ DROP POLICY IF EXISTS project_update_policy ON project;
 CREATE POLICY project_update_policy ON project
     FOR UPDATE TO auth_user
         USING (true)
-        WITH CHECK (admin_id in (
+        WITH CHECK (admin_wallet_id in (
             SELECT
                 wallet_id
             FROM

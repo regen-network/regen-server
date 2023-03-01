@@ -16,7 +16,7 @@ describe('the UPDATE RLS policy for the project table...', () => {
       );
       const [{ wallet_id }] = addrsQ.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_id) VALUES ($1) RETURNING id AS project_id',
+        'INSERT INTO project (admin_wallet_id) VALUES ($1) RETURNING id AS project_id',
         [wallet_id],
       );
       const [{ project_id }] = insQuery.rows;
@@ -43,7 +43,7 @@ describe('the UPDATE RLS policy for the project table...', () => {
       // get the wallet_id for the first user...
       const [{ wallet_id }] = addrsQ.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_id) VALUES ($1) RETURNING id AS project_id',
+        'INSERT INTO project (admin_wallet_id) VALUES ($1) RETURNING id AS project_id',
         [wallet_id],
       );
       const [{ project_id }] = insQuery.rows;

@@ -11,7 +11,7 @@ describe('the DELETE RLS policy for the project table...', () => {
       );
       const [{ wallet_id }] = addrsQ.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_id) VALUES ($1)',
+        'INSERT INTO project (admin_wallet_id) VALUES ($1)',
         [wallet_id],
       );
       expect(insQuery.rowCount).toBe(1);

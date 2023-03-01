@@ -16,7 +16,7 @@ describe('the INSERT RLS policy for the project table...', () => {
       );
       const [{ wallet_id }] = addrsQ.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_id) VALUES ($1)',
+        'INSERT INTO project (admin_wallet_id) VALUES ($1)',
         [wallet_id],
       );
       expect(insQuery.rowCount).toBe(1);
@@ -38,10 +38,12 @@ describe('the INSERT RLS policy for the project table...', () => {
       const [{ wallet_id }] = addrsQ.rows;
       // switch the second user
       await becomeAuthUser(client, walletAddr2, accountId2);
-      // try to insert the first users wallet_id as admin_id
+      // try to insert the first users wallet_id as admin_wallet_id
       // this operation should fail
       await expect(
-        client.query('INSERT INTO project (admin_id) VALUES ($1)', [wallet_id]),
+        client.query('INSERT INTO project (admin_wallet_id) VALUES ($1)', [
+          wallet_id,
+        ]),
       ).rejects.toThrow(
         'new row violates row-level security policy for table "project"',
       );
