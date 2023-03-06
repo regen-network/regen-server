@@ -18,6 +18,8 @@ EXCEPTION
         RAISE NOTICE 'Constraint already exists. Ignoring...';
 END$$;
 
+CREATE INDEX IF NOT EXISTS project_admin_wallet_id_idx ON project (admin_wallet_id);
+
 -- Deprecate the wallet_id column in favor of the new admin_wallet_id column
 -- Before removing the column, copy any existing data from the existing wallet_id column:
 UPDATE project SET admin_wallet_id = wallet_id;
