@@ -75,10 +75,10 @@ CREATE POLICY project_insert_policy ON project
 DROP POLICY IF EXISTS project_update_policy ON project;
 CREATE POLICY project_update_policy ON project
     FOR UPDATE TO auth_user
-        USING (true)
-        WITH CHECK (admin_wallet_id in (
+        USING (admin_wallet_id in (
             SELECT
                 wallet_id
             FROM
                 get_current_addrs()
-        ));
+        ))
+        WITH CHECK (true);

@@ -50,15 +50,12 @@ describe('the UPDATE RLS policy for the project table...', () => {
       // become the second user...
       await becomeAuthUser(client, walletAddr2, accountId2);
       // try to update the first users project...
-      // and expect an error...
-      await expect(
-        client.query('UPDATE project SET metadata = $2 WHERE id=$1', [
-          project_id,
-          { foo: 'bar' },
-        ]),
-      ).rejects.toThrow(
-        'new row violates row-level security policy for table "project"',
+      const updQuery = await client.query(
+        'UPDATE project SET metadata = $2 WHERE id=$1',
+        [project_id, { foo: 'bar' }],
       );
+      // expect that no rows are modified...
+      expect(updQuery.rowCount).toBe(0);
     });
   });
 });
