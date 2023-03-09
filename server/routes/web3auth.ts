@@ -77,18 +77,12 @@ web3auth.post(
             'select from private.remove_addr_from_account($1, $2)',
             [associatedId, address],
           );
-          await client.query(
-            'select from private.add_addr_to_account($1, $2, $3)',
-            [currentUserId, address, 'user'],
-          );
-          return res.status(200).send({ message: 'success' });
-        } else {
-          await client.query(
-            'select from private.add_addr_to_account($1, $2, $3)',
-            [currentUserId, address, 'user'],
-          );
-          return res.status(200).send({ message: 'success' });
         }
+        await client.query(
+          'select from private.add_addr_to_account($1, $2, $3)',
+          [currentUserId, address, 'user'],
+        );
+        return res.status(200).send({ message: 'success' });
       } else {
         throw new InvalidSignature(
           'invalid signature during attempt to add an address',
