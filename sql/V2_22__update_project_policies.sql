@@ -30,21 +30,14 @@ DROP POLICY IF EXISTS project_insert_admin ON project;
 DROP POLICY IF EXISTS project_delete_admin ON project;
 DROP POLICY IF EXISTS project_app_user_update ON project;
 
--- NOTE: since this versioned migration depends on get_current_addrs and flyway
--- runs versioned prior to the repeatable migration that defines
--- get_current_addrs, we must specify a definition for this function in this
--- migration.
---
--- if you need to make changes to get_current_addrs, do not
--- change it here.  modify it in the repeatable migration file instead,
--- R__get_current_addrs.sql.
+DROP FUNCTION IF EXISTS get_current_addrs();
 CREATE OR REPLACE FUNCTION get_current_addrs ()
     RETURNS TABLE (
         wallet_id uuid,
         addr text,
         profile_type party_type
     )
-    AS $$ 
+    AS $$
 DECLARE
     v_account_id uuid;
 BEGIN
