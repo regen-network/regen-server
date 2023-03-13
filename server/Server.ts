@@ -187,10 +187,12 @@ if (process.env.LEDGER_REST_ENDPOINT) {
   );
 }
 
-app.use('/graphql', doubleCsrfProtection);
+if (!process.env.GRAPHIQL_ENABLED) {
+  app.use('/graphql', doubleCsrfProtection);
+}
 app.use(
   postgraphile(pgPool, 'public', {
-    graphiql: true,
+    graphiql: process.env.GRAPHIQL_ENABLED ? true : false,
     watchPg: true,
     dynamicJson: true,
     graphileBuildOptions: {
@@ -295,4 +297,6 @@ const port = process.env.PORT || 5000;
 app.listen(port);
 
 console.log('Started server on port ' + port);
-console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
+if (process.env.GRAPHIQL_ENABLED) {
+  console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
+}
