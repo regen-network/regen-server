@@ -40,7 +40,7 @@ export function initializePassport(
 
 export function ensureLoggedIn() {
   // reference: https://github.com/jaredhanson/connect-ensure-login
-  return function (req: Request, res: Response, next: NextFunction) {
+  return function (req: any, res: Response, next: NextFunction) {
     if (!req.isAuthenticated()) {
       throw new UnauthorizedError('unauthorized');
     }
