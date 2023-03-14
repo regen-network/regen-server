@@ -27,7 +27,7 @@ BEGIN
         END IF;
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 DROP FUNCTION IF EXISTS addr_can_be_added(text);
 CREATE OR REPLACE FUNCTION addr_can_be_added (addr text, OUT can_be_added boolean)
@@ -43,4 +43,4 @@ BEGIN
         RAISE EXCEPTION 'this addr belongs to a different account';
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;

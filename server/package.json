@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@cosmjs/amino": "^0.28.11",
+    "@cosmjs/crypto": "^0.28.11",
     "@graphile-contrib/pg-many-to-many": "^1.0.1",
+    "@keplr-wallet/cosmos": "^0.11.38",
     "@keyv/compress-brotli": "^1.0.0",
     "@keyv/postgres": "^1.3.1",
     "@keyv/redis": "^2.1.2",
@@ -19,7 +22,11 @@
     "aws-sdk": "^2.859.0",
     "axios": "^1.1.3",
     "body-parser": "^1.19.0",
-    "cors": "2.8.5",
+    "cookie-parser": "^1.4.6",
+    "cookie-session": "^2.0.0",
+    "cors": "^2.8.5",
+    "csrf-csrf": "^2.2.2",
+    "env-var": "^7.1.1",
     "express": "4.18.2",
     "express-fileupload": "^1.1.10",
     "express-jwt": "7.7.5",
@@ -36,6 +43,8 @@
     "mailerlite-api-v2-node": "^1.1.2",
     "mjml": "^4.8.1",
     "nodemailer": "^6.6.3",
+    "passport": "^0.5.0",
+    "passport-custom": "^1.1.1",
     "postgraphile": "^4.7.0",
     "postgraphile-plugin-connection-filter": "^2.3.0",
     "redis": "^3.1.1",
@@ -48,9 +57,12 @@
     "build": "yarn remove-dist && tsc -b",
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "tsc --watch",
-    "test": "jest"
+    "test": "jest --runInBand --detectOpenHandles"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.3",
+    "@types/cookie-session": "^2.0.44",
+    "@types/passport": "1.0.8",
     "@types/swagger-jsdoc": "^6.0.1",
     "@types/swagger-ui-express": "^4.1.3"
   }
