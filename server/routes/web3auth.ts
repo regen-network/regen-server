@@ -21,7 +21,7 @@ web3auth.use(
   '/login',
   doubleCsrfProtection,
   passport.authenticate('keplr'),
-  (req, res) => {
+  (req: any, res) => {
     return res.send({
       user: req.user,
       message: 'You have been signed in via keplr!',
@@ -33,7 +33,7 @@ web3auth.post(
   '/addresses',
   doubleCsrfProtection,
   ensureLoggedIn(),
-  async (req, res, next) => {
+  async (req: any, res, next) => {
     try {
       const { signature } = req.body;
       const currentUserId = (req.user as User).id;
@@ -94,12 +94,17 @@ web3auth.post(
   },
 );
 
-web3auth.post('/logout', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
-  req.logout();
-  return res.send({
-    message: 'You have been logged out!',
-  });
-});
+web3auth.post(
+  '/logout',
+  doubleCsrfProtection,
+  ensureLoggedIn(),
+  (req: any, res) => {
+    req.logout();
+    return res.send({
+      message: 'You have been logged out!',
+    });
+  },
+);
 
 web3auth.get('/nonce', async (req, res, next) => {
   // this endpoint fetches a nonce for a given user by their wallet
