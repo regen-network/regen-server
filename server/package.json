@@ -17,6 +17,7 @@
     "@types/lodash": "^4.14.155",
     "@types/mjml": "^4.0.4",
     "@types/nodemailer": "^6.4.0",
+    "@types/passport": "1.0.8",
     "airtable": "^0.11.3",
     "auth0": "^2.33.0",
     "aws-sdk": "^2.859.0",
@@ -62,7 +63,6 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
     "@types/cookie-session": "^2.0.44",
-    "@types/passport": "1.0.8",
     "@types/swagger-jsdoc": "^6.0.1",
     "@types/swagger-ui-express": "^4.1.3"
   }
