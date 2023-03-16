@@ -15,8 +15,8 @@ const options: DoubleCsrfConfigOptions = {
   getSecret: () => secret,
   cookieName: cookieName,
   cookieOptions: {
-    httpOnly: httpOnly,
-    sameSite: sameSite,
+    httpOnly,
+    sameSite,
     path: '/',
     secure: secure,
   },
