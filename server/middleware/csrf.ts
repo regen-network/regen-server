@@ -18,7 +18,7 @@ const options: DoubleCsrfConfigOptions = {
     httpOnly,
     sameSite,
     path: '/',
-    secure: secure,
+    secure,
   },
 };
 
