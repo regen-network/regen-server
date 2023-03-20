@@ -50,6 +50,7 @@ import { web3auth } from './routes/web3auth';
 import { csrfRouter } from './routes/csrf';
 
 import { doubleCsrfProtection, invalidCsrfTokenError } from './middleware/csrf';
+import { sameSiteFromEnv } from './utils';
 /* eslint-enable import/first */
 
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
@@ -131,16 +132,7 @@ const SESSION_SECRET_KEY = env
   .get('SESSION_SECRET_KEY')
   .default('supersecret')
   .asString();
-const _SESSION_SAMESITE = env
-  .get('SESSION_SAMESITE')
-  .default('lax')
-  .asEnum(['true', 'false', 'lax', 'strict', 'none']);
-let SESSION_SAMESITE: boolean | 'lax' | 'strict' | 'none';
-if (_SESSION_SAMESITE === 'true' || _SESSION_SAMESITE === 'false') {
-  SESSION_SAMESITE = _SESSION_SAMESITE === 'true';
-} else {
-  SESSION_SAMESITE = _SESSION_SAMESITE;
-}
+const SESSION_SAMESITE = sameSiteFromEnv('SESSION_SAMESITE');
 const SESSION_SECURE = env
   .get('SESSION_SECURE')
   .default('false')
