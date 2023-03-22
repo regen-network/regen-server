@@ -95,6 +95,8 @@ const corsOptions = (req, callback): void => {
 
 const app = express();
 
+app.set('trust proxy', true);
+
 // this flag is used to enable sentry
 // we only want this set in the production environment
 // without this set we will use too much of our sentry quota
