@@ -2,6 +2,9 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import S3 from 'aws-sdk/clients/s3';
 import { Readable } from 'stream';
+import { UserRequest } from '../types';
+import { PoolClient } from 'pg';
+import { pgPool } from 'common/pool';
 const router = express.Router();
 
 const bucketName = process.env.AWS_S3_BUCKET;
@@ -27,30 +30,70 @@ interface FilesRequest extends express.Request {
 router.post(
   '/files',
   bodyParser.json(),
-  (request, response: express.Response) => {
-    const image = (request as FilesRequest).files.image;
-    const key = request.body.filePath;
-    const fileStream = Readable.from([image.data]);
+  async (request: UserRequest, response: express.Response, next) => {
+    let client: undefined | PoolClient = undefined;
+    try {
+      const image = (request as FilesRequest).files.image;
+      const key = request.body.filePath;
 
-    const uploadParams = {
-      Bucket: `${bucketName}/${key}`,
-      Key: `${image.name}`,
-      Body: fileStream,
-    };
+      const re = /profiles\/([a-zA-Z0-9-]*)/;
+      const matches = key.match(re);
 
-    fileStream.on('error', function (err) {
-      console.log('File Error: ', err);
-    });
+      if (key.includes('profiles') && request.isUnauthenticated()) {
+        return response.status(401).send({ error: 'unauthorized' });
+      } else if (matches) {
+        client = await pgPool.connect();
 
-    s3.upload(uploadParams, function (err, data) {
-      if (err) {
-        console.log('s3 Error', err);
-        response.status(500).send({ Error: err });
+        const accountQuery = await client.query(
+          'SELECT id FROM private.get_account_by_addr($1)',
+          [request.user?.address],
+        );
+        const [{ id: accountId }] = accountQuery.rows;
+
+        const partiesQuery = await client.query(
+          'SELECT id FROM private.get_parties_by_account_id($1)',
+          [accountId],
+        );
+        const partyId = matches[1];
+        const partyIds = partiesQuery.rows.map(x => {
+          return x.id;
+        });
+        if (!partyIds.includes(partyId)) {
+          return response.status(401).send({ error: 'unauthorized' });
+        }
       }
-      if (data) {
-        response.send({ imageUrl: data.Location });
+
+      const fileStream = Readable.from([image.data]);
+
+      const uploadParams = {
+        Bucket: `${bucketName}/${key}`,
+        Key: `${image.name}`,
+        Body: fileStream,
+      };
+
+      fileStream.on('error', function (err) {
+        console.log('File Error: ', err);
+      });
+
+      s3.upload(
+        uploadParams,
+        function (err: Error, data: S3.ManagedUpload.SendData) {
+          if (err) {
+            console.log('s3 Error', err);
+            response.status(500).send({ Error: err });
+          }
+          if (data) {
+            response.send({ imageUrl: data.Location });
+          }
+        },
+      );
+    } catch (err) {
+      next(err);
+    } finally {
+      if (client) {
+        client.release();
       }
-    });
+    }
   },
 );
 
