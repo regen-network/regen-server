@@ -39,6 +39,10 @@ router.post(
       const re = /profiles\/([a-zA-Z0-9-]*)/;
       const matches = key.match(re);
 
+      // block any unauthenticated requests are made to filePath that includes profiles
+      // otherwise, check if the filePath belongs to the current user based on their party id
+      // if not, block the request...
+      // otherwise, allow the request to update the file to proceed
       if (key.includes('profiles') && request.isUnauthenticated()) {
         return response.status(401).send({ error: 'unauthorized' });
       } else if (matches) {
