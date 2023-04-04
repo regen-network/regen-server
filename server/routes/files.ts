@@ -36,7 +36,7 @@ router.post(
       const image = (request as FilesRequest).files.image;
       const key = request.body.filePath;
 
-      const re = /profiles\/([a-zA-Z0-9-]*)/;
+      const re = /profiles(?:-test)*\/([a-zA-Z0-9-]*)/;
       const matches = key.match(re);
 
       // block any unauthenticated requests are made to filePath that includes profiles

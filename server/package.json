@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.306.0",
     "@cosmjs/amino": "^0.28.11",
     "@cosmjs/crypto": "^0.28.11",
     "@graphile-contrib/pg-many-to-many": "^1.0.1",

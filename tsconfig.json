@@ -5,6 +5,8 @@
     "noEmit": false,
     "lib": ["es2018", "esnext.asynciterable", "DOM"],
     "target": "es2018",
-    "module": "commonjs"
-  },
+    "module": "commonjs",
+    "esModuleInterop": true
+  }
 }
+

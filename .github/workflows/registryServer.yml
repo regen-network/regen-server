@@ -7,9 +7,7 @@ on:
       - '!master'
 
 jobs:
-
   lint-and-format:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,13 +25,16 @@ jobs:
       - run: yarn run eslint .
 
   tests:
-
     runs-on: ubuntu-latest
 
     env:
       FLYWAY_URL: jdbc:postgresql://localhost:5432/regen_registry
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry 
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
       TEST_DATABASE_USER: postgres
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_BUCKET_REGION: ${{ secrets.AWS_BUCKET_REGION }}
+      AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
 
     strategy:
       matrix:
@@ -64,7 +65,7 @@ jobs:
       - run: yarn
       - run: yarn migrate
       - run: yarn build
-      - name: "start the registry-server"
+      - name: 'start the registry-server'
         env:
           MAILERLITE_API_KEY: foobar
           AIRTABLE_API_KEY: foobar

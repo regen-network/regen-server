@@ -152,7 +152,6 @@ export function genAuthHeaders(
   const headers = new Headers([...csrfHeaders.entries()]);
   headers.delete('cookie');
   headers.append('cookie', parsedCookies);
-  headers.append('content-type', 'application/json');
   return headers;
 }
 
