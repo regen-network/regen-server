@@ -111,7 +111,7 @@ web3auth.get('/nonce', async (req, res, next) => {
     const err = new InvalidQueryParam(msg);
     next(err);
   } else {
-    let client: PoolClient;
+    let client: undefined | PoolClient = undefined;
     try {
       client = await pgPool.connect();
       const result = await client.query(
