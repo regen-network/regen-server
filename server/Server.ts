@@ -10,20 +10,49 @@ import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many';
 import ConnectionFilterPlugin from 'postgraphile-plugin-connection-filter';
 import url from 'url';
 import dotenv from 'dotenv';
+import * as env from 'env-var';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 
+import cookieParser from 'cookie-parser';
+import cookieSession from 'cookie-session';
+import passport from 'passport';
+
 import { UserIncomingMessage } from './types';
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
+import { initializePassport } from './middleware/passport';
+import { BaseHTTPError } from './errors';
+
+import { pgPool } from 'common/pool';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
-import { pgPool } from 'common/pool';
+/* eslint-disable import/first */
+// we disable this lint rule for these import statements
+// w/o this the application does not start locally
+// these imports require env vars which are available only after dotenv.config is called
+import mailerlite from './routes/mailerlite';
+import contact from './routes/contact';
+import buyersInfo from './routes/buyers-info';
+import stripe from './routes/stripe';
+import auth from './routes/auth';
+import recaptcha from './routes/recaptcha';
+import files from './routes/files';
+import metadataGraph from './routes/metadata-graph';
+import { MetadataNotFound } from 'common/metadata_graph';
+import { InvalidJSONLD } from 'iri-gen/iri-gen';
+import { web3auth } from './routes/web3auth';
+import { csrfRouter } from './routes/csrf';
+
+import { doubleCsrfProtection, invalidCsrfTokenError } from './middleware/csrf';
+import { sameSiteFromEnv } from './utils';
+/* eslint-enable import/first */
+
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;
@@ -35,6 +64,8 @@ const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
 const MAIN_APP_HOSTNAME_PATTERN = /[a-z0-9]+\.app\.regen\.network$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
+// docs for values in corsOptions:
+// https://github.com/expressjs/cors#configuration-options
 const corsOptions = (req, callback): void => {
   let options;
   if (process.env.NODE_ENV !== 'production') {
@@ -56,11 +87,15 @@ const corsOptions = (req, callback): void => {
       options = { origin: false }; // disable CORS for this request
     }
   }
-
+  // why the credentials option is added below:
+  // https://web.dev/cross-origin-resource-sharing/#share-credentials-with-cors
+  options['credentials'] = true;
   callback(null, options); // callback expects two parameters: error and options
 };
 
 const app = express();
+
+app.set('trust proxy', true);
 
 // this flag is used to enable sentry
 // we only want this set in the production environment
@@ -89,7 +124,35 @@ if (process.env.SENTRY_ENABLED) {
 }
 
 app.use(fileUpload());
+
+const SESSION_MAX_AGE_IN_HOURS = env
+  .get('SESSION_MAX_AGE_IN_HOURS')
+  .default('24')
+  .asIntPositive();
+const SESSION_MAX_AGE_IN_MILLIS = SESSION_MAX_AGE_IN_HOURS * 60 * 60 * 1000;
+const SESSION_SECRET_KEY = env
+  .get('SESSION_SECRET_KEY')
+  .default('supersecret')
+  .asString();
+const SESSION_SAMESITE = sameSiteFromEnv('SESSION_SAMESITE');
+const SESSION_SECURE = env
+  .get('SESSION_SECURE')
+  .default('false')
+  .asBoolStrict();
+// docs for values in cookieSessionConfig:
+// https://github.com/expressjs/cookie-session#cookie-options
+const cookieSessionConfig = {
+  name: 'session',
+  keys: [SESSION_SECRET_KEY],
+  maxAge: SESSION_MAX_AGE_IN_MILLIS,
+  sameSite: SESSION_SAMESITE,
+  secure: SESSION_SECURE,
+};
+app.use(cookieSession(cookieSessionConfig));
+
+initializePassport(app, passport);
 app.use(cors(corsOptions));
+app.use(cookieParser());
 
 app.use(getJwt(false));
 
@@ -97,26 +160,33 @@ app.use(express.json());
 
 app.use('/image', imageOptimizer());
 
-app.use(
-  '/ledger',
-  createProxyMiddleware({
-    target: process.env.LEDGER_TENDERMINT_RPC,
-    pathRewrite: { '^/ledger': '/' },
-    onProxyReq: fixRequestBody,
-  }),
-);
+if (process.env.LEDGER_TENDERMINT_RPC) {
+  app.use(
+    '/ledger',
+    createProxyMiddleware({
+      target: process.env.LEDGER_TENDERMINT_RPC,
+      pathRewrite: { '^/ledger': '/' },
+      onProxyReq: fixRequestBody,
+    }),
+  );
+}
 
-app.use(
-  '/ledger-rest',
-  createProxyMiddleware({
-    target: process.env.LEDGER_REST_ENDPOINT,
-    pathRewrite: { '^/ledger-rest': '/' },
-  }),
-);
+if (process.env.LEDGER_REST_ENDPOINT) {
+  app.use(
+    '/ledger-rest',
+    createProxyMiddleware({
+      target: process.env.LEDGER_REST_ENDPOINT,
+      pathRewrite: { '^/ledger-rest': '/' },
+    }),
+  );
+}
 
+if (!process.env.GRAPHIQL_ENABLED) {
+  app.use('/graphql', doubleCsrfProtection);
+}
 app.use(
   postgraphile(pgPool, 'public', {
-    graphiql: true,
+    graphiql: process.env.GRAPHIQL_ENABLED ? true : false,
     watchPg: true,
     dynamicJson: true,
     graphileBuildOptions: {
@@ -136,21 +206,19 @@ app.use(
         //   settings['jwt.claims.' + k] = user[k]
         // );
         return settings;
-      } else return { role: 'app_user' };
+      } else if (req.user && req.user.address && req.user.id) {
+        return {
+          role: req.user.address,
+          'account.id': req.user.id,
+        };
+      } else {
+        return {
+          role: 'app_user',
+        };
+      }
     },
   }),
 );
-
-import mailerlite from './routes/mailerlite';
-import contact from './routes/contact';
-import buyersInfo from './routes/buyers-info';
-import stripe from './routes/stripe';
-import auth from './routes/auth';
-import recaptcha from './routes/recaptcha';
-import files from './routes/files';
-import metadataGraph from './routes/metadata-graph';
-import { MetadataNotFound } from 'common/metadata_graph';
-import { InvalidJSONLD } from 'iri-gen/iri-gen';
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -159,6 +227,8 @@ app.use(auth);
 app.use(recaptcha);
 app.use(files);
 app.use(metadataGraph);
+app.use('/web3auth', web3auth);
+app.use(csrfRouter);
 
 const swaggerOptions = {
   definition: {
@@ -188,17 +258,24 @@ app.use(
 );
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  if (err.stack) {
+    console.error(err.stack);
+  }
   const { params, query, body, path } = req;
   console.error('req info:', { params, query, body, path });
   next(err);
 });
+
 app.use((err, req, res, next) => {
   const errResponse = { error: err.message };
-  if (err instanceof MetadataNotFound) {
+  if (err instanceof BaseHTTPError) {
+    res.status(err.status_code).send(errResponse);
+  } else if (err instanceof MetadataNotFound) {
     res.status(404).send(errResponse);
   } else if (err instanceof InvalidJSONLD) {
     res.status(400).send(errResponse);
+  } else if (err == invalidCsrfTokenError) {
+    res.status(403).send(errResponse);
   } else {
     next(err);
   }
@@ -214,4 +291,6 @@ const port = process.env.PORT || 5000;
 app.listen(port);
 
 console.log('Started server on port ' + port);
-console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
+if (process.env.GRAPHIQL_ENABLED) {
+  console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
+}
