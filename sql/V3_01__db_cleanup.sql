@@ -99,3 +99,14 @@ EXCEPTION
   WHEN undefined_object THEN
     RAISE NOTICE 'skipping...';
 END$$;
+
+DO $$
+BEGIN
+  UPDATE party SET website_link = organization.website FROM organization WHERE party.id = organization.party_id AND organization.website IS NOT NULL;
+  RAISE NOTICE 'migrating organization.website to party.website_link...';
+EXCEPTION
+  WHEN OTHERS THEN
+   RAISE NOTICE 'skipping migration of organization.website...';
+END$$;
+
+ALTER TABLE organization DROP COLUMN IF EXISTS website;
