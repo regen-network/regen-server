@@ -48,6 +48,7 @@ import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
 import { web3auth } from './routes/web3auth';
 import { csrfRouter } from './routes/csrf';
+import { graphiqlRouter } from './routes/graphiql';
 
 import { doubleCsrfProtection, invalidCsrfTokenError } from './middleware/csrf';
 import { sameSiteFromEnv } from './utils';
@@ -181,12 +182,9 @@ if (process.env.LEDGER_REST_ENDPOINT) {
   );
 }
 
-if (!process.env.GRAPHIQL_ENABLED) {
-  app.use('/graphql', doubleCsrfProtection);
-}
+app.use('/graphql', doubleCsrfProtection);
 app.use(
   postgraphile(pgPool, 'public', {
-    graphiql: process.env.GRAPHIQL_ENABLED ? true : false,
     watchPg: true,
     dynamicJson: true,
     graphileBuildOptions: {
@@ -229,6 +227,7 @@ app.use(files);
 app.use(metadataGraph);
 app.use('/web3auth', web3auth);
 app.use(csrfRouter);
+app.use('/graphiql', graphiqlRouter);
 
 const swaggerOptions = {
   definition: {
@@ -291,6 +290,4 @@ const port = process.env.PORT || 5000;
 app.listen(port);
 
 console.log('Started server on port ' + port);
-if (process.env.GRAPHIQL_ENABLED) {
-  console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
-}
+console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
