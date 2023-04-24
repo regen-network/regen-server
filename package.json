@@ -21,7 +21,7 @@
   },
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "serve": "lerna run --scope=registry-server start --stream",
+    "serve": "lerna run --scope=server start --stream",
     "dev": "(cd server && yarn build) && yarn serve & (cd server && yarn watch)",
     "test": "lerna run --stream test -- --verbose",
     "migrate": "flyway -c flyway.js migrate",
