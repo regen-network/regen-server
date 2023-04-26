@@ -83,6 +83,14 @@ interface PerformLogin {
   csrfHeaders: Headers;
 }
 
+interface CreateNewUser {
+  userAddr: string;
+  userPrivKey: PrivKeySecp256k1;
+  userPubKey: PubKeySecp256k1;
+}
+
+interface CreateNewUserAndLogin extends CreateNewUser, PerformLogin {}
+
 export async function performLogin(
   privKey: PrivKeySecp256k1,
   pubKey: PubKeySecp256k1,
@@ -177,4 +185,27 @@ export async function setUpTestAccount(mnemonic: string): Promise<void> {
     );
     expect(loginResp.status).toBe(200);
   }
+}
+
+export async function createNewUser(): Promise<CreateNewUser> {
+  const userPrivKey = PrivKeySecp256k1.generateRandomKey();
+  const userPubKey = userPrivKey.getPubKey();
+  const userAddr = new Bech32Address(userPubKey.getAddress()).toBech32('regen');
+  return { userPrivKey, userPubKey, userAddr };
+}
+
+export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
+  const { userPrivKey, userPubKey, userAddr } = await createNewUser();
+  const nonce = '';
+  const loginResp = await performLogin(
+    userPrivKey,
+    userPubKey,
+    userAddr,
+    nonce,
+  );
+  return { ...loginResp, userAddr, userPrivKey, userPubKey };
+}
+
+export function genRandomRegenAddress(): string {
+  return `regen${Math.random().toString().slice(2, 11)}`;
 }
