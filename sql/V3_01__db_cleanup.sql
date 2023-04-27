@@ -110,3 +110,6 @@ EXCEPTION
 END$$;
 
 ALTER TABLE organization DROP COLUMN IF EXISTS website;
+
+ALTER TABLE party DROP COLUMN IF EXISTS address_id;
+ALTER TABLE credit_class DROP COLUMN IF EXISTS methodology_id;
