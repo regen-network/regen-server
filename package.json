@@ -13,7 +13,6 @@
     "lerna": "^4.0.0",
     "minimist": "^1.2.5",
     "node-fetch": "^2",
-    "node-flywaydb": "^3.0.0",
     "pg": "^8.7.3",
     "shx": "^0.3.2",
     "ts-node": "^10.5.0",
@@ -24,8 +23,7 @@
     "serve": "lerna run --scope=server start --stream",
     "dev": "(cd server && yarn build) && yarn serve & (cd server && yarn watch)",
     "test": "lerna run --stream test -- --verbose",
-    "migrate": "flyway -c flyway.js migrate",
-    "dbinfo": "flyway -c flyway.js info",
+    "migrate": "yarn run graphile-migrate migrate",
     "build": "lerna run build",
     "watch": "lerna run watch"
   },
