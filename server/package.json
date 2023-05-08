@@ -35,6 +35,7 @@
     "express-sharp": "^4.2.41",
     "got": "^11.8.2",
     "graphile-build-pg": "^4.5.0",
+    "graphile-migrate": "^1.4.1",
     "graphile-worker": "^0.13.0",
     "html-to-text": "^5.1.1",
     "http-proxy-middleware": "^2.0.6 ",
