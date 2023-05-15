@@ -1,4 +1,10 @@
 import fetch, { Response, Request, RequestInfo, Headers } from 'node-fetch';
+import { FileHandle, open, mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createReadStream } from 'node:fs';
+import FormData from 'form-data';
+import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import {
   Bech32Address,
   makeADR36AminoSignDoc,
@@ -208,4 +214,63 @@ export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
 
 export function genRandomRegenAddress(): string {
   return `regen${Math.random().toString().slice(2, 11)}`;
+}
+
+export async function dummyFilesSetup(
+  key: string,
+  fname: string,
+  identifier: any,
+  authHeaders: Headers,
+): Promise<{ resp: Response }> {
+  let dir: undefined | string = undefined;
+  let fd: undefined | FileHandle = undefined;
+  try {
+    const path = join(tmpdir(), 'projects-');
+    dir = await mkdtemp(path);
+    const fpath = join(dir, fname);
+    fd = await open(fpath, 'w');
+    await fd.write(`helloworld, for ${identifier}.`);
+    await fd.sync();
+
+    const form = new FormData();
+    form.append('image', createReadStream(fpath));
+    form.append('filePath', key);
+
+    authHeaders.delete('content-type');
+    const resp = await fetch('http://localhost:5000/files', {
+      method: 'POST',
+      headers: authHeaders,
+      body: form,
+    });
+    return { resp };
+  } finally {
+    if (fd) {
+      await fd?.close();
+    }
+    if (dir) {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }
+}
+
+export async function dummyFilesTeardown(key: string, fname: string) {
+  const bucketName = process.env.AWS_S3_BUCKET;
+  const region = process.env.AWS_BUCKET_REGION;
+  const s3 = new S3Client({ region });
+  const cmd = new DeleteObjectsCommand({
+    Bucket: bucketName,
+    Delete: {
+      Objects: [{ Key: `${key}/${fname}` }, { Key: `${key}` }],
+    },
+  });
+  const response = await s3.send(cmd);
+  if (response['$metadata'].httpStatusCode !== 200) {
+    console.dir(
+      {
+        response,
+        warning: 'objects possibly not removed rom s3 testing bucket',
+      },
+      { depth: null },
+    );
+  }
 }
