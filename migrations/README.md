@@ -23,7 +23,7 @@ $ export ROOT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres
 $ yarn run graphile-migrate reset --erase
 ```
 
-Now, we set up a watch process that will monitor `migrations/current.sql` for your changes:
+Now, we set up a watch process that will monitor `migrations/current.sql` for your changes as well as apply them to your local database:
 
 ```
 $ yarn run graphile-migrate watch
@@ -36,11 +36,10 @@ $ yarn run graphile-migrate commit
 ```
 
 By committing your changes you should see a new SQL file in `migration/committed/`.
-Since you were doing local development that change will be automatically committed for you.
 
 ## Deploying to staging or production
 
-The migrations are always automatically run in CI.
+The migrations are always automatically run in CI for staging and production.
 See the `migrate` command in `server/package.json`.
 
 ## Debugging
@@ -53,7 +52,7 @@ Our migration tool tracks which migrations have been applied in the following ta
 
 ```
 regen_registry=# select * from graphile_migrate.migrations;
-                     hash                      | previous_hash |  filename  |             date              
+                     hash                      | previous_hash |  filename  |             date
 -----------------------------------------------+---------------+------------+-------------------------------
  sha1:28ab5499d9a4520daa9428681a9bf1152f9887af |               | 000001.sql | 2023-05-08 20:20:31.213547+00
 ```
