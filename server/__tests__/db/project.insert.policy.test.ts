@@ -1,4 +1,5 @@
 import { PoolClient } from 'pg';
+import { genRandomRegenAddress } from '../utils';
 import {
   becomeAuthUser,
   createAccount,
@@ -8,7 +9,7 @@ import {
 
 describe('the INSERT RLS policy for the project table...', () => {
   it('should allow a user to create a project with their own wallet as admin...', async () => {
-    const walletAddr = `regen${Math.random().toString().slice(2, 11)}`;
+    const walletAddr = genRandomRegenAddress();
     await withAuthUserDb(walletAddr, async (client: PoolClient) => {
       const addrsQ = await client.query(
         'select wallet_id from get_current_addrs() where addr=$1',
@@ -24,8 +25,8 @@ describe('the INSERT RLS policy for the project table...', () => {
   });
 
   it('should NOT allow a user to create a project with another users wallet as admin...', async () => {
-    const walletAddr = `regen${Math.random().toString().slice(2, 11)}`;
-    const walletAddr2 = `regen${Math.random().toString().slice(2, 11)}`;
+    const walletAddr = genRandomRegenAddress();
+    const walletAddr2 = genRandomRegenAddress();
     await withRootDb(async (client: PoolClient) => {
       const accountId = await createAccount(client, walletAddr);
       const accountId2 = await createAccount(client, walletAddr2);

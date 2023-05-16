@@ -4,6 +4,7 @@ import {
   performLogin,
   loginResponseAssertions,
   setUpTestAccount,
+  createNewUserAndLogin,
 } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
@@ -46,19 +47,12 @@ describe('web3auth login endpoint', () => {
 
   it('authenticates a new user successfully and creates a session...', async () => {
     // set up a key pair and sign the required login transaction..
-    const privKey = PrivKeySecp256k1.generateRandomKey();
-    const pubKey = privKey.getPubKey();
-    const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-    // use an empty nonce since this is a request to create a new user account
-    const nonce = '';
-
-    const { response: loginResp, authHeaders } = await performLogin(
-      privKey,
-      pubKey,
-      signer,
-      nonce,
-    );
-    loginResponseAssertions(loginResp, signer);
+    const {
+      response: loginResp,
+      authHeaders,
+      userAddr,
+    } = await createNewUserAndLogin();
+    loginResponseAssertions(loginResp, userAddr);
 
     // check that an authenticated user can use an authenticated graphql query
     const resp = await fetch('http://localhost:5000/graphql', {
@@ -72,7 +66,7 @@ describe('web3auth login endpoint', () => {
     // expect that the response contains the user's current addresses
     // because this test is for a new user they should only have one address
     expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: signer },
+      { addr: userAddr },
     ]);
   });
 

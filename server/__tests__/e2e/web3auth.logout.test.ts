@@ -1,7 +1,5 @@
 import fetch from 'node-fetch';
-import { CSRFRequest, performLogin, genAuthHeaders } from '../utils';
-import { Bech32Address } from '@keplr-wallet/cosmos';
-import { PrivKeySecp256k1 } from '@keplr-wallet/crypto';
+import { CSRFRequest, genAuthHeaders, createNewUserAndLogin } from '../utils';
 
 describe('web3auth logout endpoint', () => {
   it('returns 403 if double csrf is not used', async () => {
@@ -21,18 +19,7 @@ describe('web3auth logout endpoint', () => {
   });
 
   it('closes the user session and a user can no longer make authd requests', async () => {
-    // set up a key pair and sign the required login transaction..
-    const privKey = PrivKeySecp256k1.generateRandomKey();
-    const pubKey = privKey.getPubKey();
-    const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
-    // use an empty nonce since this is a request to create a new user account
-    const nonce = '';
-    const { authHeaders, csrfHeaders } = await performLogin(
-      privKey,
-      pubKey,
-      signer,
-      nonce,
-    );
+    const { authHeaders, csrfHeaders } = await createNewUserAndLogin();
 
     // now we pass the combined headers for the logout request
     const logoutResp = await fetch('http://localhost:5000/web3auth/logout', {
