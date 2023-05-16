@@ -95,7 +95,9 @@ web3auth.post(
 );
 
 web3auth.post('/logout', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
-  req.logout();
+  req.logout(err => {
+    console.log(err);
+  });
   return res.send({
     message: 'You have been logged out!',
   });

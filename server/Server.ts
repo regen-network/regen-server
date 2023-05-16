@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
@@ -150,6 +150,26 @@ const cookieSessionConfig = {
   secure: SESSION_SECURE,
 };
 app.use(cookieSession(cookieSessionConfig));
+app.use(function (request: Request, _, next) {
+  // this middleware is a workaround for express cookie session.
+  // express cookie session does not implement the regenerate and save callbacks.
+  // newer versions of passport.js expected these to be implemented.
+  // this workaround was found in the passport.js issue tracker:
+  // https://github.com/jaredhanson/passport/issues/904#issuecomment-1307558283
+  // in the future, we can likely do away with this when there is an update to express cookie session.
+  // or if a newer cookie session library is implemented.
+  if (request.session && !request.session.regenerate) {
+    request.session.regenerate = (cb: any) => {
+      cb();
+    };
+  }
+  if (request.session && !request.session.save) {
+    request.session.save = (cb: any) => {
+      cb();
+    };
+  }
+  next();
+});
 
 initializePassport(app, passport);
 app.use(cors(corsOptions));
