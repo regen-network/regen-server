@@ -1,9 +1,10 @@
 import { PoolClient } from 'pg';
+import { genRandomRegenAddress } from '../utils';
 import { withAuthUserDb } from './helpers';
 
 describe('the DELETE RLS policy for the project table...', () => {
   it('should NOT allow a user to delete projects...', async () => {
-    const walletAddr = `regen${Math.random().toString().slice(2, 11)}`;
+    const walletAddr = genRandomRegenAddress();
     await withAuthUserDb(walletAddr, async (client: PoolClient) => {
       const addrsQ = await client.query(
         'select wallet_id from get_current_addrs() where addr=$1',

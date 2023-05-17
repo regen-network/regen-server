@@ -1,22 +1,9 @@
 import fetch from 'node-fetch';
-import { performLogin } from '../../utils';
-import { Bech32Address } from '@keplr-wallet/cosmos';
-import { PrivKeySecp256k1 } from '@keplr-wallet/crypto';
+import { createNewUserAndLogin } from '../../utils';
 
 describe('party update policies', () => {
   it('allow a user to update a party/profile that belongs to them', async () => {
-    const userPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const userPubKey = userPrivKey.getPubKey();
-    const userAddr = new Bech32Address(userPubKey.getAddress()).toBech32(
-      'regen',
-    );
-    const emptyNonce = '';
-    const { authHeaders } = await performLogin(
-      userPrivKey,
-      userPubKey,
-      userAddr,
-      emptyNonce,
-    );
+    const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const query = await fetch('http://localhost:5000/graphql', {
       method: 'POST',
@@ -64,25 +51,9 @@ describe('party update policies', () => {
   });
 
   it('does not allow a user to update another users party/profile', async () => {
-    const userPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const userPubKey = userPrivKey.getPubKey();
-    const userAddr = new Bech32Address(userPubKey.getAddress()).toBech32(
-      'regen',
-    );
-    const emptyNonce = '';
-    const { authHeaders } = await performLogin(
-      userPrivKey,
-      userPubKey,
-      userAddr,
-      emptyNonce,
-    );
+    const { authHeaders } = await createNewUserAndLogin();
     // create an additional account
-    const otherPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const otherPubKey = otherPrivKey.getPubKey();
-    const otherAddr = new Bech32Address(otherPubKey.getAddress()).toBech32(
-      'regen',
-    );
-    await performLogin(otherPrivKey, otherPubKey, otherAddr, emptyNonce);
+    const { userAddr: otherAddr } = await createNewUserAndLogin();
 
     // as the first user look up the party of the other user...
     const query = await fetch('http://localhost:5000/graphql', {

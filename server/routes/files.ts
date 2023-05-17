@@ -36,16 +36,21 @@ router.post(
       const image = (request as FilesRequest).files.image;
       const key = request.body.filePath;
 
-      const re = /profiles(?:-test)*\/([a-zA-Z0-9-]*)/;
-      const matches = key.match(re);
+      const profilesRe = /profiles(?:-test)*\/([a-zA-Z0-9-]*)/;
+      const profilesMatch = key.match(profilesRe);
+      const projectsRe = /projects(?:-test)*\/([a-zA-Z0-9-]*)/;
+      const projectsMatch = key.match(projectsRe);
 
       // block any unauthenticated requests are made to filePath that includes profiles
       // otherwise, check if the filePath belongs to the current user based on their party id
       // if not, block the request...
       // otherwise, allow the request to update the file to proceed
-      if (key.includes('profiles') && request.isUnauthenticated()) {
+      if (
+        (key.includes('profiles') || key.includes('projects')) &&
+        request.isUnauthenticated()
+      ) {
         return response.status(401).send({ error: 'unauthorized' });
-      } else if (matches) {
+      } else if (profilesMatch) {
         client = await pgPool.connect();
 
         const accountQuery = await client.query(
@@ -58,11 +63,23 @@ router.post(
           'SELECT id FROM private.get_parties_by_account_id($1)',
           [accountId],
         );
-        const partyId = matches[1];
+        const partyId = profilesMatch[1];
         const partyIds = partiesQuery.rows.map(x => {
           return x.id;
         });
         if (!partyIds.includes(partyId)) {
+          return response.status(401).send({ error: 'unauthorized' });
+        }
+      } else if (projectsMatch) {
+        const projectId = projectsMatch[1];
+        client = await pgPool.connect();
+        console.log(request.user?.address);
+        console.log(projectId);
+        const queryRes = await client.query(
+          'SELECT project.id FROM project JOIN wallet ON wallet.id = project.admin_wallet_id WHERE wallet.addr = $1 AND project.id = $2',
+          [request.user?.address, projectId],
+        );
+        if (queryRes.rowCount !== 1) {
           return response.status(401).send({ error: 'unauthorized' });
         }
       }

@@ -1,23 +1,14 @@
 import fetch from 'node-fetch';
-import { performLogin, genAddAddressSignature } from '../utils';
-import { Bech32Address } from '@keplr-wallet/cosmos';
-import { PrivKeySecp256k1 } from '@keplr-wallet/crypto';
+import {
+  genAddAddressSignature,
+  createNewUserAndLogin,
+  createNewUser,
+} from '../utils';
 
 describe('web3auth addresses endpoint', () => {
   it('can add a previously claimed address to a user account...', async () => {
     // create a new testing account
-    const userPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const userPubKey = userPrivKey.getPubKey();
-    const userAddr = new Bech32Address(userPubKey.getAddress()).toBech32(
-      'regen',
-    );
-    const emptyNonce = '';
-    const { authHeaders } = await performLogin(
-      userPrivKey,
-      userPubKey,
-      userAddr,
-      emptyNonce,
-    );
+    const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
       `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
@@ -25,16 +16,13 @@ describe('web3auth addresses endpoint', () => {
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
 
-    // create another new testing account with another address to add to the first account
-    const newPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const newPubKey = newPrivKey.getPubKey();
-    const newAddr = new Bech32Address(newPubKey.getAddress()).toBech32('regen');
-    const { authHeaders: testUserAuthHeaders } = await performLogin(
-      newPrivKey,
-      newPubKey,
-      newAddr,
-      emptyNonce,
-    );
+    const {
+      authHeaders: testUserAuthHeaders,
+      userAddr: newAddr,
+      userPrivKey: newPrivKey,
+      userPubKey: newPubKey,
+    } = await createNewUserAndLogin();
+
     // prove ownership of the new testing account
     // use the nonce of the currently authenticated user
     const newSig = genAddAddressSignature(
@@ -75,18 +63,7 @@ describe('web3auth addresses endpoint', () => {
 
   it('can add an unused address to a user account...', async () => {
     // create a new testing account
-    const userPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const userPubKey = userPrivKey.getPubKey();
-    const userAddr = new Bech32Address(userPubKey.getAddress()).toBech32(
-      'regen',
-    );
-    const emptyNonce = '';
-    const { authHeaders } = await performLogin(
-      userPrivKey,
-      userPubKey,
-      userAddr,
-      emptyNonce,
-    );
+    const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
       `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
@@ -96,9 +73,11 @@ describe('web3auth addresses endpoint', () => {
 
     // just generate a key pair and an address
     // do not create an account for this address
-    const newPrivKey = PrivKeySecp256k1.generateRandomKey();
-    const newPubKey = newPrivKey.getPubKey();
-    const newAddr = new Bech32Address(newPubKey.getAddress()).toBech32('regen');
+    const {
+      userPubKey: newPubKey,
+      userPrivKey: newPrivKey,
+      userAddr: newAddr,
+    } = await createNewUser();
     // prove ownership of the key pair
     // use the nonce of the currently authenticated user
     const newSig = genAddAddressSignature(
