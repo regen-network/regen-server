@@ -66,6 +66,10 @@ describe('remove_addr_from_account', () => {
   it('successfully removes an address from an account', async () => {
     await withRootDb(async client => {
       const accountId = await createAccount(client, walletAddr);
+      const resp = await client.query(
+        `select * from private.get_parties_by_account_id('${accountId}')`,
+      );
+      const [{ id: partyId }] = resp.rows;
       await client.query(
         `select * from private.remove_addr_from_account('${accountId}', '${walletAddr}')`,
       );
@@ -73,6 +77,11 @@ describe('remove_addr_from_account', () => {
         .query(`select * from private.get_addrs_by_account_id('${accountId}')`)
         .then(result => {
           expect(result.rowCount).toBe(0);
+        });
+      client
+        .query(`select count(*) from party where id = '${partyId}'`)
+        .then(result => {
+          expect(result.rowCount).toBe(1);
         });
     });
   });
