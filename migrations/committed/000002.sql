@@ -1,0 +1,8 @@
+--! Previous: sha1:854455b4dfefc488a97a9c54cd783ad2b4696192
+--! Hash: sha1:9013262c085bd4cb3eef3f42a90bbb71d29d6b51
+
+ALTER TABLE credit_class
+ADD COLUMN IF NOT EXISTS registry_id UUID REFERENCES party (id) ON DELETE SET NULL;
+
+ALTER TABLE project
+ADD COLUMN IF NOT EXISTS verifier_id UUID REFERENCES party (id) ON DELETE SET NULL;
