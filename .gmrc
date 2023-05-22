@@ -93,11 +93,11 @@
    * afterAllMigrations: actions executed once all migrations are complete.
    */
   "afterAllMigrations": [
-    // {
-    //   "_": "command",
-    //   "shadow": true,
-    //   "command": "if [ \"$IN_TESTS\" != \"1\" ]; then ./scripts/dump-db; fi",
-    // },
+    {
+      "_": "command",
+      "shadow": true,
+      "command": "pg_dump --no-sync --schema-only --no-owner --file=./migrations/schema_snapshot.sql $SHADOW_DATABASE_URL",
+    },
   ],
 
   /*

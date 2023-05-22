@@ -37,10 +37,22 @@ $ yarn run graphile-migrate commit
 
 By committing your changes you should see a new SQL file in `migration/committed/`.
 
+## Schema Snapshot
+
+The schema snapshot is stored and tracked in version control as `migrations/schema_snapshot.sql`.
+Each time you apply a migration in local development this snapshot will be automatically updated.
+See `.gmrc` and `afterAllMigrations` from [the `graphile-migrate` configuration docs](https://github.com/graphile/migrate#configuration) for how this is done.
+This allows us to keep track of the changes being introduced to the schema.
+You must commit your changes to this file.
+
+This is a helpful file to keep in mind when you have questions about entities in the database.
+For example, it allows you to also view the functions in the database being used in various RLS policies.
+Similarly, you can view the various policies in the database or which tables have RLS enabled.
+
 ## Deploying to staging or production
 
-The migrations are always automatically run in CI for staging and production.
-See the `migrate` command in `server/package.json`.
+The migrations are always automatically run in Heroku for staging and production.
+See the `migrate` command in `server/package.json` and `Procfile` for Heroku.
 
 ## Debugging
 
