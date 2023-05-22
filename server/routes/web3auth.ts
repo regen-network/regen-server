@@ -94,14 +94,21 @@ web3auth.post(
   },
 );
 
-web3auth.post('/logout', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
-  req.logout(err => {
-    console.log(err);
-  });
-  return res.send({
-    message: 'You have been logged out!',
-  });
-});
+web3auth.post(
+  '/logout',
+  doubleCsrfProtection,
+  ensureLoggedIn(),
+  (req, res, next) => {
+    req.logout(err => {
+      if (err) {
+        next(err);
+      }
+    });
+    return res.send({
+      message: 'You have been logged out!',
+    });
+  },
+);
 
 web3auth.get('/nonce', async (req, res, next) => {
   // this endpoint fetches a nonce for a given user by their wallet
