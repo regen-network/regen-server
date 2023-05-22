@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FLYWAY_URL: jdbc:postgresql://localhost:5432/regen_registry
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
       TEST_DATABASE_USER: postgres
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
