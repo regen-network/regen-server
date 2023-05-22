@@ -1,1 +1,0 @@
-grant select on admin to app_user;
