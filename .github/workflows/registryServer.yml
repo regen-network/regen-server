@@ -80,4 +80,4 @@ jobs:
           CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
         run: yarn build && yarn serve &
       - name: 'run tests after waiting a bit'
-        run: sleep 20 && yarn test
+        run: yarn test
