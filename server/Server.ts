@@ -150,7 +150,7 @@ const cookieSessionConfig = {
   secure: SESSION_SECURE,
 };
 app.use(cookieSession(cookieSessionConfig));
-app.use(function (request: Request, _, next) {
+app.use(function (request: any, _, next) {
   // this middleware is a workaround for express cookie session.
   // express cookie session does not implement the regenerate and save callbacks.
   // newer versions of passport.js expected these to be implemented.
