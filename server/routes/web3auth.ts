@@ -77,6 +77,8 @@ web3auth.post(
             'select from private.remove_addr_from_account($1, $2)',
             [associatedId, address],
           );
+        } else {
+          await client.query('select private.create_auth_user($1)', [address]);
         }
         await client.query(
           'select from private.add_addr_to_account($1, $2, $3)',
