@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { withRootDb } from '../db/helpers';
 import {
   genAddAddressSignature,
   createNewUserAndLogin,
@@ -104,5 +105,12 @@ describe('web3auth addresses endpoint', () => {
     });
     const data = await resp.json();
     expect(data.data.getCurrentAddrs.nodes.length).toBe(2);
+    await withRootDb(async client => {
+      const result = await client.query(
+        `SELECT rolname FROM pg_roles WHERE rolname = '${newAddr}'`,
+      );
+      // we expect that a role is created for the unused address when adding an address
+      expect(result.rowCount).toBe(1);
+    });
   });
 });
