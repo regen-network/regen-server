@@ -19,7 +19,7 @@
     "@types/mjml": "^4.0.4",
     "@types/nodemailer": "^6.4.0",
     "@types/passport": "^1.0.12",
-    "airtable": "^0.11.3",
+    "airtable": "^0.12.1",
     "auth0": "^2.33.0",
     "aws-sdk": "^2.859.0",
     "axios": "^1.1.3",
