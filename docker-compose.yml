@@ -1,10 +1,11 @@
 version: '3'
 services:
   postgres:
-    image: postgis/postgis:12-master
+    build:
+      context: .
+      dockerfile: ./Dockerfile.postgres
     restart: always
     environment:
-      # - POSTGRES_MULTIPLE_DB=regen_registry,regen_registry_test
       - POSTGRES_DB=regen_registry
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

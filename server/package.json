@@ -35,6 +35,7 @@
     "express-sharp": "^4.2.41",
     "got": "^11.8.2",
     "graphile-build-pg": "^4.5.0",
+    "graphile-migrate": "^1.4.1",
     "graphile-worker": "^0.13.0",
     "html-to-text": "^5.1.1",
     "http-proxy-middleware": "^2.0.6 ",
@@ -52,7 +53,8 @@
     "redis": "^3.1.1",
     "stripe": "^8.120.0",
     "swagger-jsdoc": "^6.2.1",
-    "swagger-ui-express": "^4.4.0"
+    "swagger-ui-express": "^4.4.0",
+    "wait-port": "^1.0.4"
   },
   "scripts": {
     "start": "ts-node Server.ts",
@@ -60,7 +62,7 @@
     "build": "yarn remove-dist && tsc -b",
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "tsc --watch",
-    "test": "jest --runInBand --detectOpenHandles"
+    "test": "wait-port localhost:5000 --timeout 120000 && jest --runInBand --detectOpenHandles"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
