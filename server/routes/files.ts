@@ -1,22 +1,21 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
-import S3 from 'aws-sdk/clients/s3';
 import { Readable } from 'stream';
 import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
+import {
+  DeleteObjectCommand,
+  DeleteObjectCommandInput,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 const router = express.Router();
 
 const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-const s3 = new S3({
-  region,
-  accessKeyId,
-  secretAccessKey,
-});
+const newS3 = new S3Client({ region });
 
 interface FilesRequest extends express.Request {
   files: {
@@ -29,7 +28,6 @@ interface FilesRequest extends express.Request {
 
 router.post(
   '/files',
-  bodyParser.json(),
   async (request: UserRequest, response: express.Response, next) => {
     let client: undefined | PoolClient = undefined;
     try {
@@ -73,8 +71,6 @@ router.post(
       } else if (projectsMatch) {
         const projectId = projectsMatch[1];
         client = await pgPool.connect();
-        console.log(request.user?.address);
-        console.log(projectId);
         const queryRes = await client.query(
           'SELECT project.id FROM project JOIN wallet ON wallet.id = project.admin_wallet_id WHERE wallet.addr = $1 AND project.id = $2',
           [request.user?.address, projectId],
@@ -85,29 +81,25 @@ router.post(
       }
 
       const fileStream = Readable.from([image.data]);
-
-      const uploadParams = {
-        Bucket: `${bucketName}/${key}`,
-        Key: `${image.name}`,
-        Body: fileStream,
-      };
-
       fileStream.on('error', function (err) {
         console.log('File Error: ', err);
       });
 
-      s3.upload(
-        uploadParams,
-        function (err: Error, data: S3.ManagedUpload.SendData) {
-          if (err) {
-            console.log('s3 Error', err);
-            response.status(500).send({ Error: err });
-          }
-          if (data) {
-            response.send({ imageUrl: data.Location });
-          }
-        },
-      );
+      const cmd = new PutObjectCommand({
+        Bucket: bucketName,
+        Body: image.data,
+        Key: `${key}/${image.name}`,
+      });
+      const cmdResp = await newS3.send(cmd);
+      const status = cmdResp['$metadata'].httpStatusCode;
+      if (status && (status < 200 || status >= 300)) {
+        console.log({ cmdResp });
+        throw new Error('Error uploading file to s3');
+      } else {
+        response.send({
+          imageUrl: `https://${bucketName}.s3.amazonaws.com/${key}/${image.name}`,
+        });
+      }
     } catch (err) {
       next(err);
     } finally {
@@ -121,24 +113,27 @@ router.post(
 router.delete(
   '/files/:projectId/:key',
   bodyParser.json(),
-  (request, response: express.Response) => {
-    const projectId = request.params.projectId;
-    const key = request.params.key;
+  async (request, response: express.Response, next) => {
+    try {
+      const projectId = request.params.projectId;
+      const key = request.params.key;
 
-    const deleteParams = {
-      Bucket: `${bucketName}/projects/${projectId}`,
-      Key: key,
-    };
-
-    s3.deleteObject(deleteParams, function (err, data) {
-      if (err) {
-        console.log('s3 Error', err);
-        response.status(500).send(err);
-      }
-      if (data) {
+      const input: DeleteObjectCommandInput = {
+        Bucket: bucketName,
+        Key: `projects/${projectId}/${key}`,
+      };
+      const cmd = new DeleteObjectCommand(input);
+      const cmdResp = await newS3.send(cmd);
+      const status = cmdResp['$metadata'].httpStatusCode;
+      if (status && (status < 200 || status >= 300)) {
+        console.log({ cmdResp });
+        throw new Error('Unable to delete file');
+      } else {
         response.send('File successfully deleted');
       }
-    });
+    } catch (err) {
+      next(err);
+    }
   },
 );
 
