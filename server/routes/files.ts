@@ -15,7 +15,7 @@ const router = express.Router();
 const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
 
-const newS3 = new S3Client({ region });
+const s3 = new S3Client({ region });
 
 interface FilesRequest extends express.Request {
   files: {
@@ -90,7 +90,7 @@ router.post(
         Body: image.data,
         Key: `${key}/${image.name}`,
       });
-      const cmdResp = await newS3.send(cmd);
+      const cmdResp = await s3.send(cmd);
       const status = cmdResp['$metadata'].httpStatusCode;
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });
@@ -123,7 +123,7 @@ router.delete(
         Key: `projects/${projectId}/${key}`,
       };
       const cmd = new DeleteObjectCommand(input);
-      const cmdResp = await newS3.send(cmd);
+      const cmdResp = await s3.send(cmd);
       const status = cmdResp['$metadata'].httpStatusCode;
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });
