@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.8 (Debian 14.8-1.pgdg110+1)
--- Dumped by pg_dump version 14.8 (Homebrew)
+-- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
+-- Dumped by pg_dump version 15.0
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,13 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -565,6 +572,44 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: party; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.party (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    type public.party_type NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    wallet_id uuid,
+    description character(160),
+    image text DEFAULT ''::text,
+    account_id uuid,
+    bg_image text,
+    twitter_link text,
+    website_link text,
+    CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
+);
+
+
+--
+-- Name: get_parties_by_name_or_addr(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_parties_by_name_or_addr(input text) RETURNS SETOF public.party
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT
+    p.*
+  FROM
+    party as p
+  JOIN wallet ON wallet.id = p.wallet_id
+  WHERE
+    p.name ILIKE CONCAT('%', input, '%') OR wallet.addr ILIKE CONCAT('%', input, '%');
+$$;
+
+
+--
 -- Name: current; Type: TABLE; Schema: graphile_migrate; Owner: -
 --
 
@@ -680,27 +725,6 @@ CREATE TABLE public.organization (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     party_id uuid NOT NULL,
     legal_name text DEFAULT ''::text NOT NULL
-);
-
-
---
--- Name: party; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.party (
-    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    type public.party_type NOT NULL,
-    name text DEFAULT ''::text NOT NULL,
-    wallet_id uuid,
-    description character(160),
-    image text DEFAULT ''::text,
-    account_id uuid,
-    bg_image text,
-    twitter_link text,
-    website_link text,
-    CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
 
@@ -1175,6 +1199,50 @@ CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: TABLE party; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT ON TABLE public.party TO app_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
+
+
+--
+-- Name: COLUMN party.name; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(name) ON TABLE public.party TO app_user;
+
+
+--
+-- Name: COLUMN party.wallet_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(wallet_id) ON TABLE public.party TO app_user;
+
+
+--
+-- Name: COLUMN party.description; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(description) ON TABLE public.party TO app_user;
+
+
+--
+-- Name: COLUMN party.image; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(image) ON TABLE public.party TO app_user;
+
+
+--
 -- Name: TABLE account; Type: ACL; Schema: public; Owner: -
 --
 
@@ -1228,42 +1296,6 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.organization TO app_user;
 --
 
 GRANT UPDATE(legal_name) ON TABLE public.organization TO app_user;
-
-
---
--- Name: TABLE party; Type: ACL; Schema: public; Owner: -
---
-
-GRANT SELECT,INSERT ON TABLE public.party TO app_user;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.name; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(name) ON TABLE public.party TO app_user;
-
-
---
--- Name: COLUMN party.wallet_id; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(wallet_id) ON TABLE public.party TO app_user;
-
-
---
--- Name: COLUMN party.description; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(description) ON TABLE public.party TO app_user;
-
-
---
--- Name: COLUMN party.image; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(image) ON TABLE public.party TO app_user;
 
 
 --
