@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express from 'express';
 import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
@@ -14,7 +14,6 @@ import * as env from 'env-var';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 
 import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
@@ -98,30 +97,12 @@ const app = express();
 
 app.set('trust proxy', true);
 
-// this flag is used to enable sentry
-// we only want this set in the production environment
-// without this set we will use too much of our sentry quota
-// it can also be used in local dev when testing sentry
 if (process.env.SENTRY_ENABLED) {
   Sentry.init({
     dsn: 'https://92594830df5944ae87656e33c98f36fc@o1377530.ingest.sentry.io/6688455',
-    integrations: [
-      // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
-      // enable Express.js middleware tracing
-      new Tracing.Integrations.Express({ app }),
-    ],
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
-    tracesSampleRate: 1.0,
     environment: process.env.SENTRY_ENVIRONMENT || 'development',
   });
-  // RequestHandler creates a separate execution context using domains, so that every
-  // transaction/span/breadcrumb is attached to its own Hub instance
   app.use(Sentry.Handlers.requestHandler());
-  // TracingHandler creates a trace for every incoming request
-  app.use(Sentry.Handlers.tracingHandler());
 }
 
 app.use(fileUpload());
@@ -219,10 +200,6 @@ app.use(
       if (req.user && req.user.sub) {
         const { sub } = req.user;
         const settings = { role: sub };
-        // TODO need to deal with keys that aren't strings properly
-        // Object.keys(user).map(k =>
-        //   settings['jwt.claims.' + k] = user[k]
-        // );
         return settings;
       } else if (req.user && req.user.address && req.user.id) {
         return {
@@ -265,7 +242,7 @@ const swaggerOptions = {
   apis: ['./routes/*.ts'],
 };
 const specs = swaggerJsdoc(swaggerOptions);
-app.get('/api-docs/swagger.json', (req, res) => res.json(specs));
+app.get('/api-docs/swagger.json', (_, res) => res.json(specs));
 app.use(
   '/api-docs',
   swaggerUi.serve,
@@ -276,7 +253,7 @@ app.use(
   }),
 );
 
-app.use((err, req, res, next) => {
+app.use((err, req, _, next) => {
   if (err.stack) {
     console.error(err.stack);
   }
@@ -285,7 +262,7 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.use((err, req, res, next) => {
+app.use((err, _, res, next) => {
   const errResponse = { error: err.message };
   if (err instanceof BaseHTTPError) {
     res.status(err.status_code).send(errResponse);
@@ -300,9 +277,7 @@ app.use((err, req, res, next) => {
   }
 });
 
-// this is the last error handler to register we only want the
-// uncaught exceptions to be sent to sentry. otherwise we end
-// up with a lot of noise in sentry.
+// this is the last error handler to register because we only want the uncaught exceptions to be sent to sentry.
 app.use(Sentry.Handlers.errorHandler());
 
 const port = process.env.PORT || 5000;
