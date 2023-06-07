@@ -11,7 +11,6 @@ describe('get_parties_by_name_or_addr', () => {
         [walletAddr],
       );
       const [{ id: walletId }] = walletIdRes.rows;
-      console.log('walletIdRes', walletIdRes);
       const partyIdRes = await client.query(
         `INSERT INTO party (type, name, wallet_id) values ('user', $1, $2) returning id`,
         [partyName, walletId],
@@ -24,6 +23,23 @@ describe('get_parties_by_name_or_addr', () => {
       );
       expect(partiesByAddrRes.rowCount).toBe(1);
       expect(partiesByAddrRes.rows[0].id).toEqual(partyId);
+
+      const partiesByNameRes = await client.query(
+        `SELECT id FROM public.get_parties_by_name_or_addr($1)`,
+        [partyName.substring(0, 4)],
+      );
+      expect(partiesByNameRes.rowCount).toBe(1);
+      expect(partiesByNameRes.rows[0].id).toEqual(partyId);
+    });
+  });
+
+  it('returns parties without wallet addresses by name', async () => {
+    await withRootDb(async client => {
+      const partyIdRes = await client.query(
+        `INSERT INTO party (type, name) values ('user', $1) returning id`,
+        [partyName],
+      );
+      const [{ id: partyId }] = partyIdRes.rows;
 
       const partiesByNameRes = await client.query(
         `SELECT id FROM public.get_parties_by_name_or_addr($1)`,

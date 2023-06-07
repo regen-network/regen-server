@@ -607,7 +607,7 @@ CREATE FUNCTION public.get_parties_by_name_or_addr(input text) RETURNS SETOF pub
     p.*
   FROM
     party as p
-  JOIN wallet ON wallet.id = p.wallet_id
+  LEFT JOIN wallet ON wallet.id = p.wallet_id
   WHERE
     p.name ILIKE CONCAT('%', input, '%') OR wallet.addr ILIKE CONCAT('%', input, '%');
 $$;
