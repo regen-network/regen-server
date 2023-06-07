@@ -1,4 +1,4 @@
-import { createAccount, withRootDb } from '../../helpers';
+import { createAccount, createWalletAndParty, withRootDb } from '../../helpers';
 
 const walletAddr = 'regen123456789';
 
@@ -27,18 +27,12 @@ describe('create_new_account', () => {
       // Create existing wallet and party
       const partyName = 'John';
       const partyType = 'organization';
-      const walletRes = await client.query(
-        `insert into wallet (addr) values ($1) returning id`,
-        [walletAddr],
+      const { walletId, partyId } = await createWalletAndParty(
+        client,
+        walletAddr,
+        partyName,
+        partyType,
       );
-      expect(walletRes.rowCount).toBe(1);
-      const [{ id: walletId }] = walletRes.rows;
-      const partyRes = await client.query(
-        `insert into party (name, type, wallet_id) values ($1, $2, $3) returning id`,
-        [partyName, partyType, walletId],
-      );
-      expect(partyRes.rowCount).toBe(1);
-      const [{ id: partyId }] = partyRes.rows;
 
       const accountId = await createAccount(client, walletAddr);
       const result = await client.query(
