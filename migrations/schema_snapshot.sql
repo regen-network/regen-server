@@ -261,7 +261,7 @@ BEGIN
           RAISE LOG 'new _party_id %', v_party_id;
         ELSE
           RAISE LOG 'associating preexisting party...';
-          UPDATE party SET account_id = v_account_id, type = v_party_type WHERE id = v_party_id ;
+          UPDATE party SET account_id = v_account_id WHERE id = v_party_id ;
         END IF;
     END IF;
 END;
@@ -315,6 +315,10 @@ BEGIN
 
         INSERT INTO party (account_id, TYPE, wallet_id)
             VALUES (v_account_id, v_party_type, v_wallet_id)
+        ON CONFLICT ON CONSTRAINT
+            party_wallet_id_key
+        DO UPDATE SET
+            account_id = v_account_id
         RETURNING
             id INTO v_party_id;
 
@@ -603,7 +607,7 @@ CREATE FUNCTION public.get_parties_by_name_or_addr(input text) RETURNS SETOF pub
     p.*
   FROM
     party as p
-  JOIN wallet ON wallet.id = p.wallet_id
+  LEFT JOIN wallet ON wallet.id = p.wallet_id
   WHERE
     p.name ILIKE CONCAT('%', input, '%') OR wallet.addr ILIKE CONCAT('%', input, '%');
 $$;
@@ -1190,6 +1194,13 @@ CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user US
 --
 
 ALTER TABLE public.wallet ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: wallet wallet_insert_policy; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY wallet_insert_policy ON public.wallet FOR INSERT TO auth_user WITH CHECK (true);
+
 
 --
 -- Name: wallet wallet_select_all; Type: POLICY; Schema: public; Owner: -

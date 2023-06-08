@@ -121,3 +121,25 @@ export async function getAccount(client: PoolClient): Promise<string> {
   const [{ account_id }] = result.rows;
   return account_id;
 }
+
+export async function createWalletAndParty(
+  client: PoolClient,
+  walletAddr: string,
+  partyName: string,
+  partyType: 'user' | 'organization' = 'user',
+): Promise<{ walletId: string; partyId: string }> {
+  const walletRes = await client.query(
+    `insert into wallet (addr) values ($1) returning id`,
+    [walletAddr],
+  );
+  expect(walletRes.rowCount).toBe(1);
+  const [{ id: walletId }] = walletRes.rows;
+  const partyRes = await client.query(
+    `insert into party (name, type, wallet_id) values ($1, $2, $3) returning id`,
+    [partyName, partyType, walletId],
+  );
+  expect(partyRes.rowCount).toBe(1);
+  const [{ id: partyId }] = partyRes.rows;
+
+  return { walletId, partyId };
+}
