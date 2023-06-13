@@ -1,1 +1,0 @@
-drop index if exists transaction_from_wallet_id_idx1;

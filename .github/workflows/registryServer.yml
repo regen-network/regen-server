@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FLYWAY_URL: jdbc:postgresql://localhost:5432/regen_registry
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
       TEST_DATABASE_USER: postgres
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -63,9 +62,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: corepack enable
       - run: yarn
-      - run: yarn migrate
-      - run: yarn build
-      - name: 'start the registry-server'
+      - run: yarn
+      - name: 'prepare an empty test database'
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
+          ROOT_DATABASE_URL: postgres://postgres:postgres@localhost/postgres
+        run: yarn run graphile-migrate reset --erase
+      - name: 'start the registry-server and run tests'
         env:
           MAILERLITE_API_KEY: foobar
           AIRTABLE_API_KEY: foobar
@@ -75,5 +78,6 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
           CSRF_SECRET: foobar
           CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
-        run: yarn serve &
-      - run: yarn test
+        run: yarn build && yarn serve &
+      - name: 'run tests after waiting a bit'
+        run: yarn test
