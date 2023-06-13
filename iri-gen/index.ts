@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { generateIRI } from './iri-gen';
 import 'dotenv/config';
 import { pgPool } from 'common/pool';
-import * as minimist from 'minimist';
+import minimist from 'minimist';
 import { PoolClient } from 'pg';
 import { MetadataGraph } from 'common/metadata_graph';
 
