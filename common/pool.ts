@@ -20,4 +20,10 @@ function setupPgPool(): Pool {
 
 const pgPool = setupPgPool();
 
-export { pgPool };
+const pgPoolAnalytics = new Pool({
+  connectionString:
+    process.env.ANALYTICS_DATABASE_URL ||
+    'postgres://postgres:postgres@localhost:5432/analytics',
+});
+
+export { pgPool, pgPoolAnalytics };
