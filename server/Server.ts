@@ -214,21 +214,6 @@ app.use(
     },
   }),
 );
-app.use(
-  '/analytics',
-  postgraphile(pgPoolAnalytics, 'public', {
-    watchPg: true,
-    dynamicJson: true,
-    graphileBuildOptions: {
-      connectionFilterAllowedFieldTypes: ['JSON'],
-      connectionFilterAllowedOperators: ['contains'],
-      connectionFilterComputedColumns: false,
-      connectionFilterArrays: false,
-      connectionFilterSetofFunctions: false,
-    },
-    appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
-  }),
-);
 app.use(mailerlite);
 app.use(contact);
 app.use(buyersInfo);
@@ -240,7 +225,26 @@ app.use(metadataGraph);
 app.use('/web3auth', web3auth);
 app.use(csrfRouter);
 app.use('/graphiql', graphiqlRouter);
-app.use('/analytics/graphiql', analyticsGraphiqlRouter);
+
+if (!process.env.CI) {
+  console.log('setting up the analytics db graphql connection..');
+  app.use(
+    '/analytics',
+    postgraphile(pgPoolAnalytics, 'public', {
+      watchPg: true,
+      dynamicJson: true,
+      graphileBuildOptions: {
+        connectionFilterAllowedFieldTypes: ['JSON'],
+        connectionFilterAllowedOperators: ['contains'],
+        connectionFilterComputedColumns: false,
+        connectionFilterArrays: false,
+        connectionFilterSetofFunctions: false,
+      },
+      appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
+    }),
+  );
+  app.use('/analytics/graphiql', analyticsGraphiqlRouter);
+}
 
 const swaggerOptions = {
   definition: {
