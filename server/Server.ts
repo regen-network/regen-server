@@ -233,14 +233,7 @@ if (!process.env.CI) {
     postgraphile(pgPoolAnalytics, 'public', {
       watchPg: true,
       dynamicJson: true,
-      graphileBuildOptions: {
-        connectionFilterAllowedFieldTypes: ['JSON'],
-        connectionFilterAllowedOperators: ['contains'],
-        connectionFilterComputedColumns: false,
-        connectionFilterArrays: false,
-        connectionFilterSetofFunctions: false,
-      },
-      appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
+      appendPlugins: [PgManyToManyPlugin],
     }),
   );
   app.use('/analytics/graphiql', analyticsGraphiqlRouter);
