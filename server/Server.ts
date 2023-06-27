@@ -25,7 +25,7 @@ import imageOptimizer from './middleware/imageOptimizer';
 import { initializePassport } from './middleware/passport';
 import { BaseHTTPError } from './errors';
 
-import { pgPool } from 'common/pool';
+import { pgPool, pgPoolIndexer } from 'common/pool';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -47,7 +47,7 @@ import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
 import { web3auth } from './routes/web3auth';
 import { csrfRouter } from './routes/csrf';
-import { graphiqlRouter } from './routes/graphiql';
+import { graphiqlRouter, indexerGraphiqlRouter } from './routes/graphiql';
 
 import { doubleCsrfProtection, invalidCsrfTokenError } from './middleware/csrf';
 import { sameSiteFromEnv } from './utils';
@@ -225,6 +225,19 @@ app.use(metadataGraph);
 app.use('/web3auth', web3auth);
 app.use(csrfRouter);
 app.use('/graphiql', graphiqlRouter);
+
+if (!process.env.CI) {
+  console.log('setting up the analytics db graphql connection...');
+  app.use(
+    '/indexer',
+    postgraphile(pgPoolIndexer, 'public', {
+      watchPg: true,
+      dynamicJson: true,
+      appendPlugins: [PgManyToManyPlugin],
+    }),
+  );
+  app.use('/indexer/graphiql', indexerGraphiqlRouter);
+}
 
 const swaggerOptions = {
   definition: {
