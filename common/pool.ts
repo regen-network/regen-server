@@ -22,7 +22,7 @@ const pgPool = setupPgPool();
 
 const pgPoolIndexer = new Pool({
   connectionString:
-    process.env.ANALYTICS_DATABASE_URL ||
+    process.env.INDEXER_DATABASE_URL ||
     'postgres://postgres:postgres@localhost:5432/analytics',
 });
 
