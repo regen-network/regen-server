@@ -227,7 +227,7 @@ app.use(csrfRouter);
 app.use('/graphiql', graphiqlRouter);
 
 if (!process.env.CI) {
-  console.log('setting up the analytics db graphql connection...');
+  console.log('setting up the indexer db graphql connection...');
   app.use(
     '/indexer',
     postgraphile(pgPoolIndexer, 'public', {
