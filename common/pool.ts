@@ -23,7 +23,7 @@ const pgPool = setupPgPool();
 const pgPoolIndexer = new Pool({
   connectionString:
     process.env.INDEXER_DATABASE_URL ||
-    'postgres://postgres:postgres@localhost:5432/analytics',
+    'postgres://postgres:postgres@localhost:5432/indexer',
 });
 
 export { pgPool, pgPoolIndexer };
