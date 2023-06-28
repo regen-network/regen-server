@@ -20,4 +20,10 @@ function setupPgPool(): Pool {
 
 const pgPool = setupPgPool();
 
-export { pgPool };
+const pgPoolIndexer = new Pool({
+  connectionString:
+    process.env.INDEXER_DATABASE_URL ||
+    'postgres://postgres:postgres@localhost:5432/indexer',
+});
+
+export { pgPool, pgPoolIndexer };
