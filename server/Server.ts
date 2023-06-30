@@ -20,12 +20,7 @@ import cookieSession from 'cookie-session';
 import passport from 'passport';
 
 import { UserIncomingMessage } from './types';
-import getJwt from './middleware/jwt';
-import imageOptimizer from './middleware/imageOptimizer';
-import { initializePassport } from './middleware/passport';
 import { BaseHTTPError } from './errors';
-
-import { pgPool, pgPoolIndexer } from 'common/pool';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -35,6 +30,10 @@ if (process.env.NODE_ENV !== 'production') {
 // we disable this lint rule for these import statements
 // w/o this the application does not start locally
 // these imports require env vars which are available only after dotenv.config is called
+import getJwt from './middleware/jwt';
+import imageOptimizer from './middleware/imageOptimizer';
+import { initializePassport } from './middleware/passport';
+import { pgPool, pgPoolIndexer } from 'common/pool';
 import mailerlite from './routes/mailerlite';
 import contact from './routes/contact';
 import buyersInfo from './routes/buyers-info';

@@ -18,12 +18,27 @@ function setupPgPool(): Pool {
   return pool;
 }
 
-const pgPool = setupPgPool();
+function setupPgPoolIndexer(): Pool {
+  const poolConfig: PoolConfig = {
+    connectionString:
+      process.env.INDEXER_DATABASE_URL ||
+      'postgres://postgres:postgres@localhost:5432/indexer',
+  };
 
-const pgPoolIndexer = new Pool({
-  connectionString:
-    process.env.INDEXER_DATABASE_URL ||
-    'postgres://postgres:postgres@localhost:5432/indexer',
-});
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    !poolConfig.connectionString.includes('localhost:5432')
+  ) {
+    poolConfig.ssl = {
+      rejectUnauthorized: false,
+    };
+  }
+
+  const pool = new Pool(poolConfig);
+  return pool;
+}
+
+const pgPool = setupPgPool();
+const pgPoolIndexer = setupPgPoolIndexer();
 
 export { pgPool, pgPoolIndexer };
