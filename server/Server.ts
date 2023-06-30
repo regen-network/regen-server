@@ -67,7 +67,13 @@ const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 // https://github.com/expressjs/cors#configuration-options
 const corsOptions = (req, callback): void => {
   let options;
-  if (process.env.NODE_ENV !== 'production') {
+  if (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.ALLOW_CORS_ALL_DOMAINS === 'true'
+  ) {
+    console.log(
+      'WARNING: protection from cross-origin requests is turned off...',
+    );
     options = { origin: true };
   } else {
     const originURL = req.header('Origin') && url.parse(req.header('Origin'));
