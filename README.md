@@ -225,12 +225,10 @@ Optional: Test the above by viewing the apps available to the our team.
 ```
 $ heroku apps --team=regen-network
 === Apps in team regen-network
-regen-analytics
-regen-dev-analytics
-regen-keystone-dev
+...
 regen-server
 regen-server-staging
-regen-web-backend
+...
 ```
 
 ### Checkout and synchronize the code you want to deploy
