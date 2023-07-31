@@ -4,7 +4,7 @@
   "private": true,
   "description": "Script for generating an IRI from JSON-LD data",
   "main": "app.ts",
-  "repository": "https://github.com/regen-network/registry-server",
+  "repository": "https://github.com/regen-network/regen-server",
   "author": "blushi",
   "license": "MIT",
   "dependencies": {

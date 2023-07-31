@@ -69,8 +69,8 @@ Set-Cookie: regen-dev.x-csrf-token=b5763f7869e5cf55ca17b72629065a728661d476ce172
 ```
 
 The `token` in the JSON response body must also be saved.
-The `token` and the cookie must be submitted together for all subsequent requests to the registry server.
-The `token` will be submitted to the registry server in the `X-CSRF-TOKEN` header.
+The `token` and the cookie must be submitted together for all subsequent requests to the regen server.
+The `token` will be submitted to the regen server in the `X-CSRF-TOKEN` header.
 
 ### Step 2: Retrieve a nonce for the user
 

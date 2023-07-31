@@ -11,7 +11,7 @@ export default function getJwt(credentialsRequired: boolean) {
       jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
     }),
     credentialsRequired,
-    audience: 'https://regen-registry-server.herokuapp.com/',
+    audience: 'https://regen-server.herokuapp.com/',
     issuer: `https://${process.env.AUTH0_DOMAIN}/`,
     algorithms: ['RS256'],
   });
