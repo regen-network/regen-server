@@ -12,7 +12,7 @@ describe('web3auth addresses endpoint', () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
-      `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
+      `http://localhost:5000/marketplace/v1/web3auth/nonce?userAddress=${userAddr}`,
     );
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
@@ -24,20 +24,23 @@ describe('web3auth addresses endpoint', () => {
       userPubKey: newPubKey,
     } = await createNewUserAndLogin();
 
-    const testUserPartyQuery = await fetch('http://localhost:5000/graphql', {
-      method: 'POST',
-      headers: testUserAuthHeaders,
-      body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${newAddr}") { id partyByWalletId { id } } }`,
-      }),
-    });
+    const testUserPartyQuery = await fetch(
+      'http://localhost:5000/marketplace/v1/graphql',
+      {
+        method: 'POST',
+        headers: testUserAuthHeaders,
+        body: JSON.stringify({
+          query: `{ walletByAddr(addr: "${newAddr}") { id partyByWalletId { id } } }`,
+        }),
+      },
+    );
     const testUserPartyResult = await testUserPartyQuery.json();
     const testUserPartyId =
       testUserPartyResult.data.walletByAddr.partyByWalletId.id;
 
     // test user has updated their profile name..
     const testUserName = 'Foo Bar';
-    await fetch('http://localhost:5000/graphql', {
+    await fetch('http://localhost:5000/marketplace/v1/graphql', {
       method: 'POST',
       headers: testUserAuthHeaders,
       body: JSON.stringify({
@@ -64,15 +67,18 @@ describe('web3auth addresses endpoint', () => {
       nonce,
     );
 
-    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ signature: newSig }),
-    });
+    const addrResp = await fetch(
+      'http://localhost:5000/marketplace/v1/web3auth/addresses',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ signature: newSig }),
+      },
+    );
 
     expect(addrResp.status).toBe(200);
 
-    const resp = await fetch('http://localhost:5000/graphql', {
+    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -82,23 +88,29 @@ describe('web3auth addresses endpoint', () => {
     const data = await resp.json();
     expect(data.data.getCurrentAddrs.nodes.length).toBe(2);
 
-    const testUserResp = await fetch('http://localhost:5000/graphql', {
-      method: 'POST',
-      headers: testUserAuthHeaders,
-      body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
-      }),
-    });
+    const testUserResp = await fetch(
+      'http://localhost:5000/marketplace/v1/graphql',
+      {
+        method: 'POST',
+        headers: testUserAuthHeaders,
+        body: JSON.stringify({
+          query: '{getCurrentAddrs { nodes {addr}}}',
+        }),
+      },
+    );
     const testUserData = await testUserResp.json();
     expect(testUserData.data.getCurrentAddrs.nodes.length).toBe(0);
 
-    const partyQuery = await fetch('http://localhost:5000/graphql', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${newAddr}") { id partyByWalletId { name } } }`,
-      }),
-    });
+    const partyQuery = await fetch(
+      'http://localhost:5000/marketplace/v1/graphql',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          query: `{ walletByAddr(addr: "${newAddr}") { id partyByWalletId { name } } }`,
+        }),
+      },
+    );
     const partyResult = await partyQuery.json();
     const partyName = partyResult.data.walletByAddr.partyByWalletId.name;
     // after the user claims the test user address, the profile info should remain the same
@@ -110,7 +122,7 @@ describe('web3auth addresses endpoint', () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
-      `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
+      `http://localhost:5000/marketplace/v1/web3auth/nonce?userAddress=${userAddr}`,
     );
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
@@ -131,15 +143,18 @@ describe('web3auth addresses endpoint', () => {
       nonce,
     );
 
-    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ signature: newSig }),
-    });
+    const addrResp = await fetch(
+      'http://localhost:5000/marketplace/v1/web3auth/addresses',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ signature: newSig }),
+      },
+    );
 
     expect(addrResp.status).toBe(200);
 
-    const resp = await fetch('http://localhost:5000/graphql', {
+    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({

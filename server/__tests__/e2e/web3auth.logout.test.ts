@@ -3,15 +3,18 @@ import { CSRFRequest, genAuthHeaders, createNewUserAndLogin } from '../utils';
 
 describe('web3auth logout endpoint', () => {
   it('returns 403 if double csrf is not used', async () => {
-    const resp = await fetch('http://localhost:5000/web3auth/logout', {
-      method: 'POST',
-    });
+    const resp = await fetch(
+      'http://localhost:5000/marketplace/v1/web3auth/logout',
+      {
+        method: 'POST',
+      },
+    );
     expect(resp.status).toBe(403);
   });
 
   it('returns 401 if request is unauthorized', async () => {
     const req = await CSRFRequest(
-      'http://localhost:5000/web3auth/logout',
+      'http://localhost:5000/marketplace/v1/web3auth/logout',
       'POST',
     );
     const resp = await fetch(req);
@@ -22,10 +25,13 @@ describe('web3auth logout endpoint', () => {
     const { authHeaders, csrfHeaders } = await createNewUserAndLogin();
 
     // now we pass the combined headers for the logout request
-    const logoutResp = await fetch('http://localhost:5000/web3auth/logout', {
-      method: 'POST',
-      headers: authHeaders,
-    });
+    const logoutResp = await fetch(
+      'http://localhost:5000/marketplace/v1/web3auth/logout',
+      {
+        method: 'POST',
+        headers: authHeaders,
+      },
+    );
     expect(logoutResp.status).toBe(200);
     const logoutRespData = await logoutResp.json();
     expect(logoutRespData).toHaveProperty(
@@ -36,7 +42,7 @@ describe('web3auth logout endpoint', () => {
     // we must parse those here, and include these in subsequent requests
     const newAuthHeaders = genAuthHeaders(logoutResp.headers, csrfHeaders);
 
-    const resp = await fetch('http://localhost:5000/graphql', {
+    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
       method: 'POST',
       headers: newAuthHeaders,
       body: JSON.stringify({

@@ -9,14 +9,17 @@ describe('CSRF protection', () => {
   });
 
   it('protects an POST endpoint which does not include a CSRF token', async () => {
-    const resp = await fetch('http://localhost:5000/csrfToken', {
+    const resp = await fetch('http://localhost:5000/marketplace/v1/csrfToken', {
       method: 'POST',
     });
     expect(resp.status).toBe(403);
   });
 
   it('allows requests that use the double CSRF pattern', async () => {
-    const req = await CSRFRequest('http://localhost:5000/csrfToken', 'GET');
+    const req = await CSRFRequest(
+      'http://localhost:5000/marketplace/v1/csrfToken',
+      'GET',
+    );
     const resp = await fetch(req);
     expect(resp.status).toBe(200);
   });

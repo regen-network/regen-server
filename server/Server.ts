@@ -173,11 +173,11 @@ app.use(getJwt(false));
 
 app.use(express.json());
 
-app.use('/image', imageOptimizer());
+app.use('/marketplace/v1/image', imageOptimizer());
 
 if (process.env.LEDGER_TENDERMINT_RPC) {
   app.use(
-    '/ledger',
+    '/marketplace/v1/ledger',
     createProxyMiddleware({
       target: process.env.LEDGER_TENDERMINT_RPC,
       pathRewrite: { '^/ledger': '/' },
@@ -188,7 +188,7 @@ if (process.env.LEDGER_TENDERMINT_RPC) {
 
 if (process.env.LEDGER_REST_ENDPOINT) {
   app.use(
-    '/ledger-rest',
+    '/marketplace/v1/ledger-rest',
     createProxyMiddleware({
       target: process.env.LEDGER_REST_ENDPOINT,
       pathRewrite: { '^/ledger-rest': '/' },
@@ -196,8 +196,9 @@ if (process.env.LEDGER_REST_ENDPOINT) {
   );
 }
 
-app.use('/graphql', doubleCsrfProtection);
+app.use('/marketplace/v1/graphql', doubleCsrfProtection);
 app.use(
+  '/marketplace/v1',
   postgraphile(pgPool, 'public', {
     watchPg: true,
     dynamicJson: true,
@@ -227,29 +228,29 @@ app.use(
     },
   }),
 );
-app.use(mailerlite);
-app.use(contact);
-app.use(buyersInfo);
-app.use(stripe);
-app.use(auth);
-app.use(recaptcha);
-app.use(files);
-app.use(metadataGraph);
-app.use('/web3auth', web3auth);
-app.use(csrfRouter);
-app.use('/graphiql', graphiqlRouter);
+app.use('/marketplace/v1', mailerlite);
+app.use('/marketplace/v1', contact);
+app.use('/marketplace/v1', buyersInfo);
+app.use('/marketplace/v1', stripe);
+app.use('/marketplace/v1', auth);
+app.use('/marketplace/v1', recaptcha);
+app.use('/marketplace/v1', files);
+app.use('/data/v1', metadataGraph);
+app.use('/marketplace/v1/web3auth', web3auth);
+app.use('/marketplace/v1', csrfRouter);
+app.use('/marketplace/v1/graphiql', graphiqlRouter);
 
 if (!process.env.CI) {
   console.log('setting up the indexer db graphql connection...');
   app.use(
-    '/indexer',
+    '/indexer/v1',
     postgraphile(pgPoolIndexer, 'public', {
       watchPg: true,
       dynamicJson: true,
       appendPlugins: [PgManyToManyPlugin],
     }),
   );
-  app.use('/indexer/graphiql', indexerGraphiqlRouter);
+  app.use('/indexer/v1/graphiql', indexerGraphiqlRouter);
 }
 
 const swaggerOptions = {
@@ -278,6 +279,20 @@ app.use(
     },
   }),
 );
+
+app.use((req, res, next) => {
+  if (req.hostname.endsWith('.registry.regen.network')) {
+    if (
+      req.path.startsWith('/metadata-graph') ||
+      req.path.startsWith('/iri-gen')
+    ) {
+      return res.redirect(308, `/data/v1${req.originalUrl}`);
+    } else if (!req.path.startsWith('/marketplace/v1') && req.path !== '/') {
+      return res.redirect(308, `/marketplace/v1${req.originalUrl}`);
+    }
+  }
+  next();
+});
 
 app.use((err, req, _, next) => {
   if (err.stack) {
