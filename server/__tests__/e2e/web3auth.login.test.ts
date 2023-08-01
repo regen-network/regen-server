@@ -5,6 +5,7 @@ import {
   loginResponseAssertions,
   setUpTestAccount,
   createNewUserAndLogin,
+  getMarketplaceURL,
 } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
@@ -19,18 +20,15 @@ describe('web3auth login endpoint', () => {
   });
 
   it('returns 403 if double csrf is not used', async () => {
-    const resp = await fetch(
-      'http://localhost:5000/marketplace/v1/web3auth/login',
-      {
-        method: 'POST',
-      },
-    );
+    const resp = await fetch(`${getMarketplaceURL()}/web3auth/login`, {
+      method: 'POST',
+    });
     expect(resp.status).toBe(403);
   });
 
   it('does not return 403 if double csrf is used', async () => {
     const req = await CSRFRequest(
-      'http://localhost:5000/marketplace/v1/web3auth/login',
+      `${getMarketplaceURL()}/web3auth/login`,
       'POST',
     );
     const resp = await fetch(req);
@@ -39,7 +37,7 @@ describe('web3auth login endpoint', () => {
 
   it('an invalid signature returns a 500 error', async () => {
     const req = await CSRFRequest(
-      'http://localhost:5000/marketplace/v1/web3auth/login',
+      `${getMarketplaceURL()}/web3auth/login`,
       'POST',
     );
     const resp = await fetch(req, {
@@ -58,7 +56,7 @@ describe('web3auth login endpoint', () => {
     loginResponseAssertions(loginResp, userAddr);
 
     // check that an authenticated user can use an authenticated graphql query
-    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -81,7 +79,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `http://localhost:5000/marketplace/v1/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
@@ -94,7 +92,7 @@ describe('web3auth login endpoint', () => {
     );
     loginResponseAssertions(loginResp, signer);
 
-    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -115,7 +113,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `http://localhost:5000/marketplace/v1/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
@@ -157,7 +155,7 @@ describe('web3auth login endpoint', () => {
     const newCookie = [...manipulatedParts, cookieParts[2]].join(';');
     authHeaders.set('cookie', newCookie);
 
-    const resp = await fetch('http://localhost:5000/marketplace/v1/graphql', {
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({

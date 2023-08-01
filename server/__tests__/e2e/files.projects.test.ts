@@ -3,37 +3,32 @@ import {
   createNewUserAndLogin,
   dummyFilesSetup,
   dummyFilesTeardown,
+  getMarketplaceURL,
 } from '../utils';
 
 describe('files endpoint, projects auth...', () => {
   it('allows a user to upload project media to a project they are an admin for...', async () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch(
-      'http://localhost:5000/marketplace/v1/graphql',
-      {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({
-          query: `{ walletByAddr(addr: "${userAddr}") { id } }`,
-        }),
-      },
-    );
+    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query: `{ walletByAddr(addr: "${userAddr}") { id } }`,
+      }),
+    });
     const walletIdResult = await walletIdQuery.json();
     const walletId = walletIdResult.data.walletByAddr.id;
 
-    const createProjectQuery = await fetch(
-      'http://localhost:5000/marketplace/v1/graphql',
-      {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({
-          query:
-            'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
-          variables: `{"input":{"project":{"adminWalletId":"${walletId}"}}}`,
-        }),
-      },
-    );
+    const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query:
+          'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
+        variables: `{"input":{"project":{"adminWalletId":"${walletId}"}}}`,
+      }),
+    });
     const createProjectResult = await createProjectQuery.json();
     const projectId = createProjectResult.data.createProject.project.id;
 
@@ -58,31 +53,25 @@ describe('files endpoint, projects auth...', () => {
     const { authHeaders: authHeaders1, userAddr: userAddr1 } =
       await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch(
-      'http://localhost:5000/marketplace/v1/graphql',
-      {
-        method: 'POST',
-        headers: authHeaders1,
-        body: JSON.stringify({
-          query: `{ walletByAddr(addr: "${userAddr1}") { id } }`,
-        }),
-      },
-    );
+    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders1,
+      body: JSON.stringify({
+        query: `{ walletByAddr(addr: "${userAddr1}") { id } }`,
+      }),
+    });
     const walletIdResult = await walletIdQuery.json();
     const walletId1 = walletIdResult.data.walletByAddr.id;
 
-    const createProjectQuery = await fetch(
-      'http://localhost:5000/marketplace/v1/graphql',
-      {
-        method: 'POST',
-        headers: authHeaders1,
-        body: JSON.stringify({
-          query:
-            'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
-          variables: `{"input":{"project":{"adminWalletId": "${walletId1}"}}}`,
-        }),
-      },
-    );
+    const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders1,
+      body: JSON.stringify({
+        query:
+          'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
+        variables: `{"input":{"project":{"adminWalletId": "${walletId1}"}}}`,
+      }),
+    });
     const createProjectResult = await createProjectQuery.json();
     const projectId = createProjectResult.data.createProject.project.id;
 

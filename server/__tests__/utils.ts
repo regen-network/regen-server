@@ -23,7 +23,7 @@ import {
 } from '../middleware/keplrStrategy';
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
-  const resp = await fetch('http://localhost:5000/marketplace/v1/csrfToken', {
+  const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
     method: 'GET',
   });
   const cookie = resp.headers.get('set-cookie');
@@ -108,7 +108,7 @@ export async function performLogin(
   // send the request to login API endpoint
   // this step requires retrieving CSRF tokens first
   const req = await CSRFRequest(
-    'http://localhost:5000/marketplace/v1/web3auth/login',
+    `${getMarketplaceURL()}/web3auth/login`,
     'POST',
   );
   const response = await fetch(req, {
@@ -180,7 +180,7 @@ export async function setUpTestAccount(mnemonic: string): Promise<void> {
   const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
 
   const resp = await fetch(
-    `http://localhost:5000/marketplace/v1/web3auth/nonce?userAddress=${signer}`,
+    `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
   );
   // if the nonce was not found then the account does not yet exist
   if (resp.status === 404) {
@@ -240,7 +240,7 @@ export async function dummyFilesSetup(
     form.append('filePath', key);
 
     authHeaders.delete('content-type');
-    const resp = await fetch('http://localhost:5000/marketplace/v1/files', {
+    const resp = await fetch(`${getMarketplaceURL()}/files`, {
       method: 'POST',
       headers: authHeaders,
       body: form,
@@ -276,4 +276,8 @@ export async function dummyFilesTeardown(key: string, fname: string) {
       { depth: null },
     );
   }
+}
+
+export function getMarketplaceURL() {
+  return 'http://localhost:5000/marketplace/v1';
 }
