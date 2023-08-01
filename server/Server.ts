@@ -228,8 +228,8 @@ app.use(
     },
   }),
 );
-app.use('/marketplace/v1', mailerlite);
-app.use('/marketplace/v1', contact);
+app.use('/website/v1', mailerlite);
+app.use('/website/v1', contact);
 app.use('/marketplace/v1', buyersInfo);
 app.use('/marketplace/v1', stripe);
 app.use('/marketplace/v1', auth);
