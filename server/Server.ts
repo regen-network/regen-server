@@ -177,7 +177,7 @@ app.use('/marketplace/v1/image', imageOptimizer());
 
 if (process.env.LEDGER_TENDERMINT_RPC) {
   app.use(
-    '/marketplace/v1/ledger',
+    '/ledger',
     createProxyMiddleware({
       target: process.env.LEDGER_TENDERMINT_RPC,
       pathRewrite: { '^/ledger': '/' },
@@ -188,7 +188,7 @@ if (process.env.LEDGER_TENDERMINT_RPC) {
 
 if (process.env.LEDGER_REST_ENDPOINT) {
   app.use(
-    '/marketplace/v1/ledger-rest',
+    '/ledger-rest',
     createProxyMiddleware({
       target: process.env.LEDGER_REST_ENDPOINT,
       pathRewrite: { '^/ledger-rest': '/' },
