@@ -277,12 +277,24 @@ app.use(
 );
 
 app.use((req, res, next) => {
+  // this middleware implements backward compat redirects for our old domains.
+  // if a previous middleware handles an endpoint, then this code is not executed.
+  // i.e. the /api-docs is handled by a middleware above which gets precedence, and this middleware is never reached.
   if (req.hostname.endsWith('.registry.regen.network')) {
     if (
       req.path.startsWith('/metadata-graph') ||
       req.path.startsWith('/iri-gen')
     ) {
       return res.redirect(308, `/data/v1${req.originalUrl}`);
+    } else if (
+      req.path.startsWith('/mailerlite') ||
+      req.path.startsWith('/contact')
+    ) {
+      return res.redirect(308, `/website/v1${req.originalUrl}`);
+    } else if (req.path.startsWith('/indexer')) {
+      const parts = req.originalUrl.split('/indexer');
+      const rewrittenPath = parts.slice(1).join('/');
+      return res.redirect(308, `/indexer/v1${rewrittenPath}`);
     } else if (!req.path.startsWith('/marketplace/v1') && req.path !== '/') {
       return res.redirect(308, `/marketplace/v1${req.originalUrl}`);
     }

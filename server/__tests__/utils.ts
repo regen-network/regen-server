@@ -278,6 +278,10 @@ export async function dummyFilesTeardown(key: string, fname: string) {
   }
 }
 
+export function getServerBaseURL() {
+  return 'http://localhost:5000';
+}
+
 export function getMarketplaceURL() {
-  return 'http://localhost:5000/marketplace/v1';
+  return `${getServerBaseURL()}/marketplace/v1`;
 }
