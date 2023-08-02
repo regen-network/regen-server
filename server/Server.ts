@@ -253,12 +253,12 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.n',
     info: {
-      title: 'registry-server',
+      title: 'regen-server',
       version: '0.1.0',
-      description: 'API docs for the registry-server',
+      description: 'API docs for the regen-server',
       contact: {
-        name: 'regen-network/registry-server',
-        url: 'https://github.com/regen-network/registry-server',
+        name: 'regen-network/regen-server',
+        url: 'https://github.com/regen-network/regen-server',
       },
     },
   },

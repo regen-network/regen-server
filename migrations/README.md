@@ -10,7 +10,7 @@ First, you must run the local database:
 
 ```
 $ pwd
-/Users/kyle/regen/registry-server
+/Users/kyle/regen/regen-server
 $ docker-compose up --build postgres
 ```
 
