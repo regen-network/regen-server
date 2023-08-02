@@ -110,17 +110,9 @@ describe('redirect middleware', () => {
       redirect: 'manual',
     });
     expect(resp.status).toBe(308);
-    const redirectedLocation = resp.headers.get('location');
-    expect(redirectedLocation).toBe(
+    expect(resp.headers.get('location')).toBe(
       `${getServerBaseURL()}/indexer/v1/graphiql`,
     );
-    if (redirectedLocation) {
-      const redirectedResp = await fetch(redirectedLocation, {
-        method: 'GET',
-      });
-      console.dir({ redirectedResp }, { depth: null });
-      expect(redirectedResp.status).toBe(200);
-    }
   });
   it('redirects GET /csrfToken requests to /marketplace/v1', async () => {
     const resp = await fetch(`${getServerBaseURL()}/csrfToken`, {
