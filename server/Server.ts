@@ -291,7 +291,7 @@ app.use((req, res, next) => {
       req.path.startsWith('/contact')
     ) {
       return res.redirect(308, `/website/v1${req.originalUrl}`);
-    } else if (req.path.startsWith('/indexer')) {
+    } else if (req.path.startsWith('/indexer') && !req.path.includes('v1')) {
       const parts = req.originalUrl.split('/indexer');
       const rewrittenPath = parts.slice(1).join('/');
       return res.redirect(308, `/indexer/v1${rewrittenPath}`);
