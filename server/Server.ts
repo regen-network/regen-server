@@ -60,6 +60,8 @@ const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-registry\.netlify\.app$/;
 const GROUPS_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-groups-ui\.netlify\.app$/;
+const GROUPS_BRANCH_HOSTNAME_PATTERN =
+  /[a-z0-9]+--regen-groups-ui\.netlify\.app$/;
 const MAIN_PREVIEW_HOSTNAME_PATTERN =
   /[a-z0-9]+--regen-registry\.netlify\.app$/;
 const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
@@ -87,6 +89,7 @@ const corsOptions = (req, callback): void => {
         originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(GROUPS_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(GROUPS_BRANCH_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_APP_HOSTNAME_PATTERN) ||
         originURL.hostname.match(DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN) ||
