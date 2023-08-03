@@ -1,11 +1,11 @@
 import fetch from 'node-fetch';
-import { createNewUserAndLogin } from '../../utils';
+import { createNewUserAndLogin, getMarketplaceURL } from '../../utils';
 
 describe('party update policies', () => {
   it('allow a user to update a party/profile that belongs to them', async () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
-    const query = await fetch('http://localhost:5000/graphql', {
+    const query = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -16,7 +16,7 @@ describe('party update policies', () => {
     const partyId = result.data.walletByAddr.partyByWalletId.id;
 
     const NEW_NAME = 'FOO BAR';
-    const update = await fetch('http://localhost:5000/graphql', {
+    const update = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -38,7 +38,7 @@ describe('party update policies', () => {
 
     expect(returnedPartyId).toBe(partyId);
 
-    const checkParty = await fetch('http://localhost:5000/graphql', {
+    const checkParty = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -56,7 +56,7 @@ describe('party update policies', () => {
     const { userAddr: otherAddr } = await createNewUserAndLogin();
 
     // as the first user look up the party of the other user...
-    const query = await fetch('http://localhost:5000/graphql', {
+    const query = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -68,7 +68,7 @@ describe('party update policies', () => {
 
     const NEW_NAME = 'FOO BAR';
     // try to update the other users party as the first user...
-    const update = await fetch('http://localhost:5000/graphql', {
+    const update = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({

@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { fetchCsrf, CSRFRequest } from '../utils';
+import { fetchCsrf, CSRFRequest, getMarketplaceURL } from '../utils';
 
 describe('CSRF protection', () => {
   it('provides a CSRF token on the GET endpoint and sets the hash cookie', async () => {
@@ -9,14 +9,14 @@ describe('CSRF protection', () => {
   });
 
   it('protects an POST endpoint which does not include a CSRF token', async () => {
-    const resp = await fetch('http://localhost:5000/csrfToken', {
+    const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
       method: 'POST',
     });
     expect(resp.status).toBe(403);
   });
 
   it('allows requests that use the double CSRF pattern', async () => {
-    const req = await CSRFRequest('http://localhost:5000/csrfToken', 'GET');
+    const req = await CSRFRequest(`${getMarketplaceURL()}/csrfToken`, 'GET');
     const resp = await fetch(req);
     expect(resp.status).toBe(200);
   });
