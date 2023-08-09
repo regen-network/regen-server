@@ -1,4 +1,4 @@
-# Registry Server
+# Regen Server
 
 ## Prerequisites
 
@@ -68,7 +68,7 @@ The tradeoff is that you must manually restart the command after making code cha
 The example below shows how to increase the log verbosity for certain parts of the app.
 
 ```
-$ cd registry-server
+$ cd regen-server
 $ DEBUG='express:*,express-sharp*' yarn start
 ```
 
@@ -225,12 +225,10 @@ Optional: Test the above by viewing the apps available to the our team.
 ```
 $ heroku apps --team=regen-network
 === Apps in team regen-network
-regen-analytics
-regen-dev-analytics
-regen-keystone-dev
-regen-registry-server
-regen-registry-server-staging
-regen-web-backend
+...
+regen-server
+regen-server-staging
+...
 ```
 
 ### Checkout and synchronize the code you want to deploy
@@ -254,25 +252,25 @@ $ git pull
 If you are deploying to staging:
 
 ```
-$ heroku git:remote -r regen-registry-server-staging -a regen-registry-server-staging
+$ heroku git:remote -r regen-server-staging -a regen-server-staging
 ```
 
 If you are deploying to production:
 
 ```
-$ heroku git:remote -r regen-registry-server -a regen-registry-server
+$ heroku git:remote -r regen-server -a regen-server
 ```
 
 Your git remotes should like this:
 
 ```
 $ git remote -v
-origin	git@github.com:regen-network/registry-server.git (fetch)
-origin	git@github.com:regen-network/registry-server.git (push)
-regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (fetch)
-regen-registry-server-staging	https://git.heroku.com/regen-registry-server-staging.git (push)
-regen-registry-server	https://git.heroku.com/regen-registry-server.git (fetch)
-regen-registry-server	https://git.heroku.com/regen-registry-server.git (push)
+origin	git@github.com:regen-network/regen-server.git (fetch)
+origin	git@github.com:regen-network/regen-server.git (push)
+regen-server-staging	https://git.heroku.com/regen-server-staging.git (fetch)
+regen-server-staging	https://git.heroku.com/regen-server-staging.git (push)
+regen-server	https://git.heroku.com/regen-server.git (fetch)
+regen-server	https://git.heroku.com/regen-server.git (push)
 ```
 
 ### Deploy the dev or master branch to heroku
@@ -280,13 +278,13 @@ regen-registry-server	https://git.heroku.com/regen-registry-server.git (push)
 To finish a deploy to staging, we need to push the `dev` branch:
 
 ```
-$ git push regen-registry-server-staging dev:main
+$ git push regen-server-staging dev:main
 ```
 
 To finish a deploy to production, we need to push the `master` branch:
 
 ```
-$ git push regen-registry-server master:main
+$ git push regen-server master:main
 ```
 
 Note: When you are deploying a branch, Heroku requires it to be `<branch>:main`.

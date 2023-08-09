@@ -3,13 +3,14 @@ import {
   createNewUserAndLogin,
   dummyFilesSetup,
   dummyFilesTeardown,
+  getMarketplaceURL,
 } from '../utils';
 
 describe('files endpoint, projects auth...', () => {
   it('allows a user to upload project media to a project they are an admin for...', async () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch('http://localhost:5000/graphql', {
+    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -19,7 +20,7 @@ describe('files endpoint, projects auth...', () => {
     const walletIdResult = await walletIdQuery.json();
     const walletId = walletIdResult.data.walletByAddr.id;
 
-    const createProjectQuery = await fetch('http://localhost:5000/graphql', {
+    const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -52,7 +53,7 @@ describe('files endpoint, projects auth...', () => {
     const { authHeaders: authHeaders1, userAddr: userAddr1 } =
       await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch('http://localhost:5000/graphql', {
+    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders1,
       body: JSON.stringify({
@@ -62,7 +63,7 @@ describe('files endpoint, projects auth...', () => {
     const walletIdResult = await walletIdQuery.json();
     const walletId1 = walletIdResult.data.walletByAddr.id;
 
-    const createProjectQuery = await fetch('http://localhost:5000/graphql', {
+    const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders1,
       body: JSON.stringify({

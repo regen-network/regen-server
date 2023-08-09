@@ -59,7 +59,7 @@
     <script>
       const createSimpleFetcher =
         options => async (graphQLParams, fetcherOpts) => {
-          const csrfResp = await window.fetch('/csrfToken', {
+          const csrfResp = await window.fetch('/marketplace/v1/csrfToken', {
             method: 'GET',
             credentials: 'include',
           });
@@ -80,7 +80,7 @@
       ReactDOM.render(
         React.createElement(GraphiQL, {
           fetcher: createSimpleFetcher({
-            url: '/graphql',
+            url: '/marketplace/v1/graphql',
           }),
           defaultEditorToolsVisibility: true,
         }),

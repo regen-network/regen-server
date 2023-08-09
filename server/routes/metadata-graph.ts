@@ -9,7 +9,7 @@ const router = express.Router();
 
 /**
  * @openapi
- * /metadata-graph/{iri}:
+ * /data/v1/metadata-graph/{iri}:
  *   get:
  *     summary: fetch a metadata graph for a given iri
  *     tags:
@@ -74,7 +74,7 @@ router.get('/metadata-graph/:iri', async (req, res, next) => {
 
 /**
  * @openapi
- * /iri-gen:
+ * /data/v1/iri-gen:
  *   get:
  *     summary: generate an iri for a given JSON-LD metadata graph
  *     tags:
@@ -126,7 +126,7 @@ router.get('/iri-gen', async (req, res, next) => {
 
 /**
  * @openapi
- * /iri-gen:
+ * /data/v1/iri-gen:
  *   post:
  *     summary: generate and save an iri and JSON-LD metadata graph pair
  *     tags:

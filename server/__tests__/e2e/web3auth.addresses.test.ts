@@ -4,6 +4,7 @@ import {
   genAddAddressSignature,
   createNewUserAndLogin,
   createNewUser,
+  getMarketplaceURL,
 } from '../utils';
 
 describe('web3auth addresses endpoint', () => {
@@ -12,7 +13,7 @@ describe('web3auth addresses endpoint', () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
-      `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
+      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${userAddr}`,
     );
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
@@ -24,7 +25,7 @@ describe('web3auth addresses endpoint', () => {
       userPubKey: newPubKey,
     } = await createNewUserAndLogin();
 
-    const testUserPartyQuery = await fetch('http://localhost:5000/graphql', {
+    const testUserPartyQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: testUserAuthHeaders,
       body: JSON.stringify({
@@ -37,7 +38,7 @@ describe('web3auth addresses endpoint', () => {
 
     // test user has updated their profile name..
     const testUserName = 'Foo Bar';
-    await fetch('http://localhost:5000/graphql', {
+    await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: testUserAuthHeaders,
       body: JSON.stringify({
@@ -64,7 +65,7 @@ describe('web3auth addresses endpoint', () => {
       nonce,
     );
 
-    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
+    const addrResp = await fetch(`${getMarketplaceURL()}/web3auth/addresses`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({ signature: newSig }),
@@ -72,7 +73,7 @@ describe('web3auth addresses endpoint', () => {
 
     expect(addrResp.status).toBe(200);
 
-    const resp = await fetch('http://localhost:5000/graphql', {
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -82,7 +83,7 @@ describe('web3auth addresses endpoint', () => {
     const data = await resp.json();
     expect(data.data.getCurrentAddrs.nodes.length).toBe(2);
 
-    const testUserResp = await fetch('http://localhost:5000/graphql', {
+    const testUserResp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: testUserAuthHeaders,
       body: JSON.stringify({
@@ -92,7 +93,7 @@ describe('web3auth addresses endpoint', () => {
     const testUserData = await testUserResp.json();
     expect(testUserData.data.getCurrentAddrs.nodes.length).toBe(0);
 
-    const partyQuery = await fetch('http://localhost:5000/graphql', {
+    const partyQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -110,7 +111,7 @@ describe('web3auth addresses endpoint', () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
     const nonceResp = await fetch(
-      `http://localhost:5000/web3auth/nonce?userAddress=${userAddr}`,
+      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${userAddr}`,
     );
     // get the nonce for the currently authenticated user
     const { nonce } = await nonceResp.json();
@@ -131,7 +132,7 @@ describe('web3auth addresses endpoint', () => {
       nonce,
     );
 
-    const addrResp = await fetch('http://localhost:5000/web3auth/addresses', {
+    const addrResp = await fetch(`${getMarketplaceURL()}/web3auth/addresses`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({ signature: newSig }),
@@ -139,7 +140,7 @@ describe('web3auth addresses endpoint', () => {
 
     expect(addrResp.status).toBe(200);
 
-    const resp = await fetch('http://localhost:5000/graphql', {
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({

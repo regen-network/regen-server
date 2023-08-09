@@ -37,9 +37,7 @@ import { pgPool, pgPoolIndexer } from 'common/pool';
 import mailerlite from './routes/mailerlite';
 import contact from './routes/contact';
 import buyersInfo from './routes/buyers-info';
-import stripe from './routes/stripe';
 import auth from './routes/auth';
-import recaptcha from './routes/recaptcha';
 import files from './routes/files';
 import metadataGraph from './routes/metadata-graph';
 import { MetadataNotFound } from 'common/metadata_graph';
@@ -53,10 +51,15 @@ import { sameSiteFromEnv } from './utils';
 /* eslint-enable import/first */
 
 const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
+const GROUPS_HOSTNAME_PATTERN = /groups\.regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;
 const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-registry\.netlify\.app$/;
+const GROUPS_PREVIEW_HOSTNAME_PATTERN =
+  /deploy-preview-\d+--regen-groups-ui\.netlify\.app$/;
+const GROUPS_BRANCH_HOSTNAME_PATTERN =
+  /[a-z0-9]+--regen-groups-ui\.netlify\.app$/;
 const MAIN_PREVIEW_HOSTNAME_PATTERN =
   /[a-z0-9]+--regen-registry\.netlify\.app$/;
 const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
@@ -80,8 +83,11 @@ const corsOptions = (req, callback): void => {
     if (
       originURL &&
       (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(GROUPS_HOSTNAME_PATTERN) ||
         originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(GROUPS_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(GROUPS_BRANCH_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_APP_HOSTNAME_PATTERN) ||
         originURL.hostname.match(DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN) ||
@@ -165,7 +171,7 @@ app.use(getJwt(false));
 
 app.use(express.json());
 
-app.use('/image', imageOptimizer());
+app.use('/marketplace/v1/image', imageOptimizer());
 
 if (process.env.LEDGER_TENDERMINT_RPC) {
   app.use(
@@ -188,8 +194,9 @@ if (process.env.LEDGER_REST_ENDPOINT) {
   );
 }
 
-app.use('/graphql', doubleCsrfProtection);
+app.use('/marketplace/v1/graphql', doubleCsrfProtection);
 app.use(
+  '/marketplace/v1',
   postgraphile(pgPool, 'public', {
     watchPg: true,
     dynamicJson: true,
@@ -219,41 +226,39 @@ app.use(
     },
   }),
 );
-app.use(mailerlite);
-app.use(contact);
-app.use(buyersInfo);
-app.use(stripe);
-app.use(auth);
-app.use(recaptcha);
-app.use(files);
-app.use(metadataGraph);
-app.use('/web3auth', web3auth);
-app.use(csrfRouter);
-app.use('/graphiql', graphiqlRouter);
+app.use('/website/v1', mailerlite);
+app.use('/website/v1', contact);
+app.use('/marketplace/v1', buyersInfo);
+app.use('/marketplace/v1', auth);
+app.use('/marketplace/v1', files);
+app.use('/data/v1', metadataGraph);
+app.use('/marketplace/v1/web3auth', web3auth);
+app.use('/marketplace/v1', csrfRouter);
+app.use('/marketplace/v1/graphiql', graphiqlRouter);
 
 if (!process.env.CI) {
   console.log('setting up the indexer db graphql connection...');
   app.use(
-    '/indexer',
+    '/indexer/v1',
     postgraphile(pgPoolIndexer, 'public', {
       watchPg: true,
       dynamicJson: true,
       appendPlugins: [PgManyToManyPlugin],
     }),
   );
-  app.use('/indexer/graphiql', indexerGraphiqlRouter);
+  app.use('/indexer/v1/graphiql', indexerGraphiqlRouter);
 }
 
 const swaggerOptions = {
   definition: {
     openapi: '3.0.n',
     info: {
-      title: 'registry-server',
+      title: 'regen-server',
       version: '0.1.0',
-      description: 'API docs for the registry-server',
+      description: 'API docs for the regen-server',
       contact: {
-        name: 'regen-network/registry-server',
-        url: 'https://github.com/regen-network/registry-server',
+        name: 'regen-network/regen-server',
+        url: 'https://github.com/regen-network/regen-server',
       },
     },
   },
@@ -270,6 +275,32 @@ app.use(
     },
   }),
 );
+
+app.use((req, res, next) => {
+  // this middleware implements backward compat redirects for our old domains.
+  // if a previous middleware handles an endpoint, then this code is not executed.
+  // i.e. the /api-docs is handled by a middleware above which gets precedence, and this middleware is never reached.
+  if (req.hostname.endsWith('.registry.regen.network')) {
+    if (
+      req.path.startsWith('/metadata-graph') ||
+      req.path.startsWith('/iri-gen')
+    ) {
+      return res.redirect(308, `/data/v1${req.originalUrl}`);
+    } else if (
+      req.path.startsWith('/mailerlite') ||
+      req.path.startsWith('/contact')
+    ) {
+      return res.redirect(308, `/website/v1${req.originalUrl}`);
+    } else if (req.path.startsWith('/indexer') && !req.path.includes('v1')) {
+      const parts = req.originalUrl.split('/indexer');
+      const rewrittenPath = parts.slice(1).join('/');
+      return res.redirect(308, `/indexer/v1${rewrittenPath}`);
+    } else if (!req.path.startsWith('/marketplace/v1') && req.path !== '/') {
+      return res.redirect(308, `/marketplace/v1${req.originalUrl}`);
+    }
+  }
+  next();
+});
 
 app.use((err, req, _, next) => {
   if (err.stack) {

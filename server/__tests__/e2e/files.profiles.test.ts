@@ -3,13 +3,14 @@ import {
   createNewUserAndLogin,
   dummyFilesSetup,
   dummyFilesTeardown,
+  getMarketplaceURL,
 } from '../utils';
 
 describe('files endpoint, profiles auth...', () => {
   it('allows a user to upload profile media...', async () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
-    const query = await fetch('http://localhost:5000/graphql', {
+    const query = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({

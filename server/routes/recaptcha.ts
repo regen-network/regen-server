@@ -1,3 +1,6 @@
+/* DEPRECATED - this code is no longer in use.
+ *  At time of writing we wish to keep this code around a bit longer.
+ * */
 import * as express from 'express';
 import axios from 'axios';
 import * as bodyParser from 'body-parser';
