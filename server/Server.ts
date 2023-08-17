@@ -54,15 +54,15 @@ const REGEN_HOSTNAME_PATTERN = /regen\.network$/;
 const GROUPS_HOSTNAME_PATTERN = /groups\.regen\.network$/;
 const WEBSITE_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-website\.netlify\.app$/;
-const REGISTRY_PREVIEW_HOSTNAME_PATTERN =
-  /deploy-preview-\d+--regen-registry\.netlify\.app$/;
+const MARKETPLACE_PREVIEW_HOSTNAME_PATTERN =
+  /deploy-preview-\d+--regen-marketplace\.netlify\.app$/;
 const GROUPS_PREVIEW_HOSTNAME_PATTERN =
   /deploy-preview-\d+--regen-groups-ui\.netlify\.app$/;
 const GROUPS_BRANCH_HOSTNAME_PATTERN =
   /[a-z0-9]+--regen-groups-ui\.netlify\.app$/;
 const MAIN_PREVIEW_HOSTNAME_PATTERN =
-  /[a-z0-9]+--regen-registry\.netlify\.app$/;
-const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-registry\.netlify\.app$/;
+  /[a-z0-9]+--regen-marketplace\.netlify\.app$/;
+const DEFAULT_SUBDOMAIN_HOSTNAME_PATTERN = /regen-marketplace\.netlify\.app$/;
 const MAIN_APP_HOSTNAME_PATTERN = /[a-z0-9]+\.app\.regen\.network$/;
 const AUTH0_HOSTNAME_PATTERN = /regen-network-registry\.auth0\.com$/;
 
@@ -85,7 +85,7 @@ const corsOptions = (req, callback): void => {
       (originURL.hostname.match(REGEN_HOSTNAME_PATTERN) ||
         originURL.hostname.match(GROUPS_HOSTNAME_PATTERN) ||
         originURL.hostname.match(WEBSITE_PREVIEW_HOSTNAME_PATTERN) ||
-        originURL.hostname.match(REGISTRY_PREVIEW_HOSTNAME_PATTERN) ||
+        originURL.hostname.match(MARKETPLACE_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(GROUPS_PREVIEW_HOSTNAME_PATTERN) ||
         originURL.hostname.match(GROUPS_BRANCH_HOSTNAME_PATTERN) ||
         originURL.hostname.match(MAIN_PREVIEW_HOSTNAME_PATTERN) ||
