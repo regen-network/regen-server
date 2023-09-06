@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
--- Dumped by pg_dump version 15.0
+-- Dumped from database version 14.9 (Homebrew)
+-- Dumped by pg_dump version 14.9 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,13 +35,6 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
-
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
 
 
 --
@@ -746,7 +739,8 @@ CREATE TABLE public.project (
     handle text,
     on_chain_id text,
     admin_wallet_id uuid,
-    verifier_id uuid
+    verifier_id uuid,
+    approved boolean DEFAULT false
 );
 
 
@@ -1210,14 +1204,6 @@ CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
---
 -- Name: TABLE party; Type: ACL; Schema: public; Owner: -
 --
 
@@ -1313,7 +1299,56 @@ GRANT UPDATE(legal_name) ON TABLE public.organization TO app_user;
 -- Name: TABLE project; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.project TO app_user;
+GRANT SELECT,INSERT,DELETE ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.developer_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(developer_id) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.credit_class_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(credit_class_id) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.metadata; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(metadata) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.handle; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(handle) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.on_chain_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(on_chain_id) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.admin_wallet_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(admin_wallet_id) ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.verifier_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(verifier_id) ON TABLE public.project TO app_user;
 
 
 --
