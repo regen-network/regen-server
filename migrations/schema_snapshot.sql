@@ -1306,49 +1306,49 @@ GRANT SELECT,INSERT,DELETE ON TABLE public.project TO app_user;
 -- Name: COLUMN project.developer_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(developer_id) ON TABLE public.project TO app_user;
+GRANT UPDATE(developer_id) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.credit_class_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(credit_class_id) ON TABLE public.project TO app_user;
+GRANT UPDATE(credit_class_id) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.metadata; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(metadata) ON TABLE public.project TO app_user;
+GRANT UPDATE(metadata) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.handle; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(handle) ON TABLE public.project TO app_user;
+GRANT UPDATE(handle) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.on_chain_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(on_chain_id) ON TABLE public.project TO app_user;
+GRANT UPDATE(on_chain_id) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.admin_wallet_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(admin_wallet_id) ON TABLE public.project TO app_user;
+GRANT UPDATE(admin_wallet_id) ON TABLE public.project TO auth_user;
 
 
 --
 -- Name: COLUMN project.verifier_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(verifier_id) ON TABLE public.project TO app_user;
+GRANT UPDATE(verifier_id) ON TABLE public.project TO auth_user;
 
 
 --
