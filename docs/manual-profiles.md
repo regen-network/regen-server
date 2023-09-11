@@ -49,7 +49,7 @@ SET
   twitter_link = 'twitter link',
   website_link = 'website link'
 WHERE
-  party_id = '997ea872-4c59-11ee-98a7-c26700a3bae4';
+  id = '997ea872-4c59-11ee-98a7-c26700a3bae4';
 ```
 
 # Updating an already existing profile
@@ -80,7 +80,7 @@ SET
   twitter_link = 'twitter link',
   website_link = 'website link'
 WHERE
-  party_id = '997ea872-4c59-11ee-98a7-c26700a3bae4';
+  id = '997ea872-4c59-11ee-98a7-c26700a3bae4';
 ```
 
 # Profile image and background image
