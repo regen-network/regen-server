@@ -10,16 +10,6 @@ describe('files endpoint, projects auth...', () => {
   it('allows a user to upload project media to a project they are an admin for...', async () => {
     const { authHeaders, userAddr } = await createNewUserAndLogin();
 
-    const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        query: `{ getCurrentAccount }`,
-      }),
-    });
-    const accountIdResult = await accountIdQuery.json();
-    const walletId = walletIdResult.data.walletByAddr.id;
-
     const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,

@@ -135,7 +135,7 @@ describe('party update policies', () => {
   });
 
   it('allow a user to update a party/profile that he/she created', async () => {
-    const { authHeaders, userAddr } = await createNewUserAndLogin();
+    const { authHeaders } = await createNewUserAndLogin();
 
     const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
@@ -145,7 +145,6 @@ describe('party update policies', () => {
       }),
     });
     const accountIdResult = await accountIdQuery.json();
-    console.log('accountIdResult', accountIdResult);
 
     // Create a party
     const createQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
@@ -157,7 +156,28 @@ describe('party update policies', () => {
           input: {
             party: {
               type: 'USER',
-              creatorId: accountIdResult,
+              creatorId: accountIdResult.data.getCurrentAccount,
+            },
+          },
+        },
+        query:
+          'mutation CreateParty($input: CreatePartyInput!) { createParty(input: $input) { party { id } } }',
+      }),
+    });
+    const createResp = await createQuery.json();
+    const newPartyId = createResp.data.createParty.party.id;
+
+    const NEW_NAME = 'FOO BAR';
+    const update = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        operationName: 'UpdatePartyById',
+        variables: {
+          input: {
+            id: newPartyId,
+            partyPatch: {
+              name: NEW_NAME,
             },
           },
         },
@@ -165,52 +185,20 @@ describe('party update policies', () => {
           'mutation UpdatePartyById($input: UpdatePartyByIdInput!) { updatePartyById(input: $input) { party { id } } }',
       }),
     });
-    const createResp = await createQuery.json();
-    const party = createResp.data.createParty.party;
-    console.log('party', party);
+    const updResp = await update.json();
+    const { id: returnedPartyId } = updResp.data.updatePartyById.party;
 
-    // const query = await fetch(`${getMarketplaceURL()}/graphql`, {
-    //   method: 'POST',
-    //   headers: authHeaders,
-    //   body: JSON.stringify({
-    //     query: `{ walletByAddr(addr: "${userAddr}") { id partyByWalletId { id } } }`,
-    //   }),
-    // });
-    // const result = await query.json();
-    // const partyId = result.data.walletByAddr.partyByWalletId.id;
+    expect(returnedPartyId).toBe(newPartyId);
 
-    // const NEW_NAME = 'FOO BAR';
-    // const update = await fetch(`${getMarketplaceURL()}/graphql`, {
-    //   method: 'POST',
-    //   headers: authHeaders,
-    //   body: JSON.stringify({
-    //     operationName: 'UpdatePartyById',
-    //     variables: {
-    //       input: {
-    //         id: partyId,
-    //         partyPatch: {
-    //           name: NEW_NAME,
-    //         },
-    //       },
-    //     },
-    //     query:
-    //       'mutation UpdatePartyById($input: UpdatePartyByIdInput!) { updatePartyById(input: $input) { party { id } } }',
-    //   }),
-    // });
-    // const updResp = await update.json();
-    // const { id: returnedPartyId } = updResp.data.updatePartyById.party;
+    const checkParty = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query: `{ partyById(id: "${newPartyId}") { name } } `,
+      }),
+    });
+    const checkPartyResp = await checkParty.json();
 
-    // expect(returnedPartyId).toBe(partyId);
-
-    // const checkParty = await fetch(`${getMarketplaceURL()}/graphql`, {
-    //   method: 'POST',
-    //   headers: authHeaders,
-    //   body: JSON.stringify({
-    //     query: `{ partyById(id: "${partyId}") { name } } `,
-    //   }),
-    // });
-    // const checkPartyResp = await checkParty.json();
-
-    // expect(checkPartyResp.data.partyById.name).toBe(NEW_NAME);
+    expect(checkPartyResp.data.partyById.name).toBe(NEW_NAME);
   });
 });
