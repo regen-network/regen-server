@@ -91,4 +91,46 @@ describe('party update policies', () => {
     );
     expect(updResp.data.updatePartyById).toBe(null);
   });
+
+  it('does not allow a user to update another users party/profile', async () => {
+    const { authHeaders } = await createNewUserAndLogin();
+    // create an additional account
+    const { userAddr: otherAddr } = await createNewUserAndLogin();
+
+    // as the first user look up the party of the other user...
+    const query = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query: `{ walletByAddr(addr: "${otherAddr}") { id partyByWalletId { id } } }`,
+      }),
+    });
+    const result = await query.json();
+    const partyId = result.data.walletByAddr.partyByWalletId.id;
+
+    const NEW_NAME = 'FOO BAR';
+    // try to update the other users party as the first user...
+    const update = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        operationName: 'UpdatePartyById',
+        variables: {
+          input: {
+            id: partyId,
+            partyPatch: {
+              name: NEW_NAME,
+            },
+          },
+        },
+        query:
+          'mutation UpdatePartyById($input: UpdatePartyByIdInput!) { updatePartyById(input: $input) { party { id } } }',
+      }),
+    });
+    const updResp = await update.json();
+    expect(updResp.errors[0].message).toBe(
+      "No values were updated in collection 'parties' because no values you can update were found matching these criteria.",
+    );
+    expect(updResp.data.updatePartyById).toBe(null);
+  });
 });

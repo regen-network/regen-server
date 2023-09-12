@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Homebrew)
--- Dumped by pg_dump version 14.9 (Homebrew)
+-- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
+-- Dumped by pg_dump version 15.0
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,13 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -585,6 +592,8 @@ CREATE TABLE public.party (
     bg_image text,
     twitter_link text,
     website_link text,
+    creator_id uuid,
+    CONSTRAINT has_account_or_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
@@ -1085,6 +1094,14 @@ ALTER TABLE ONLY public.party
 
 
 --
+-- Name: party party_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.party
+    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.account(id);
+
+
+--
 -- Name: party party_wallet_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1142,6 +1159,16 @@ CREATE POLICY party_insert_all ON public.party FOR INSERT WITH CHECK (true);
 --
 
 CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
+
+
+--
+-- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
+   FROM public.party p
+  WHERE (p.creator_id IN ( SELECT get_current_account.account_id
+           FROM public.get_current_account() get_current_account(account_id))))));
 
 
 --
@@ -1204,11 +1231,26 @@ CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
 -- Name: TABLE party; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT SELECT,INSERT ON TABLE public.party TO app_user;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
+GRANT SELECT,INSERT ON TABLE public.party TO auth_user;
+
+
+--
+-- Name: COLUMN party.type; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(type) ON TABLE public.party TO auth_user;
 
 
 --
@@ -1216,6 +1258,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
 --
 
 GRANT UPDATE(name) ON TABLE public.party TO app_user;
+GRANT UPDATE(name) ON TABLE public.party TO auth_user;
 
 
 --
@@ -1230,6 +1273,7 @@ GRANT UPDATE(wallet_id) ON TABLE public.party TO app_user;
 --
 
 GRANT UPDATE(description) ON TABLE public.party TO app_user;
+GRANT UPDATE(description) ON TABLE public.party TO auth_user;
 
 
 --
@@ -1237,6 +1281,28 @@ GRANT UPDATE(description) ON TABLE public.party TO app_user;
 --
 
 GRANT UPDATE(image) ON TABLE public.party TO app_user;
+GRANT UPDATE(image) ON TABLE public.party TO auth_user;
+
+
+--
+-- Name: COLUMN party.bg_image; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(bg_image) ON TABLE public.party TO auth_user;
+
+
+--
+-- Name: COLUMN party.twitter_link; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(twitter_link) ON TABLE public.party TO auth_user;
+
+
+--
+-- Name: COLUMN party.website_link; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(website_link) ON TABLE public.party TO auth_user;
 
 
 --
