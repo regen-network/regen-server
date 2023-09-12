@@ -988,6 +988,13 @@ CREATE INDEX party_account_id_idx ON public.party USING btree (account_id);
 
 
 --
+-- Name: party_creator_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX party_creator_id_key ON public.party USING btree (creator_id);
+
+
+--
 -- Name: party_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1243,14 +1250,7 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 --
 
 GRANT SELECT,INSERT ON TABLE public.party TO app_user;
-GRANT SELECT,INSERT ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.type; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(type) ON TABLE public.party TO auth_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
 
 
 --
@@ -1258,7 +1258,6 @@ GRANT UPDATE(type) ON TABLE public.party TO auth_user;
 --
 
 GRANT UPDATE(name) ON TABLE public.party TO app_user;
-GRANT UPDATE(name) ON TABLE public.party TO auth_user;
 
 
 --
@@ -1273,7 +1272,6 @@ GRANT UPDATE(wallet_id) ON TABLE public.party TO app_user;
 --
 
 GRANT UPDATE(description) ON TABLE public.party TO app_user;
-GRANT UPDATE(description) ON TABLE public.party TO auth_user;
 
 
 --
@@ -1281,28 +1279,6 @@ GRANT UPDATE(description) ON TABLE public.party TO auth_user;
 --
 
 GRANT UPDATE(image) ON TABLE public.party TO app_user;
-GRANT UPDATE(image) ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.bg_image; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(bg_image) ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.twitter_link; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(twitter_link) ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.website_link; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(website_link) ON TABLE public.party TO auth_user;
 
 
 --

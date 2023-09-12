@@ -1,5 +1,5 @@
 --! Previous: sha1:5666f1ac7ef6e4f614dc524337da6b535d0787a6
---! Hash: sha1:b3d3e5b9cb7c46d76d12a0270d77d95aaeed5bb7
+--! Hash: sha1:ab2563a65cc002b556b476357a1dc1bfb3eff9cd
 
 ALTER TABLE party DROP CONSTRAINT IF EXISTS has_account_or_creator;
 ALTER TABLE 
@@ -22,21 +22,7 @@ ADD
     )
   );
 
-REVOKE
-UPDATE ON party
-FROM
-  auth_user;
-
-GRANT
-UPDATE (
-  type,
-  name,
-  description,
-  image,
-  bg_image,
-  twitter_link,
-  website_link
-) ON party TO auth_user;
+CREATE INDEX IF NOT EXISTS party_creator_id_key ON party (creator_id);
 
 DROP POLICY IF EXISTS party_update_only_by_creator on public.party;
 CREATE POLICY party_update_only_by_creator ON public.party FOR 
