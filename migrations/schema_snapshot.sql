@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
--- Dumped by pg_dump version 15.0
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -261,7 +261,7 @@ BEGIN
           RAISE LOG 'new _party_id %', v_party_id;
         ELSE
           RAISE LOG 'associating preexisting party...';
-          UPDATE party SET account_id = v_account_id WHERE id = v_party_id ;
+          UPDATE party SET account_id = v_account_id, creator_id = null WHERE id = v_party_id ;
         END IF;
     END IF;
 END;
@@ -318,7 +318,8 @@ BEGIN
         ON CONFLICT ON CONSTRAINT
             party_wallet_id_key
         DO UPDATE SET
-            account_id = v_account_id
+            account_id = v_account_id,
+            creator_id = null
         RETURNING
             id INTO v_party_id;
 
@@ -593,7 +594,7 @@ CREATE TABLE public.party (
     twitter_link text,
     website_link text,
     creator_id uuid,
-    CONSTRAINT has_account_or_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
+    CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 

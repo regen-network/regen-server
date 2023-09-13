@@ -1,3 +1,4 @@
+import { genRandomRegenAddress } from '../../../utils';
 import {
   createAccount,
   withRootDb,
@@ -5,7 +6,7 @@ import {
   createWalletAndParty,
 } from '../../helpers';
 
-const walletAddr = 'regen123456789';
+const walletAddr = genRandomRegenAddress();
 
 describe('add_addr_to_account', () => {
   it('does not allow adding an addr that already has an association', async () => {
@@ -55,6 +56,47 @@ describe('add_addr_to_account', () => {
         existingWalletAddr,
         partyName,
         partyType,
+      );
+
+      const accountId = await createAccount(client, walletAddr);
+      const result = await client.query(
+        `select * from private.add_addr_to_account('${accountId}', '${existingWalletAddr}', 'user')`,
+      );
+      expect(result.rowCount).toBe(1);
+
+      // Check that the party now belongs to the account with unchanged wallet_id, name and type
+      const updatedPartyRes = await client.query(
+        `select * from party where id = $1`,
+        [partyId],
+      );
+      expect(updatedPartyRes.rowCount).toBe(1);
+      const [party] = updatedPartyRes.rows;
+      expect(party.account_id).toEqual(accountId);
+      expect(party.wallet_id).toEqual(walletId);
+      expect(party.name).toEqual(partyName);
+      expect(party.type).toEqual(partyType);
+
+      await becomeAuthUser(client, walletAddr, accountId);
+      const addrs = await client.query('select * from get_current_addrs()');
+      expect(addrs.rowCount).toBe(2);
+    });
+  });
+  it('allows adding an existing addr with a creator', async () => {
+    await withRootDb(async client => {
+      // Create the creator account
+      const creatorWalletAddr = genRandomRegenAddress();
+      const creatorAccountId = await createAccount(client, creatorWalletAddr);
+
+      // Create existing wallet and party with creator
+      const existingWalletAddr = 'regenABC123456';
+      const partyName = 'John';
+      const partyType = 'organization';
+      const { walletId, partyId } = await createWalletAndParty(
+        client,
+        existingWalletAddr,
+        partyName,
+        partyType,
+        creatorAccountId,
       );
 
       const accountId = await createAccount(client, walletAddr);
