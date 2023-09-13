@@ -13,7 +13,7 @@ describe('party has account or creator', () => {
           accountId,
         ]),
       ).rejects.toThrow(
-        `new row for relation "party" violates check constraint "has_account_or_creator"`,
+        `new row for relation "party" violates check constraint "cannot_have_account_and_creator"`,
       );
     });
   });
