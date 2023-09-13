@@ -95,12 +95,12 @@ export const becomeAuthUser = async (
 
 export const withAuthUserDb = <T>(
   addr: string,
-  fn: (client: PoolClient, accountId?: string) => Promise<T>,
+  fn: (client: PoolClient) => Promise<T>,
 ): Promise<void> =>
   withRootDb(async client => {
     const accountId = await createAccount(client, addr);
     await becomeAuthUser(client, addr, accountId);
-    await fn(client, accountId);
+    await fn(client);
   });
 
 export async function createAccount(
