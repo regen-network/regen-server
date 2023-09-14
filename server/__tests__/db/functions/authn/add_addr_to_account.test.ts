@@ -99,6 +99,7 @@ describe('add_addr_to_account', () => {
         creatorAccountId,
       );
 
+      // Create the user account that will claim the party from the creator
       const accountId = await createAccount(client, walletAddr);
       const result = await client.query(
         `select * from private.add_addr_to_account('${accountId}', '${existingWalletAddr}', 'user')`,
@@ -113,6 +114,7 @@ describe('add_addr_to_account', () => {
       expect(updatedPartyRes.rowCount).toBe(1);
       const [party] = updatedPartyRes.rows;
       expect(party.account_id).toEqual(accountId);
+      expect(party.creator_id).toEqual(null);
       expect(party.wallet_id).toEqual(walletId);
       expect(party.name).toEqual(partyName);
       expect(party.type).toEqual(partyType);
