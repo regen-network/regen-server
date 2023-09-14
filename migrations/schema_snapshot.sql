@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Homebrew)
--- Dumped by pg_dump version 14.9 (Homebrew)
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,13 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -254,7 +261,7 @@ BEGIN
           RAISE LOG 'new _party_id %', v_party_id;
         ELSE
           RAISE LOG 'associating preexisting party...';
-          UPDATE party SET account_id = v_account_id WHERE id = v_party_id ;
+          UPDATE party SET account_id = v_account_id, creator_id = null WHERE id = v_party_id ;
         END IF;
     END IF;
 END;
@@ -311,7 +318,8 @@ BEGIN
         ON CONFLICT ON CONSTRAINT
             party_wallet_id_key
         DO UPDATE SET
-            account_id = v_account_id
+            account_id = v_account_id,
+            creator_id = null
         RETURNING
             id INTO v_party_id;
 
@@ -585,6 +593,8 @@ CREATE TABLE public.party (
     bg_image text,
     twitter_link text,
     website_link text,
+    creator_id uuid,
+    CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
@@ -979,6 +989,13 @@ CREATE INDEX party_account_id_idx ON public.party USING btree (account_id);
 
 
 --
+-- Name: party_creator_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX party_creator_id_key ON public.party USING btree (creator_id);
+
+
+--
 -- Name: party_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1085,6 +1102,14 @@ ALTER TABLE ONLY public.party
 
 
 --
+-- Name: party party_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.party
+    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.account(id);
+
+
+--
 -- Name: party party_wallet_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1145,6 +1170,16 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 
 
 --
+-- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
+   FROM public.party p
+  WHERE (p.creator_id IN ( SELECT get_current_account.account_id
+           FROM public.get_current_account() get_current_account(account_id))))));
+
+
+--
 -- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1201,6 +1236,14 @@ CREATE POLICY wallet_insert_policy ON public.wallet FOR INSERT TO auth_user WITH
 --
 
 CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
