@@ -1199,8 +1199,7 @@ ALTER TABLE public.project ENABLE ROW LEVEL SECURITY;
 -- Name: project project_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WITH CHECK ((admin_wallet_id IN ( SELECT get_current_addrs.wallet_id
-   FROM public.get_current_addrs() get_current_addrs(wallet_id, addr, profile_type))));
+CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WITH CHECK (true);
 
 
 --
