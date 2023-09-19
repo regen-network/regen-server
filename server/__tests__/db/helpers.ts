@@ -127,6 +127,7 @@ export async function createWalletAndParty(
   walletAddr: string,
   partyName: string,
   partyType: 'user' | 'organization' = 'user',
+  creatorAccountId?: string,
 ): Promise<{ walletId: string; partyId: string }> {
   const walletRes = await client.query(
     `insert into wallet (addr) values ($1) returning id`,
@@ -135,8 +136,8 @@ export async function createWalletAndParty(
   expect(walletRes.rowCount).toBe(1);
   const [{ id: walletId }] = walletRes.rows;
   const partyRes = await client.query(
-    `insert into party (name, type, wallet_id) values ($1, $2, $3) returning id`,
-    [partyName, partyType, walletId],
+    `insert into party (name, type, wallet_id, creator_id) values ($1, $2, $3, $4) returning id`,
+    [partyName, partyType, walletId, creatorAccountId],
   );
   expect(partyRes.rowCount).toBe(1);
   const [{ id: partyId }] = partyRes.rows;

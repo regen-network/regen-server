@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
--- Dumped by pg_dump version 15.0
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -261,7 +261,7 @@ BEGIN
           RAISE LOG 'new _party_id %', v_party_id;
         ELSE
           RAISE LOG 'associating preexisting party...';
-          UPDATE party SET account_id = v_account_id WHERE id = v_party_id ;
+          UPDATE party SET account_id = v_account_id, creator_id = null WHERE id = v_party_id ;
         END IF;
     END IF;
 END;
@@ -318,7 +318,8 @@ BEGIN
         ON CONFLICT ON CONSTRAINT
             party_wallet_id_key
         DO UPDATE SET
-            account_id = v_account_id
+            account_id = v_account_id,
+            creator_id = null
         RETURNING
             id INTO v_party_id;
 
@@ -592,6 +593,8 @@ CREATE TABLE public.party (
     bg_image text,
     twitter_link text,
     website_link text,
+    creator_id uuid,
+    CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
@@ -746,7 +749,8 @@ CREATE TABLE public.project (
     handle text,
     on_chain_id text,
     admin_wallet_id uuid,
-    verifier_id uuid
+    verifier_id uuid,
+    approved boolean DEFAULT false
 );
 
 
@@ -985,6 +989,13 @@ CREATE INDEX party_account_id_idx ON public.party USING btree (account_id);
 
 
 --
+-- Name: party_creator_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX party_creator_id_key ON public.party USING btree (creator_id);
+
+
+--
 -- Name: party_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1091,6 +1102,14 @@ ALTER TABLE ONLY public.party
 
 
 --
+-- Name: party party_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.party
+    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.account(id);
+
+
+--
 -- Name: party party_wallet_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1151,6 +1170,16 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 
 
 --
+-- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
+   FROM public.party p
+  WHERE (p.creator_id IN ( SELECT get_current_account.account_id
+           FROM public.get_current_account() get_current_account(account_id))))));
+
+
+--
 -- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -1170,8 +1199,7 @@ ALTER TABLE public.project ENABLE ROW LEVEL SECURITY;
 -- Name: project project_insert_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WITH CHECK ((admin_wallet_id IN ( SELECT get_current_addrs.wallet_id
-   FROM public.get_current_addrs() get_current_addrs(wallet_id, addr, profile_type))));
+CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WITH CHECK (true);
 
 
 --
@@ -1313,7 +1341,56 @@ GRANT UPDATE(legal_name) ON TABLE public.organization TO app_user;
 -- Name: TABLE project; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.project TO app_user;
+GRANT SELECT,INSERT,DELETE ON TABLE public.project TO app_user;
+
+
+--
+-- Name: COLUMN project.developer_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(developer_id) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.credit_class_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(credit_class_id) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.metadata; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(metadata) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.handle; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(handle) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.on_chain_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(on_chain_id) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.admin_wallet_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(admin_wallet_id) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.verifier_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(verifier_id) ON TABLE public.project TO auth_user;
 
 
 --
