@@ -71,7 +71,7 @@ jobs:
       - name: 'start the registry-server and run tests'
         env:
           MAILERLITE_API_KEY: foobar
-          AIRTABLE_API_KEY: foobar
+          AIRTABLE_API_TOKEN: foobar
           AUTH0_DOMAIN: foobar
           AUTH0_CLIENT_ID: foobar
           AUTH0_CLIENT_SECRET: foobar
