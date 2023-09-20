@@ -746,7 +746,7 @@ CREATE TABLE public.project (
     developer_id uuid,
     credit_class_id uuid,
     metadata jsonb,
-    handle text,
+    slug text,
     on_chain_id text,
     admin_wallet_id uuid,
     verifier_id uuid,
@@ -899,14 +899,6 @@ ALTER TABLE ONLY public.party
 
 
 --
--- Name: project project_handle_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project
-    ADD CONSTRAINT project_handle_key UNIQUE (handle);
-
-
---
 -- Name: project project_on_chain_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -920,6 +912,14 @@ ALTER TABLE ONLY public.project
 
 ALTER TABLE ONLY public.project
     ADD CONSTRAINT project_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: project project_slug_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_slug_key UNIQUE (slug);
 
 
 --
@@ -1024,10 +1024,10 @@ CREATE INDEX project_developer_id_idx ON public.project USING btree (developer_i
 
 
 --
--- Name: project_handle_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: project_slug_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX project_handle_idx ON public.project USING btree (handle);
+CREATE INDEX project_slug_idx ON public.project USING btree (slug);
 
 
 --
@@ -1366,10 +1366,10 @@ GRANT UPDATE(metadata) ON TABLE public.project TO auth_user;
 
 
 --
--- Name: COLUMN project.handle; Type: ACL; Schema: public; Owner: -
+-- Name: COLUMN project.slug; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(handle) ON TABLE public.project TO auth_user;
+GRANT UPDATE(slug) ON TABLE public.project TO auth_user;
 
 
 --
