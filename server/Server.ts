@@ -165,7 +165,7 @@ app.use(function (request: any, _, next) {
 
 initializePassport(app, passport);
 app.use(cors(corsOptions));
-app.use(cookieParser());
+app.use(cookieParser('SUPER-DUPER-SECRET-COOKIE-SIGNING-SECRET'));
 
 app.use(getJwt(false));
 
@@ -275,6 +275,57 @@ app.use(
     },
   }),
 );
+
+import { Request, Response } from 'express';
+
+const usersTable = {
+  'wgwz@pm.me': { password: 'foobar', id: 1 },
+  'klawlor419@gmail.com': { password: 'foobar', id: 2 },
+};
+
+app.post('/login/email', (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!req?.session || !email || !password) {
+    return res.sendStatus(500);
+  }
+  const user = usersTable[email];
+  if (!user) {
+    return res.sendStatus(404);
+  }
+  if (password === usersTable[email].password) {
+    req.session.currentEmail = email;
+    if (!('activeEmails' in req.session)) {
+      req.session.activeEmails = [];
+    }
+    if (req.session.activeEmails.includes(email)) {
+    } else {
+      req.session.activeEmails.push(email);
+    }
+    return res
+      .cookie('REGEN_AT', btoa(JSON.stringify({ email })), {
+        domain: 'localhost.local',
+        path: `/profile/u/${user.id}`,
+        expires: new Date(new Date().getTime() + 60 * 60 * 24 * 1000),
+        httpOnly: true,
+        secure: false,
+        signed: true,
+        sameSite: 'lax',
+      })
+      .sendStatus(200);
+  }
+  return res.sendStatus(401);
+});
+
+app.get('/profile/u/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  console.log({
+    id,
+    cookies: req.cookies,
+    signedCookies: req.signedCookies,
+    session: req.session,
+  });
+  res.sendStatus(200);
+});
 
 app.use((req, res, next) => {
   // this middleware implements backward compat redirects for our old domains.
