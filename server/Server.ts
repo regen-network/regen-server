@@ -19,7 +19,7 @@ import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
 import passport from 'passport';
 
-import { UserIncomingMessage } from './types';
+import { UserRequest } from './types';
 import { BaseHTTPError } from './errors';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -194,7 +194,7 @@ if (process.env.LEDGER_REST_ENDPOINT) {
   );
 }
 
-app.use('/marketplace/v1/graphql', doubleCsrfProtection);
+//app.use('/marketplace/v1/graphql', doubleCsrfProtection);
 app.use(
   '/marketplace/v1',
   postgraphile(pgPool, 'public', {
@@ -208,7 +208,19 @@ app.use(
       connectionFilterSetofFunctions: false,
     },
     appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
-    pgSettings: (req: UserIncomingMessage) => {
+    pgSettings: (req: UserRequest) => {
+      const queryAs = req.body.queryAs;
+      if (!!queryAs) {
+        console.log({
+          queryAs,
+          cookies: req.cookies,
+          signedCookies: req.signedCookies,
+          session: req.session,
+        });
+        if (!req.session || !req.session.activeEmails.includes(queryAs)) {
+          console.log('UNAUTHORIZED');
+        }
+      }
       if (req.user && req.user.sub) {
         const { sub } = req.user;
         const settings = { role: sub };
@@ -300,6 +312,19 @@ app.post('/login/email', (req: Request, res: Response) => {
     if (req.session.activeEmails.includes(email)) {
     } else {
       req.session.activeEmails.push(email);
+      res.cookie(
+        `regen-user_${user.id}`,
+        btoa(JSON.stringify({ email, userId: user.id })),
+        {
+          domain: 'localhost.local',
+          path: '/',
+          expires: new Date(new Date().getTime() + 60 * 60 * 24 * 30 * 1000),
+          httpOnly: false,
+          secure: false,
+          signed: true,
+          sameSite: 'lax',
+        },
+      );
     }
     return res
       .cookie('REGEN_AT', btoa(JSON.stringify({ email })), {
@@ -320,6 +345,15 @@ app.get('/profile/u/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   console.log({
     id,
+    cookies: req.cookies,
+    signedCookies: req.signedCookies,
+    session: req.session,
+  });
+  res.sendStatus(200);
+});
+
+app.get('/profile', (req: Request, res: Response) => {
+  console.log({
     cookies: req.cookies,
     signedCookies: req.signedCookies,
     session: req.session,
