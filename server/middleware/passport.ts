@@ -3,6 +3,7 @@ import { PassportStatic } from 'passport';
 import { User } from '../types';
 import { KeplrStrategy } from './keplrStrategy';
 import { UnauthorizedError } from '../errors';
+import { magicLogin } from './magicLoginStrategy';
 
 export function initializePassport(
   app: Application,
@@ -35,6 +36,8 @@ export function initializePassport(
     done(null, { id, address });
   });
 
+  passport.use('keplr', KeplrStrategy());
+  passport.use(magicLogin);
   passport.use('keplr', KeplrStrategy());
 }
 
