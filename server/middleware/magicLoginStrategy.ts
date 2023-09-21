@@ -1,11 +1,12 @@
 import MagicLoginStrategy from 'passport-magic-login';
 
+export const MAGIC_LOGIN_CALLBACK_URL = '/auth/magiclogin/callback';
 export const magicLogin = new MagicLoginStrategy({
   // Used to encrypt the authentication token. Needs to be long, unique and (duh) secret.
   secret: process.env.MAGIC_LINK_SECRET,
 
   // The authentication callback URL
-  callbackUrl: '/auth/magiclogin/callback',
+  callbackUrl: MAGIC_LOGIN_CALLBACK_URL,
 
   // Called with th e generated magic link so you can send it to the user
   // "destination" is what you POST-ed from the client
