@@ -19,7 +19,7 @@ import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
 import passport from 'passport';
 
-import { UserIncomingMessage } from './types';
+import { UserRequest } from './types';
 import { BaseHTTPError } from './errors';
 
 /* eslint-disable import/first */
@@ -207,7 +207,7 @@ app.use(
       connectionFilterSetofFunctions: false,
     },
     appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
-    pgSettings: (req: UserIncomingMessage) => {
+    pgSettings: (req: UserRequest) => {
       if (req.user && req.user.sub) {
         const { sub } = req.user;
         const settings = { role: sub };
