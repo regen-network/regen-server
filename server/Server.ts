@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { postgraphile } from 'postgraphile';
 import fileUpload from 'express-fileupload';
 import cors from 'cors';
@@ -210,7 +210,7 @@ app.use(
     appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
     pgSettings: (req: UserRequest) => {
       const queryAs = req.body.queryAs;
-      if (!!queryAs) {
+      if (queryAs) {
         console.log({
           queryAs,
           cookies: req.cookies,
@@ -287,8 +287,6 @@ app.use(
     },
   }),
 );
-
-import { Request, Response } from 'express';
 
 const usersTable = {
   'wgwz@pm.me': { password: 'foobar', id: 1 },
