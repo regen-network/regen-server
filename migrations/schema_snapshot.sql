@@ -212,6 +212,7 @@ $$;
 -- Name: add_addr_to_account(uuid, text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
 --
 
+-- TODO: will need to be modified so that a web2 user can connect their wallet to their account
 CREATE FUNCTION private.add_addr_to_account(account_id uuid, addr text, v_party_type public.party_type) RETURNS void
     LANGUAGE plpgsql
     AS $$
@@ -278,6 +279,8 @@ $$;
 -- Name: create_new_account(text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
 --
 
+-- TODO: needs to be modified so it doesn't insert to account table
+-- TODO: potentially renamed as create_new_account_with_wallet?
 CREATE FUNCTION private.create_new_account(addr text, v_party_type public.party_type) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
@@ -329,6 +332,7 @@ $$;
 -- Name: get_account_by_addr(text); Type: FUNCTION; Schema: private; Owner: -
 --
 
+-- TODO: modify this so that it returns party.id once "account" is deprecated..
 CREATE FUNCTION private.get_account_by_addr(addr text) RETURNS TABLE(id uuid)
     LANGUAGE plpgsql
     AS $$
@@ -509,6 +513,7 @@ $$;
 -- Name: get_current_account(); Type: FUNCTION; Schema: public; Owner: -
 --
 
+-- TODO: to be deprecated... or left as is if party is renamed as account
 CREATE FUNCTION public.get_current_account(OUT account_id uuid) RETURNS uuid
     LANGUAGE plpgsql STABLE
     AS $$ 
@@ -523,6 +528,7 @@ $$;
 -- Name: get_current_account_id(); Type: FUNCTION; Schema: public; Owner: -
 --
 
+-- TODO: to be deprecated... or modified if party is renamed as account
 CREATE FUNCTION public.get_current_account_id() RETURNS uuid
     LANGUAGE sql STABLE
     AS $$
@@ -534,6 +540,7 @@ $$;
 -- Name: get_current_addrs(); Type: FUNCTION; Schema: public; Owner: -
 --
 
+-- TODO: to be deprecated... and we need to evalute it's usage in the regen-web client-side code...
 CREATE FUNCTION public.get_current_addrs() RETURNS TABLE(wallet_id uuid, addr text, profile_type public.party_type)
     LANGUAGE plpgsql STABLE
     AS $$ 
@@ -640,6 +647,7 @@ CREATE TABLE public.account (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
+    -- TODO: nonce needs to be moved to the party table...
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL
 );
 
@@ -1167,6 +1175,7 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 -- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
 --
 
+-- TODO: dependent on account.id refactor to use party.id
 CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
    FROM public.party p
   WHERE (p.creator_id IN ( SELECT get_current_account.account_id
@@ -1177,6 +1186,7 @@ CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id
 -- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
 --
 
+-- TODO: dependent on account.id refactor to use party.id
 CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
    FROM public.party p
   WHERE (p.account_id IN ( SELECT get_current_account.account_id
@@ -1207,6 +1217,7 @@ CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
 -- Name: project project_update_policy; Type: POLICY; Schema: public; Owner: -
 --
 
+-- TODO: since we will have projects admined by web2 users, i.e. emails, we should switch admin_wallet_id to admin_party_id (or admin_account_id) 
 CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user USING ((admin_wallet_id IN ( SELECT get_current_addrs.wallet_id
    FROM public.get_current_addrs() get_current_addrs(wallet_id, addr, profile_type)))) WITH CHECK (true);
 

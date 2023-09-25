@@ -61,6 +61,7 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
+          // TODO: id needs to be the party.id rather than the account.id
           return done(null, { id: id, address: address, nonce: nonce });
         } else {
           return done(null, false);
@@ -107,6 +108,7 @@ export function KeplrStrategy(): CustomStrategy {
             [address],
           );
           const [{ id, nonce }] = newAccount.rows;
+          // TODO: id needs to be the party.id rather than the account.id
           return done(null, { id: id, address: address, nonce: nonce });
         } else {
           return done(null, false);

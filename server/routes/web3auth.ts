@@ -29,6 +29,8 @@ web3auth.use(
   },
 );
 
+// TODO: some modification may be required here since this allows any number of addresses to be added to the old account model
+// mayb this would be useful to have for at least adding a single address to web2 users account
 web3auth.post(
   '/addresses',
   doubleCsrfProtection,
@@ -112,6 +114,7 @@ web3auth.post(
   },
 );
 
+// TODO: the nonce is only needed for web3 users to sign-in...
 web3auth.get('/nonce', async (req, res, next) => {
   // this endpoint fetches a nonce for a given user by their wallet
   // address. this is a piece of public information so it is ok to

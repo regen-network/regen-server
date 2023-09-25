@@ -216,6 +216,10 @@ app.use(
       } else if (req.user && req.user.address && req.user.id) {
         return {
           role: req.user.address,
+          // TODO: this is where account.id gets set for postgraphile
+          // once the KeplrStrategy or any other strategies return the user,
+          // we must include an identifier here, so that we can use our RLS policies
+          // within graphql requests...
           'account.id': req.user.id,
         };
       } else {
