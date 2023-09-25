@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 15.4
+-- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
+-- Dumped by pg_dump version 14.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,13 +35,6 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
-
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
 
 
 --
@@ -750,7 +743,8 @@ CREATE TABLE public.project (
     on_chain_id text,
     admin_wallet_id uuid,
     verifier_id uuid,
-    approved boolean DEFAULT false
+    approved boolean DEFAULT false,
+    published boolean DEFAULT false
 );
 
 
@@ -1235,14 +1229,6 @@ CREATE POLICY wallet_insert_policy ON public.wallet FOR INSERT TO auth_user WITH
 --
 
 CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
