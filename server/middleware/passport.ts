@@ -3,7 +3,7 @@ import { PassportStatic } from 'passport';
 import { User } from '../types';
 import { KeplrStrategy } from './keplrStrategy';
 import { UnauthorizedError } from '../errors';
-import { MAGIC_LOGIN_CALLBACK_URL, magicLogin } from './magicLoginStrategy';
+import { magicLogin } from './magicLoginStrategy';
 
 export function initializePassport(
   app: Application,
@@ -38,12 +38,6 @@ export function initializePassport(
 
   passport.use(magicLogin);
   passport.use('keplr', KeplrStrategy());
-
-  // This is where we POST to from the frontend
-  app.post('/auth/magiclogin', magicLogin.send);
-
-  // The standard passport callback setup
-  app.get(MAGIC_LOGIN_CALLBACK_URL, passport.authenticate('magiclogin'));
 }
 
 export function ensureLoggedIn() {
