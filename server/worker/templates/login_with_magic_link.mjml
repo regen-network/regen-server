@@ -1,0 +1,153 @@
+<!-- TODO use layout, social components cf. mjml-component-boilerplate -->
+<mjml>
+  <mj-head>
+    <mj-font name="Muli" href="https://fonts.googleapis.com/css2?family=Muli:wght@800;900&display=swap" />
+    <mj-style>
+      @media (max-width:600px) {
+      	#title {
+          font-size: 21px !important;
+        }
+      	.connect {
+      		font-size: 14px !important;
+          line-height: 18px !important;
+        }
+        .bottom-link {
+          font-size: 14px !important;
+        }
+        #summary {
+          font-size: 16px !important;
+        }
+        .group {
+          width: 100%;
+        }
+        .button a {
+          font-size: 18px !important;
+      		padding: 12px 40px !important;
+        }
+        #link {
+          font-size: 12px !important;
+        }
+      }
+    </mj-style>
+    <mj-style inline="inline">
+      a {
+      	text-decoration: none;
+      	color: #4FB573;
+      }
+      .group {
+        width: 50%;
+      }
+      .bottom-link {
+        font-size: 16px;
+      }
+      .button a {
+      	font-size: 21px !important;
+      	padding: 18px 50px !important;
+      }
+      #summary {
+      	font-size: 18px;
+      	line-height: 150%;
+      }
+      #title {
+        font-size: 24px;
+     		line-height: 145%;
+      }
+      .main-column td, .main-section, .main-section table {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+      }
+      .social-section-bottom, .social-section-bottom table {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+      .connect {
+        font-family: Muli, Lato, sans-serif;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #202020;
+      	font-size: 18px;
+        line-height: 23px;
+      }
+      #link {
+      	color: #8F8F8F;
+      	font-size: 14px;
+      	line-height: 145%;
+      	text-decoration: none;
+      }
+    </mj-style>
+    
+    <mj-attributes>
+      <mj-class name="background" background-color="#f9f9f9" font-size="13px" />
+      <mj-class name="muli-text" font-family="Muli,Lato,sans-serif" font-weight="900" padding-left="0px" padding-right="0px" />
+      <mj-class name="grey-text" padding-left="0px" padding-right="0px" align="center" color="#545555" font-family="Lato,sans-serif" />
+      <mj-class name="light-grey-text" padding-left="0px" padding-right="0px" align="center" color="#8F8F8F" font-family="Lato,sans-serif" />
+      <mj-class name="black-text" padding-left="0px" padding-right="0px" align="center" color="#000" font-family="Lato,sans-serif" />
+    </mj-attributes>
+  </mj-head>
+
+  <mj-body mj-class="background">
+    <mj-section>
+      <mj-column>
+        <mj-image width="117px" src="https://regen-registry.s3.amazonaws.com/regen-market.png" />
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#D2D5D9" padding-left="1px" padding-right="1px" padding-top="1px" padding-bottom="0px" css-class="main-section">
+      <mj-column padding="38px" width="100%" css-class="main-column" background-color="#fff">
+        <mj-text align="left" mj-class="muli-text">
+          <p id="title">Click to confirm that you want to sign into Regen Marketplace.</p>
+        </mj-text>
+        
+        <mj-button css-class="button" align="left" text-transform="uppercase" letter-spacing="1px" font-weight="800" mj-class="muli-text" background-color="linear-gradient(204deg, #527984 5.94%, #79C6AA 51.92%, #C4DAB5 97.89%)" color="white" href="[[url]]">
+          sign in
+         </mj-button>
+        
+        <mj-text align="left" mj-class="black-text">
+          <span id="summary">This link will expire in [[expiresIn]].<br></br>Button not working? Copy and paste the address below into your browser:</span>
+        </mj-text>
+        <mj-text align="left" mj-class="light-grey-text">
+          <a id="link" href="[[url]]">[[url]]</span>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#D2D5D9" padding-left="1px" padding-right="1px" padding-bottom="0px" padding-top="0px">
+      <mj-column padding-left="40px" padding-right="40px" padding-top="40px" width="100%" background-color="#F4F4F4">
+        <mj-text align="center">
+          <div class="connect">connect</div>
+        </mj-text>
+		  </mj-column>
+    </mj-section>
+
+    <mj-section padding-left="1%" padding-top="20px" border-right="1px solid #D2D5D9" border-left="1px solid #D2D5D9" background-color="#F4F4F4" padding-top="0px">
+      <mj-group width="33%">
+        <mj-column width="33%">
+          <mj-image align="center" padding="0px" width="50px" href="https://www.linkedin.com/company/regen-network/" src="https://regen-registry.s3.amazonaws.com/LinkedIn.png" />
+        </mj-column>
+        <mj-column width="33%">
+          <mj-image align="center" padding="0px" width="50px" href="https://twitter.com/regen_network" src="https://regen-registry.s3.amazonaws.com/Twitter.png" />
+        </mj-column>
+        <mj-column width="33%">
+          <mj-image align="center" padding="0px" width="50px" href="https://discord.gg/tf79rjCB" src="https://regen-registry.s3.amazonaws.com/Discord.png" />
+        </mj-column>
+      </mj-group>
+    </mj-section>
+    
+    <mj-section background-color="#D2D5D9" padding-left="1px" padding-right="1px" padding-top="0px" padding-bottom="1px" css-class="social-section-bottom">
+      <mj-column padding="0px" width="100%" background-color="#F4F4F4">
+        <mj-text height="10px" />
+      </mj-column>
+    </mj-section>
+    
+    <mj-section>
+      <mj-column>
+        <mj-image width="46px" src="https://regen-registry.s3.amazonaws.com/RND.png" />
+        <mj-text mj-class="grey-text">
+          <a class="bottom-link" style="text-decoration: none; color: #545555;" href="https://app.regen.network/">app.regen.network</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

@@ -22,9 +22,11 @@ export const magicLogin = new MagicLoginStrategy({
         options: {
           to: destination,
           subject: 'Login with magic link',
-          text: `Click this link to finish logging in: ${
-            req.protocol
-          }://${req.get('host')}${href}`,
+        },
+        template: 'login_with_magic_link.mjml',
+        variables: {
+          url: `${req.protocol}://${req.get('host')}${href}`,
+          expiresIn: process.env.MAGIC_LINK_JWT_EXPIRES_IN,
         },
       });
     }
