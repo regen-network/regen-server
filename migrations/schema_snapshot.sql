@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.8 (Debian 12.8-1.pgdg100+1)
--- Dumped by pg_dump version 14.4
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,13 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -70,6 +77,20 @@ COMMENT ON SCHEMA topology IS 'PostGIS Topology schema';
 --
 
 CREATE SCHEMA utilities;
+
+
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
 
 
 --
@@ -587,6 +608,7 @@ CREATE TABLE public.party (
     twitter_link text,
     website_link text,
     creator_id uuid,
+    email public.citext,
     CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
@@ -874,6 +896,14 @@ ALTER TABLE ONLY public.organization
 
 ALTER TABLE ONLY public.organization
     ADD CONSTRAINT organization_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: party party_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.party
+    ADD CONSTRAINT party_email_key UNIQUE (email);
 
 
 --
@@ -1229,6 +1259,14 @@ CREATE POLICY wallet_insert_policy ON public.wallet FOR INSERT TO auth_user WITH
 --
 
 CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
