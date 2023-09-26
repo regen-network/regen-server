@@ -44,7 +44,7 @@
     "keyv-anyredis": "^3.1.0",
     "lodash": "^4.17.21",
     "mailerlite-api-v2-node": "^1.1.2",
-    "mjml": "^4.8.1",
+    "mjml": "^4.14.1",
     "nodemailer": "^6.6.3",
     "passport": "^0.6.0",
     "passport-custom": "^1.1.1",

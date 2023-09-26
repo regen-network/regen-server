@@ -63,4 +63,8 @@ export const magicLogin = new MagicLoginStrategy({
       }
     }
   },
+
+  jwtOptions: {
+    expiresIn: process.env.MAGIC_LINK_JWT_EXPIRES_IN,
+  },
 });
