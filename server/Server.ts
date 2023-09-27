@@ -19,17 +19,16 @@ import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
 import passport from 'passport';
 
-import { UserIncomingMessage } from './types';
+import { UserRequest } from './types';
 import { BaseHTTPError } from './errors';
-
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config();
-}
 
 /* eslint-disable import/first */
 // we disable this lint rule for these import statements
 // w/o this the application does not start locally
 // these imports require env vars which are available only after dotenv.config is called
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 import getJwt from './middleware/jwt';
 import imageOptimizer from './middleware/imageOptimizer';
 import { initializePassport } from './middleware/passport';
@@ -208,7 +207,7 @@ app.use(
       connectionFilterSetofFunctions: false,
     },
     appendPlugins: [PgManyToManyPlugin, ConnectionFilterPlugin],
-    pgSettings: (req: UserIncomingMessage) => {
+    pgSettings: (req: UserRequest) => {
       if (req.user && req.user.sub) {
         const { sub } = req.user;
         const settings = { role: sub };

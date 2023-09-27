@@ -1,5 +1,4 @@
 import { Request } from 'express';
-import { IncomingMessage } from 'http';
 
 export interface User {
   id?: number;
@@ -8,9 +7,5 @@ export interface User {
 }
 
 export interface UserRequest extends Request {
-  user?: User;
-}
-
-export interface UserIncomingMessage extends IncomingMessage {
   user?: User;
 }
