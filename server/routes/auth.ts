@@ -4,10 +4,11 @@ import {
   magicLogin,
   MAGIC_LOGIN_CALLBACK_URL,
 } from '../middleware/magicLoginStrategy';
+import { doubleCsrfProtection } from '../middleware/csrf';
 
 const router = express.Router();
 
-router.post('/magiclogin', magicLogin.send);
+router.post('/magiclogin', doubleCsrfProtection, magicLogin.send);
 
 router.get(
   MAGIC_LOGIN_CALLBACK_URL,
