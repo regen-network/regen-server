@@ -1211,10 +1211,7 @@ CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id
 -- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
-   FROM public.party p
-  WHERE (p.account_id IN ( SELECT get_current_account.account_id
-           FROM public.get_current_account() get_current_account(account_id))))));
+CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT public.get_current_party() AS get_current_party)));
 
 
 --
