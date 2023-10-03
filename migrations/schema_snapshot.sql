@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 15.4
+-- Dumped from database version 14.9 (Homebrew)
+-- Dumped by pg_dump version 14.9 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,13 +35,6 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
-
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
 
 
 --
@@ -572,6 +565,17 @@ BEGIN
     WHERE
         account.id = v_account_id;
 END;
+$$;
+
+
+--
+-- Name: get_current_party(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_current_party() RETURNS uuid
+    LANGUAGE sql STABLE
+    AS $$
+    SELECT current_setting('party.id', true)::uuid;
 $$;
 
 
@@ -1262,14 +1266,6 @@ CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
---
 -- Name: TABLE party; Type: ACL; Schema: public; Owner: -
 --
 
@@ -1394,7 +1390,6 @@ GRANT UPDATE(metadata) ON TABLE public.project TO auth_user;
 --
 
 GRANT UPDATE(slug) ON TABLE public.project TO auth_user;
-
 
 
 --

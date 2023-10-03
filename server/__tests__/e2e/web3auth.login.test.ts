@@ -69,6 +69,22 @@ describe('web3auth login endpoint', () => {
     expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
       { addr: userAddr },
     ]);
+
+    // check that the getCurrentParty function works...
+    const resp1 = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query: '{getCurrentParty}',
+      }),
+    });
+    const data1 = await resp1.json();
+    console.dir({ data1 }, { depth: null });
+    const loginRespJson = await loginResp.json();
+    expect(data1).toHaveProperty(
+      'data.getCurrentParty',
+      loginRespJson.user.partyId,
+    );
   });
 
   it('authenticates an existing user successfully and creates a session...', async () => {
