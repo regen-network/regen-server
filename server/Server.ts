@@ -215,6 +215,7 @@ app.use(
       } else if (req.user && req.user.address && req.user.id) {
         return {
           role: req.user.address,
+          'party.id': req.user.partyId,
           'account.id': req.user.id,
         };
       } else {

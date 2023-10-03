@@ -133,6 +133,7 @@ export function loginResponseAssertions(resp: Response, signer: string): void {
   const sessionData = JSON.parse(atob(sessionString));
   expect(sessionData).toHaveProperty('passport.user.id');
   expect(sessionData).toHaveProperty('passport.user.address', signer);
+  expect(sessionData).toHaveProperty('passport.user.partyId');
 }
 
 export function parseSessionCookies(resp: Response): string {

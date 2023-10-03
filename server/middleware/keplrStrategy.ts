@@ -60,8 +60,22 @@ export function KeplrStrategy(): CustomStrategy {
           decodedPubKey,
           decodedSignature,
         );
+        const party = await client.query(
+          'select party.id from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
+          [address],
+        );
+        const [{ id: partyId }] = party.rows;
+        console.dir(
+          { message: 'existing account path...', partyId },
+          { depth: null },
+        );
         if (verified) {
-          return done(null, { id: id, address: address, nonce: nonce });
+          return done(null, {
+            id: id,
+            address: address,
+            nonce: nonce,
+            partyId,
+          });
         } else {
           return done(null, false);
         }
@@ -107,7 +121,21 @@ export function KeplrStrategy(): CustomStrategy {
             [address],
           );
           const [{ id, nonce }] = newAccount.rows;
-          return done(null, { id: id, address: address, nonce: nonce });
+          const party = await client.query(
+            'select party.id from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
+            [address],
+          );
+          const [{ id: partyId }] = party.rows;
+          console.dir(
+            { message: 'new account path...', partyId },
+            { depth: null },
+          );
+          return done(null, {
+            id: id,
+            address: address,
+            nonce: nonce,
+            partyId,
+          });
         } else {
           return done(null, false);
         }
