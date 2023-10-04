@@ -44,19 +44,26 @@ web3auth.post(
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       const client = await pgPool.connect();
       const account = await client.query(
-        'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        'select a.id from private.get_account_by_addr($1) q join account a on a.id = q.id',
         [currentUserAddr],
       );
       if (account.rowCount !== 1) {
+        throw new NotFoundError('account not found');
+      }
+      const result = await client.query(
+        'select party.id, party.nonce from party join wallet on wallet.id=party.wallet_id where wallet.addr=$1',
+        [currentUserAddr],
+      );
+      if (result.rowCount !== 1) {
         throw new NotFoundError('nonce not found');
       }
-      const [{ id, nonce }] = account.rows;
+      const [{ nonce, partyId }] = result.rows;
       const { pubkey: decodedPubKey, signature: decodedSignature } =
         decodeSignature(signature);
       const data = genArbitraryAddAddressData(nonce);
       await client.query(
-        'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
-        [id],
+        'update party set nonce = md5(gen_random_bytes(256)) where id = $1',
+        [partyId],
       );
 
       const verified = verifyADR36Amino(
@@ -126,7 +133,7 @@ web3auth.get('/nonce', async (req, res, next) => {
     try {
       client = await pgPool.connect();
       const result = await client.query(
-        'select a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        'select nonce from party join wallet on wallet.id=party.wallet_id where wallet.addr=$1',
         [req.query.userAddress],
       );
       if (result.rowCount === 0) {

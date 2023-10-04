@@ -613,6 +613,7 @@ CREATE TABLE public.party (
     website_link text,
     creator_id uuid,
     email public.citext,
+    nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
     CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
@@ -665,8 +666,7 @@ CREATE TABLE graphile_migrate.migrations (
 CREATE TABLE public.account (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
