@@ -6,7 +6,7 @@ const walletAddr = genRandomRegenAddress();
 describe('create_new_account', () => {
   it('should be able to create a new account for an unused wallet address', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
         `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
       );
@@ -35,7 +35,7 @@ describe('create_new_account', () => {
         partyType,
       );
 
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
         `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
       );
@@ -58,7 +58,10 @@ describe('create_new_account', () => {
     await withRootDb(async client => {
       // Create the creator account
       const creatorWalletAddr = genRandomRegenAddress();
-      const creatorAccountId = await createAccount(client, creatorWalletAddr);
+      const { partyId: creatorPartyId } = await createAccount(
+        client,
+        creatorWalletAddr,
+      );
 
       // Create existing wallet and party with creator
       const partyName = 'John';
@@ -68,11 +71,11 @@ describe('create_new_account', () => {
         walletAddr,
         partyName,
         partyType,
-        creatorAccountId,
+        creatorPartyId,
       );
 
       // Create the user account that will claim the party from the creator
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
         `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
       );

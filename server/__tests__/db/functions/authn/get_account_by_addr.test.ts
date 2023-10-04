@@ -5,7 +5,7 @@ const walletAddr = 'regen123456789';
 describe('get_account_by_addr', () => {
   it('gets the same account for a user with multiple addresses', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       await becomeUser(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       await becomeUser(client, 'postgres');

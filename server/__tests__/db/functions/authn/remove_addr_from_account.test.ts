@@ -5,7 +5,7 @@ const walletAddr = 'regen123456789';
 describe('remove_addr_from_account', () => {
   it('throws an error if address is not associated to the user', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       await client.query('savepoint clean');
       expect(
         client.query(
@@ -38,8 +38,8 @@ describe('remove_addr_from_account', () => {
     await withRootDb(async client => {
       const addr1 = 'regen123';
       const addr2 = 'regenABC';
-      const accountId1 = await createAccount(client, addr1);
-      const accountId2 = await createAccount(client, addr2);
+      const { accountId: accountId1 } = await createAccount(client, addr1);
+      const { accountId: accountId2 } = await createAccount(client, addr2);
       await client.query('savepoint clean');
       try {
         await client.query(
@@ -65,7 +65,7 @@ describe('remove_addr_from_account', () => {
   });
   it('successfully removes an address from an account', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const resp = await client.query(
         `select * from private.get_parties_by_account_id('${accountId}')`,
       );

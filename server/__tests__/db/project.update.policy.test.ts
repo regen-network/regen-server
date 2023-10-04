@@ -68,8 +68,11 @@ describe('the UPDATE RLS policy for the project table...', () => {
     const walletAddr = genRandomRegenAddress();
     const walletAddr2 = genRandomRegenAddress();
     await withRootDb(async (client: PoolClient) => {
-      const accountId = await createAccount(client, walletAddr);
-      const accountId2 = await createAccount(client, walletAddr2);
+      const { accountId } = await createAccount(client, walletAddr);
+      const { accountId: accountId2 } = await createAccount(
+        client,
+        walletAddr2,
+      );
       // become the first user...
       await becomeAuthUser(client, walletAddr, accountId);
       const addrsQ = await client.query(

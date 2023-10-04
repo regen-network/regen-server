@@ -11,7 +11,7 @@ const walletAddr = genRandomRegenAddress();
 describe('add_addr_to_account', () => {
   it('does not allow adding an addr that already has an association', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       expect(
         client.query(
           `select * from private.add_addr_to_account('${accountId}', '${walletAddr}', 'user')`,
@@ -23,7 +23,7 @@ describe('add_addr_to_account', () => {
     await withRootDb(async client => {
       const user1WalletAddr = 'regen123';
       const user2WalletAddr = 'regen456';
-      const accountId = await createAccount(client, user1WalletAddr);
+      const { accountId } = await createAccount(client, user1WalletAddr);
       await createAccount(client, user2WalletAddr);
       expect(
         client.query(
@@ -34,7 +34,7 @@ describe('add_addr_to_account', () => {
   });
   it('allows adding a new, unused addr', async () => {
     await withRootDb(async client => {
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const newWalletAddr = 'regenABC123';
       const result = await client.query(
         `select * from private.add_addr_to_account('${accountId}', '${newWalletAddr}', 'user')`,
@@ -58,7 +58,7 @@ describe('add_addr_to_account', () => {
         partyType,
       );
 
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
         `select * from private.add_addr_to_account('${accountId}', '${existingWalletAddr}', 'user')`,
       );
@@ -85,7 +85,10 @@ describe('add_addr_to_account', () => {
     await withRootDb(async client => {
       // Create the creator account
       const creatorWalletAddr = genRandomRegenAddress();
-      const creatorAccountId = await createAccount(client, creatorWalletAddr);
+      const { partyId: creatorPartyId } = await createAccount(
+        client,
+        creatorWalletAddr,
+      );
 
       // Create existing wallet and party with creator
       const existingWalletAddr = 'regenABC123456';
@@ -96,11 +99,11 @@ describe('add_addr_to_account', () => {
         existingWalletAddr,
         partyName,
         partyType,
-        creatorAccountId,
+        creatorPartyId,
       );
 
       // Create the user account that will claim the party from the creator
-      const accountId = await createAccount(client, walletAddr);
+      const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
         `select * from private.add_addr_to_account('${accountId}', '${existingWalletAddr}', 'user')`,
       );

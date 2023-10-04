@@ -95,14 +95,14 @@ describe('party update policies', () => {
   it('allow a user to update a party/profile that he/she created', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
-    const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    const partyIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ getCurrentAccount }`,
+        query: `{ getCurrentParty }`,
       }),
     });
-    const accountIdResult = await accountIdQuery.json();
+    const partyIdResult = await partyIdQuery.json();
 
     // Create a party
     const createQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
@@ -114,7 +114,7 @@ describe('party update policies', () => {
           input: {
             party: {
               type: 'USER',
-              creatorId: accountIdResult.data.getCurrentAccount,
+              creatorId: partyIdResult.data.getCurrentParty,
             },
           },
         },

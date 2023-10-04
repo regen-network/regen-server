@@ -1134,7 +1134,7 @@ ALTER TABLE ONLY public.party
 --
 
 ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.account(id);
+    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.party(id);
 
 
 --
@@ -1201,10 +1201,7 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 -- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((id IN ( SELECT p.id
-   FROM public.party p
-  WHERE (p.creator_id IN ( SELECT get_current_account.account_id
-           FROM public.get_current_account() get_current_account(account_id))))));
+CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((creator_id IN ( SELECT public.get_current_party() AS get_current_party)));
 
 
 --
