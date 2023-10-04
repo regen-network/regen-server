@@ -607,14 +607,12 @@ CREATE TABLE public.party (
     wallet_id uuid,
     description character(160),
     image text DEFAULT ''::text,
-    account_id uuid,
     bg_image text,
     twitter_link text,
     website_link text,
     creator_id uuid,
     email public.citext,
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
-    CONSTRAINT cannot_have_account_and_creator CHECK ((((account_id IS NULL) AND (creator_id IS NOT NULL)) OR ((account_id IS NOT NULL) AND (creator_id IS NULL)) OR ((account_id IS NULL) AND (creator_id IS NULL)))),
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
@@ -656,17 +654,6 @@ CREATE TABLE graphile_migrate.migrations (
     previous_hash text,
     filename text NOT NULL,
     date timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: account; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.account (
-    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -812,14 +799,6 @@ ALTER TABLE ONLY graphile_migrate.current
 
 ALTER TABLE ONLY graphile_migrate.migrations
     ADD CONSTRAINT migrations_pkey PRIMARY KEY (hash);
-
-
---
--- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.account
-    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
 
 
 --
@@ -1010,13 +989,6 @@ CREATE INDEX on_chain_id_idx ON public.project USING btree (on_chain_id);
 
 
 --
--- Name: party_account_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX party_account_id_idx ON public.party USING btree (account_id);
-
-
---
 -- Name: party_creator_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1119,14 +1091,6 @@ ALTER TABLE ONLY public.document
 
 ALTER TABLE ONLY public.organization
     ADD CONSTRAINT organization_party_id_fkey FOREIGN KEY (party_id) REFERENCES public.party(id);
-
-
---
--- Name: party party_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
 
 
 --
@@ -1293,13 +1257,6 @@ GRANT UPDATE(description) ON TABLE public.party TO app_user;
 --
 
 GRANT UPDATE(image) ON TABLE public.party TO app_user;
-
-
---
--- Name: TABLE account; Type: ACL; Schema: public; Owner: -
---
-
-GRANT SELECT ON TABLE public.account TO auth_user;
 
 
 --
