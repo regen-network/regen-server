@@ -90,6 +90,11 @@ export const becomeAuthUser = async (
 ): Promise<void> => {
   await becomeRoot(client);
   await client.query(`set role "${address}"`);
+  const partyQuery = await client.query(
+    `select party.id from party join wallet on wallet.id=party.wallet_id where wallet.addr='${address}'`,
+  );
+  const [{ id: partyId }] = partyQuery.rows;
+  await client.query(`select set_config('party.id', '${partyId}', false)`);
   await client.query(`select set_config('account.id', '${accountId}', false)`);
 };
 
