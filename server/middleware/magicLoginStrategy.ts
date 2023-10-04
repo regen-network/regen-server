@@ -10,7 +10,7 @@ runnerPromise.then(res => {
 
 export const MAGIC_LOGIN_CALLBACK_URL = '/magiclogin/callback';
 
-export const magicLogin = new MagicLoginStrategy({
+export const magicLoginStrategy = new MagicLoginStrategy({
   // Used to encrypt the authentication token. Needs to be long, unique and (duh) secret.
   secret: process.env.MAGIC_LINK_SECRET,
 
