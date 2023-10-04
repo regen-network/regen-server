@@ -79,7 +79,6 @@ describe('web3auth login endpoint', () => {
       }),
     });
     const data1 = await resp1.json();
-    console.dir({ data1 }, { depth: null });
     const loginRespJson = await loginResp.json();
     expect(data1).toHaveProperty(
       'data.getCurrentParty',

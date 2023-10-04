@@ -65,10 +65,6 @@ export function KeplrStrategy(): CustomStrategy {
           [address],
         );
         const [{ id: partyId }] = party.rows;
-        console.dir(
-          { message: 'existing account path...', partyId },
-          { depth: null },
-        );
         if (verified) {
           return done(null, {
             id: id,
@@ -126,10 +122,6 @@ export function KeplrStrategy(): CustomStrategy {
             [address],
           );
           const [{ id: partyId }] = party.rows;
-          console.dir(
-            { message: 'new account path...', partyId },
-            { depth: null },
-          );
           return done(null, {
             id: id,
             address: address,
