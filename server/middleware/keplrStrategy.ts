@@ -36,18 +36,13 @@ export function KeplrStrategy(): CustomStrategy {
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       // is there an existing account for the given address?
       client = await pgPool.connect();
-      const account = await client.query(
-        'select a.id from private.get_account_by_addr($1) q join account a on a.id = q.id',
+      const party = await client.query(
+        'select party.id, party.nonce from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
         [address],
       );
-      if (account.rowCount === 1) {
+      if (party.rowCount === 1) {
         // if there is an existing account, then we need to verify the signature and log them in.
-        const party = await client.query(
-          'select party.id, party.nonce from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
-          [address],
-        );
         const [{ id: partyId, nonce }] = party.rows;
-        const [{ id }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
         const data = genArbitraryLoginData(nonce);
@@ -67,7 +62,6 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           return done(null, {
-            id: id,
             address: address,
             nonce: nonce,
             partyId,
@@ -91,6 +85,10 @@ export function KeplrStrategy(): CustomStrategy {
         if (verified) {
           const DEFAULT_PROFILE_TYPE = 'user';
           try {
+            await client.query(
+              'select * from private.create_new_account_with_wallet($1, $2)',
+              [address, DEFAULT_PROFILE_TYPE],
+            );
             try {
               await client.query('select private.create_auth_user($1)', [
                 address,
@@ -100,10 +98,6 @@ export function KeplrStrategy(): CustomStrategy {
                 throw err;
               }
             }
-            await client.query(
-              'select * from private.create_new_account($1, $2)',
-              [address, DEFAULT_PROFILE_TYPE],
-            );
           } catch (err) {
             if (
               err.toString() !==
@@ -112,18 +106,21 @@ export function KeplrStrategy(): CustomStrategy {
               throw err;
             }
           }
-          const newAccount = await client.query(
-            'select a.id from private.get_account_by_addr($1) q join account a on a.id = q.id',
-            [address],
-          );
-          const [{ id }] = newAccount.rows;
           const party = await client.query(
             'select party.id, party.nonce from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
             [address],
           );
           const [{ id: partyId, nonce }] = party.rows;
+          try {
+            await client.query('select private.create_auth_user($1)', [
+              partyId,
+            ]);
+          } catch (err) {
+            if (err.message !== `role "${partyId}" already exists`) {
+              throw err;
+            }
+          }
           return done(null, {
-            id: id,
             address: address,
             nonce: nonce,
             partyId,

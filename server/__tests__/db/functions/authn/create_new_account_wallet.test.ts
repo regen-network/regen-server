@@ -3,24 +3,21 @@ import { createAccount, createWalletAndParty, withRootDb } from '../../helpers';
 
 const walletAddr = genRandomRegenAddress();
 
-describe('create_new_account', () => {
+describe('create_new_account_with_wallet', () => {
   it('should be able to create a new account for an unused wallet address', async () => {
     await withRootDb(async client => {
       const { accountId } = await createAccount(client, walletAddr);
-      const result = await client.query(
-        `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
-      );
+      const result = await client.query('select 1 from party where id=$1', [
+        accountId,
+      ]);
       expect(result.rowCount).toBe(1);
     });
   });
-  it('should not be able to create a new account with a wallet address that already belongs to an account', async () => {
+  it('account creation is an idempotent operation...', async () => {
     await withRootDb(async client => {
-      await createAccount(client, walletAddr);
-      expect(
-        client.query(
-          `select * from private.create_new_account('${walletAddr}', 'user') as accountId`,
-        ),
-      ).rejects.toThrow('this addr belongs to a different account');
+      const { accountId: accountId1 } = await createAccount(client, walletAddr);
+      const { accountId: accountId2 } = await createAccount(client, walletAddr);
+      expect(accountId1).toBe(accountId2);
     });
   });
   it('should be able to create a new account with an existing wallet address and party with no account yet', async () => {
@@ -37,7 +34,7 @@ describe('create_new_account', () => {
 
       const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
-        `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
+        `select wallet.addr from party join wallet on wallet.id=party.wallet_id where party.id='${accountId}' and wallet.addr = '${walletAddr}'`,
       );
       expect(result.rowCount).toBe(1);
 
@@ -48,7 +45,7 @@ describe('create_new_account', () => {
       );
       expect(updatedPartyRes.rowCount).toBe(1);
       const [party] = updatedPartyRes.rows;
-      expect(party.account_id).toEqual(accountId);
+      expect(party.id).toEqual(accountId);
       expect(party.wallet_id).toEqual(walletId);
       expect(party.name).toEqual(partyName);
       expect(party.type).toEqual(partyType);
@@ -77,7 +74,7 @@ describe('create_new_account', () => {
       // Create the user account that will claim the party from the creator
       const { accountId } = await createAccount(client, walletAddr);
       const result = await client.query(
-        `select addr from private.get_addrs_by_account_id('${accountId}') where addr = '${walletAddr}'`,
+        `select wallet.addr from party join wallet on wallet.id=party.wallet_id where party.id='${accountId}' and wallet.addr = '${walletAddr}'`,
       );
       expect(result.rowCount).toBe(1);
 
@@ -88,7 +85,7 @@ describe('create_new_account', () => {
       );
       expect(updatedPartyRes.rowCount).toBe(1);
       const [party] = updatedPartyRes.rows;
-      expect(party.account_id).toEqual(accountId);
+      expect(party.id).toEqual(accountId);
       expect(party.creator_id).toEqual(null);
       expect(party.wallet_id).toEqual(walletId);
       expect(party.name).toEqual(partyName);

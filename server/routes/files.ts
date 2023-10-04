@@ -51,15 +51,9 @@ router.post(
       } else if (profilesMatch) {
         client = await pgPool.connect();
 
-        const accountQuery = await client.query(
-          'SELECT id FROM private.get_account_by_addr($1)',
-          [request.user?.address],
-        );
-        const [{ id: accountId }] = accountQuery.rows;
-
         const partiesQuery = await client.query(
-          'SELECT id FROM private.get_parties_by_account_id($1)',
-          [accountId],
+          'SELECT party.id FROM party JOIN wallet ON wallet.id = party.wallet_id WHERE wallet.addr=$1',
+          [request.user?.address],
         );
         const partyId = profilesMatch[1];
         const partyIds = partiesQuery.rows.map(x => {

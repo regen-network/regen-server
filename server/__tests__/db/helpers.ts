@@ -113,22 +113,15 @@ export async function createAccount(
   walletAddr: string,
   partyType: 'user' | 'organization' = 'user',
 ): Promise<{ accountId: string; partyId: string }> {
-  await client.query('select private.create_auth_user($1)', [walletAddr]);
   const result = await client.query(
-    `select * from private.create_new_account('${walletAddr}', '${partyType}') as account_id`,
+    `select * from private.create_new_account_with_wallet('${walletAddr}', '${partyType}') as account_id`,
   );
   const [{ account_id }] = result.rows;
-  const partyQuery = await client.query(
-    `select party.id from party join wallet on wallet.id=party.wallet_id where wallet.addr='${walletAddr}'`,
-  );
-  const [{ id: partyId }] = partyQuery.rows;
-  return { accountId: account_id, partyId };
-}
-
-export async function getAccount(client: PoolClient): Promise<string> {
-  const result = await client.query('select * from get_current_account()');
-  const [{ account_id }] = result.rows;
-  return account_id;
+  try {
+    await client.query('select private.create_auth_user($1)', [walletAddr]);
+    await client.query('select private.create_auth_user($1)', [account_id]);
+  } catch {}
+  return { accountId: account_id, partyId: account_id };
 }
 
 export async function createWalletAndParty(

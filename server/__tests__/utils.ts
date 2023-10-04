@@ -131,7 +131,6 @@ export function loginResponseAssertions(resp: Response, signer: string): void {
   // assertions on the base64 encoded user session..
   const sessionString = cookies.match(/session=(.*?);/)[1];
   const sessionData = JSON.parse(atob(sessionString));
-  expect(sessionData).toHaveProperty('passport.user.id');
   expect(sessionData).toHaveProperty('passport.user.address', signer);
   expect(sessionData).toHaveProperty('passport.user.partyId');
 }

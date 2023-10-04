@@ -223,59 +223,6 @@ $$;
 
 
 --
--- Name: add_addr_to_account(uuid, text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
---
-
-CREATE FUNCTION private.add_addr_to_account(account_id uuid, addr text, v_party_type public.party_type) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_account_id uuid = account_id;
-    v_addr text = addr;
-    can_be_added boolean;
-    v_wallet_id uuid;
-    v_party_id uuid;
-    v_current_user name;
-BEGIN
-    RAISE LOG 'v_account_id %', v_account_id;
-    can_be_added := public.addr_can_be_added (v_account_id, v_addr);
-    IF can_be_added THEN
-        INSERT INTO wallet (addr)
-            VALUES (v_addr)
-        ON CONFLICT ON CONSTRAINT wallet_addr_key DO UPDATE SET
-            addr = v_addr
-        RETURNING
-            id INTO v_wallet_id;
-        RAISE LOG '_wallet_id %', v_wallet_id;
-
-        SELECT
-            party.id INTO v_party_id
-        FROM
-            party
-        JOIN
-            wallet
-        ON
-            wallet.id = party.wallet_id
-        WHERE
-            wallet.addr = v_addr;
-        RAISE LOG 'v_party_id %', v_party_id;
-
-        IF v_party_id is null THEN
-          RAISE LOG 'creating new party...';
-          SELECT * INTO v_party_id from uuid_generate_v1();
-          INSERT INTO party (id, account_id, TYPE, wallet_id)
-               VALUES (v_party_id, v_account_id, v_party_type, v_wallet_id);
-          RAISE LOG 'new _party_id %', v_party_id;
-        ELSE
-          RAISE LOG 'associating preexisting party...';
-          UPDATE party SET account_id = v_account_id, creator_id = null WHERE id = v_party_id ;
-        END IF;
-    END IF;
-END;
-$$;
-
-
---
 -- Name: create_auth_user(text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -289,281 +236,38 @@ $$;
 
 
 --
--- Name: create_new_account(text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
+-- Name: create_new_account_with_wallet(text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
 --
 
-CREATE FUNCTION private.create_new_account(addr text, v_party_type public.party_type) RETURNS uuid
+CREATE FUNCTION private.create_new_account_with_wallet(addr text, v_party_type public.party_type) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 DECLARE
     v_addr text = addr;
-    can_be_added boolean;
-    v_account_id uuid;
     v_wallet_id uuid;
     v_party_id uuid;
 BEGIN
-    can_be_added := public.addr_can_be_added (v_addr);
-    IF can_be_added THEN
-        RAISE LOG 'trying to create new account for this addr';
+    INSERT INTO wallet (addr)
+        VALUES (v_addr)
+    ON CONFLICT ON CONSTRAINT
+        wallet_addr_key
+    DO UPDATE SET
+        addr = v_addr
+    RETURNING
+        id INTO v_wallet_id;
 
-        INSERT INTO account DEFAULT
-            VALUES
-            RETURNING
-                id INTO v_account_id;
+    INSERT INTO party (TYPE, wallet_id)
+        VALUES (v_party_type, v_wallet_id)
+    ON CONFLICT ON CONSTRAINT
+        party_wallet_id_key
+    DO UPDATE SET
+        creator_id = null
+    RETURNING
+        id INTO v_party_id;
 
-        INSERT INTO wallet (addr)
-            VALUES (v_addr)
-        ON CONFLICT ON CONSTRAINT
-            wallet_addr_key
-        DO UPDATE SET
-            addr = v_addr
-        RETURNING
-            id INTO v_wallet_id;
-
-        INSERT INTO party (account_id, TYPE, wallet_id)
-            VALUES (v_account_id, v_party_type, v_wallet_id)
-        ON CONFLICT ON CONSTRAINT
-            party_wallet_id_key
-        DO UPDATE SET
-            account_id = v_account_id,
-            creator_id = null
-        RETURNING
-            id INTO v_party_id;
-
-        RAISE LOG 'new account_id %', v_account_id;
-        RAISE LOG 'new party_id %', v_party_id;
-        RAISE LOG 'new wallet_id %', v_wallet_id;
-	RETURN v_account_id;
-    END IF;
-END;
-$$;
-
-
---
--- Name: get_account_by_addr(text); Type: FUNCTION; Schema: private; Owner: -
---
-
-CREATE FUNCTION private.get_account_by_addr(addr text) RETURNS TABLE(id uuid)
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_addr text = addr;
-BEGIN
-    RETURN query
-    SELECT
-        account.id
-    FROM
-        wallet
-        JOIN party ON party.wallet_id = wallet.id
-        JOIN account ON account.id = party.account_id
-    WHERE
-        wallet.addr = v_addr;
-END;
-$$;
-
-
---
--- Name: get_addrs_by_account_id(uuid); Type: FUNCTION; Schema: private; Owner: -
---
-
-CREATE FUNCTION private.get_addrs_by_account_id(account_id uuid) RETURNS TABLE(addr text)
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_account_id uuid = account_id;
-BEGIN
-    RETURN query
-    SELECT
-        wallet.addr
-    FROM
-        account
-        JOIN party ON party.account_id = account.id
-        JOIN wallet ON party.wallet_id = wallet.id
-    WHERE
-        account.id = v_account_id;
-END;
-$$;
-
-
---
--- Name: get_parties_by_account_id(uuid); Type: FUNCTION; Schema: private; Owner: -
---
-
-CREATE FUNCTION private.get_parties_by_account_id(account_id uuid) RETURNS TABLE(id uuid)
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_account_id uuid = account_id;
-BEGIN
-    RETURN query
-    SELECT
-        party.id
-    FROM
-        account
-        JOIN party ON party.account_id = account.id
-    WHERE
-        account.id = v_account_id;
-END;
-$$;
-
-
---
--- Name: remove_addr_from_account(uuid, text); Type: FUNCTION; Schema: private; Owner: -
---
-
-CREATE FUNCTION private.remove_addr_from_account(v_account_id uuid, v_addr text) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_num_addrs bigint;
-	v_removed int;
-BEGIN
-    --- figure out if the given address belongs to the given account
-    SELECT
-        count(q.addr) INTO v_num_addrs
-    FROM
-        private.get_addrs_by_account_id (v_account_id) q
-    WHERE
-        q.addr = v_addr;
-
-    --- if the given address does not belong to the given account
-    --- throw an error because you cannot remove the address from this account
-    IF v_num_addrs = 0 THEN
-        RAISE 'cannot remove, this address is not associated to the given account id';
-    END IF;
-
-    WITH update_confirm AS (
-      UPDATE
-        party p
-      SET
-        account_id = null
-      WHERE
-        p.id in (
-          SELECT
-            p.id AS pid
-          FROM
-            party p
-            JOIN wallet w on p.wallet_id = w.id
-          WHERE
-            w.addr = v_addr
-        ) RETURNING 1
-    )
-    SELECT
-      count(*) INTO v_removed
-    FROM
-      update_confirm;
-
-    IF v_removed = 1 THEN
-        raise notice 'party association has been removed';
-    ELSE
-        raise 'error removing the address';
-    END IF;
-END;
-$$;
-
-
---
--- Name: addr_can_be_added(text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.addr_can_be_added(addr text, OUT can_be_added boolean) RETURNS boolean
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
-    AS $$
-DECLARE
-    v_addr text = addr;
-    associated_account_id uuid;
-BEGIN
-    associated_account_id := private.get_account_by_addr (addr);
-    IF associated_account_id IS NULL THEN
-        can_be_added := true;
-    ELSE
-        RAISE EXCEPTION 'this addr belongs to a different account';
-    END IF;
-END;
-$$;
-
-
---
--- Name: addr_can_be_added(uuid, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.addr_can_be_added(account_id uuid, addr text, OUT can_be_added boolean) RETURNS boolean
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
-    AS $$
-DECLARE
-    v_account_id uuid = account_id;
-    v_addr text = addr;
-    associated_account_id uuid;
-BEGIN
-    PERFORM
-        id
-    FROM
-        account
-    WHERE
-        id = v_account_id;
-    IF NOT found THEN
-        RAISE EXCEPTION
-            USING message = 'no account found for given account_id', hint = 'check the account_id', errcode = 'NTFND';
-    END IF;
-    associated_account_id := private.get_account_by_addr (v_addr);
-    IF associated_account_id IS NULL THEN
-        can_be_added := true;
-    ELSE
-        IF associated_account_id = account_id THEN
-            RAISE EXCEPTION 'this addr already belongs to this account';
-        ELSE
-            RAISE EXCEPTION 'this addr belongs to a different account';
-        END IF;
-    END IF;
-END;
-$$;
-
-
---
--- Name: get_current_account(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_account(OUT account_id uuid) RETURNS uuid
-    LANGUAGE plpgsql STABLE
-    AS $$ 
-DECLARE
-BEGIN
-    SELECT * INTO account_id FROM get_current_account_id();
-END;
-$$;
-
-
---
--- Name: get_current_account_id(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_account_id() RETURNS uuid
-    LANGUAGE sql STABLE
-    AS $$
-  select current_setting('account.id', true)::uuid;
-$$;
-
-
---
--- Name: get_current_addrs(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_addrs() RETURNS TABLE(wallet_id uuid, addr text, profile_type public.party_type)
-    LANGUAGE plpgsql STABLE
-    AS $$ 
-DECLARE
-    v_account_id uuid;
-BEGIN
-    SELECT * INTO v_account_id FROM get_current_account();
-    RETURN query
-    SELECT
-        wallet.id, wallet.addr, party.type
-    FROM
-        account
-        JOIN party ON party.account_id = account.id
-        JOIN wallet ON party.wallet_id = wallet.id
-    WHERE
-        account.id = v_account_id;
+    RAISE LOG 'new party_id %', v_party_id;
+    RAISE LOG 'new wallet_id %', v_wallet_id;
+    RETURN v_party_id;
 END;
 $$;
 
@@ -1199,8 +903,7 @@ CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
 -- Name: project project_update_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user USING ((admin_wallet_id IN ( SELECT get_current_addrs.wallet_id
-   FROM public.get_current_addrs() get_current_addrs(wallet_id, addr, profile_type)))) WITH CHECK (true);
+CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user USING (true) WITH CHECK (true);
 
 
 --

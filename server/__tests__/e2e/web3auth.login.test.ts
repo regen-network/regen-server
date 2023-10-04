@@ -60,15 +60,14 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{getCurrentParty}',
       }),
     });
     const data = await resp.json();
+    console.dir({ data }, { depth: null });
     // expect that the response contains the user's current addresses
     // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: userAddr },
-    ]);
+    expect(data).toHaveProperty('data.getCurrentParty', [{ addr: userAddr }]);
 
     // check that the getCurrentParty function works...
     const resp1 = await fetch(`${getMarketplaceURL()}/graphql`, {
