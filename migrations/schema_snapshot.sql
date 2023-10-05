@@ -462,7 +462,8 @@ CREATE TABLE public.project (
     admin_wallet_id uuid,
     verifier_id uuid,
     approved boolean DEFAULT false,
-    published boolean DEFAULT false
+    published boolean DEFAULT false,
+    admin_party_id uuid
 );
 
 
@@ -708,6 +709,13 @@ CREATE INDEX party_wallet_id_idx ON public.party USING btree (wallet_id);
 
 
 --
+-- Name: project_admin_party_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX project_admin_party_id_idx ON public.project USING btree (admin_party_id);
+
+
+--
 -- Name: project_admin_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -812,6 +820,14 @@ ALTER TABLE ONLY public.party
 
 ALTER TABLE ONLY public.party
     ADD CONSTRAINT party_wallet_id_fkey FOREIGN KEY (wallet_id) REFERENCES public.wallet(id);
+
+
+--
+-- Name: project project_admin_party_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_admin_party_id_fkey FOREIGN KEY (admin_party_id) REFERENCES public.party(id);
 
 
 --
