@@ -44,16 +44,15 @@ export const magicLoginStrategy = new MagicLoginStrategy({
         const [{ id: accountId }] = accountQuery.rows;
         callback(null, { accountId });
       } else {
-        // TODO (#375): we'll need to adjust how we define roles/session variables in the db because right now,
-        // they are based on wallet address that we don't necessarily have here for email based-login.
-        // For now, we just create a new entry in the account table but we'll need to create a db role as well
-        // if we want to continue using the db role approach along with our RLS policies.
         const createAccountQuery = await client.query(
-          'INSERT INTO account (type, email) values ($1, $2) returning id',
+          'insert into account (type, email) values ($1, $2) returning id',
           ['user', payload.destination],
         );
         if (createAccountQuery.rowCount === 1) {
           const [{ id: accountId }] = createAccountQuery.rows;
+          await client.query('select private.create_auth_user($1)', [
+            accountId,
+          ]);
           callback(null, { accountId });
         }
       }
