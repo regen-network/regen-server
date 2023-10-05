@@ -60,27 +60,18 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentParty}',
+        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
       }),
     });
     const data = await resp.json();
-    console.dir({ data }, { depth: null });
-    // expect that the response contains the user's current addresses
-    // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentParty', [{ addr: userAddr }]);
 
-    // check that the getCurrentParty function works...
-    const resp1 = await fetch(`${getMarketplaceURL()}/graphql`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        query: '{getCurrentParty}',
-      }),
+    // expect that the response contains the user's current party
+    expect(data).toHaveProperty('data.getCurrentParty.walletByWalletId', {
+      addr: userAddr,
     });
-    const data1 = await resp1.json();
     const loginRespJson = await loginResp.json();
-    expect(data1).toHaveProperty(
-      'data.getCurrentParty',
+    expect(data).toHaveProperty(
+      'data.getCurrentParty.id',
       loginRespJson.user.partyId,
     );
   });
@@ -110,13 +101,13 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: signer },
-    ]);
+    expect(data).toHaveProperty('data.getCurrentParty.walletByWalletId', {
+      addr: signer,
+    });
   });
 
   it('returns a permissions error if the user session is manipulated...', async () => {
@@ -173,7 +164,7 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
       }),
     });
     const data = await resp.json();
@@ -181,6 +172,6 @@ describe('web3auth login endpoint', () => {
     // the user session is invalidated because the session is signed
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
-    expect(data.data.getCurrentAddrs).toBe(null);
+    expect(data.data.getCurrentParty).toBe(null);
   });
 });

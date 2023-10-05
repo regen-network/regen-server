@@ -99,7 +99,7 @@ describe('party update policies', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ getCurrentParty }`,
+        query: `{ getCurrentParty { id } }`,
       }),
     });
     const partyIdResult = await partyIdQuery.json();
@@ -114,7 +114,7 @@ describe('party update policies', () => {
           input: {
             party: {
               type: 'USER',
-              creatorId: partyIdResult.data.getCurrentParty,
+              creatorId: partyIdResult.data.getCurrentParty.id,
             },
           },
         },

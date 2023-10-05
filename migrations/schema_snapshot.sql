@@ -272,28 +272,6 @@ END;
 $$;
 
 
---
--- Name: get_current_party(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_party() RETURNS uuid
-    LANGUAGE sql STABLE
-    AS $$
-    SELECT current_setting('party.id', true)::uuid;
-$$;
-
-
---
--- Name: get_current_user(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_user() RETURNS text
-    LANGUAGE sql STABLE
-    AS $$
-  SELECT current_user::text;
-$$;
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -319,6 +297,28 @@ CREATE TABLE public.party (
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
+
+
+--
+-- Name: get_current_party(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_current_party() RETURNS public.party
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT party.* from party where id=nullif(current_setting('party.id', true),'')::uuid LIMIT 1;
+$$;
+
+
+--
+-- Name: get_current_user(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_current_user() RETURNS text
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT current_user::text;
+$$;
 
 
 --
@@ -869,14 +869,16 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 -- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((creator_id IN ( SELECT public.get_current_party() AS get_current_party)));
+CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((creator_id IN ( SELECT get_current_party.id
+   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, wallet_id, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
 
 
 --
 -- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT public.get_current_party() AS get_current_party)));
+CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT get_current_party.id
+   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, wallet_id, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
 
 
 --
