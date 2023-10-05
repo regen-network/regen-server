@@ -286,7 +286,6 @@ CREATE TABLE public.party (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     type public.party_type NOT NULL,
     name text DEFAULT ''::text NOT NULL,
-    wallet_id uuid,
     description character(160),
     image text DEFAULT ''::text,
     bg_image text,
@@ -459,7 +458,6 @@ CREATE TABLE public.project (
     metadata jsonb,
     slug text,
     on_chain_id text,
-    admin_wallet_id uuid,
     verifier_id uuid,
     approved boolean DEFAULT false,
     published boolean DEFAULT false,
@@ -476,18 +474,6 @@ CREATE TABLE public.shacl_graph (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     graph jsonb NOT NULL
-);
-
-
---
--- Name: wallet; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.wallet (
-    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    addr text NOT NULL
 );
 
 
@@ -604,14 +590,6 @@ ALTER TABLE ONLY public.party
 
 
 --
--- Name: party party_wallet_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_wallet_id_key UNIQUE (wallet_id);
-
-
---
 -- Name: project project_on_chain_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -641,22 +619,6 @@ ALTER TABLE ONLY public.project
 
 ALTER TABLE ONLY public.shacl_graph
     ADD CONSTRAINT shacl_graph_pkey PRIMARY KEY (uri);
-
-
---
--- Name: wallet wallet_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wallet
-    ADD CONSTRAINT wallet_addr_key UNIQUE (addr);
-
-
---
--- Name: wallet wallet_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wallet
-    ADD CONSTRAINT wallet_pkey PRIMARY KEY (id);
 
 
 --
@@ -702,24 +664,10 @@ CREATE INDEX party_creator_id_key ON public.party USING btree (creator_id);
 
 
 --
--- Name: party_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX party_wallet_id_idx ON public.party USING btree (wallet_id);
-
-
---
 -- Name: project_admin_party_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX project_admin_party_id_idx ON public.project USING btree (admin_party_id);
-
-
---
--- Name: project_admin_wallet_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX project_admin_wallet_id_idx ON public.project USING btree (admin_wallet_id);
 
 
 --
@@ -815,27 +763,11 @@ ALTER TABLE ONLY public.party
 
 
 --
--- Name: party party_wallet_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_wallet_id_fkey FOREIGN KEY (wallet_id) REFERENCES public.wallet(id);
-
-
---
 -- Name: project project_admin_party_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.project
     ADD CONSTRAINT project_admin_party_id_fkey FOREIGN KEY (admin_party_id) REFERENCES public.party(id);
-
-
---
--- Name: project project_admin_wallet_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.project
-    ADD CONSTRAINT project_admin_wallet_id_fkey FOREIGN KEY (admin_wallet_id) REFERENCES public.wallet(id);
 
 
 --
@@ -887,7 +819,7 @@ CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
 --
 
 CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((creator_id IN ( SELECT get_current_party.id
-   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, wallet_id, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
+   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
 
 
 --
@@ -895,7 +827,7 @@ CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((cr
 --
 
 CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT get_current_party.id
-   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, wallet_id, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
+   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
 
 
 --
@@ -926,26 +858,6 @@ CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user US
 
 
 --
--- Name: wallet; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.wallet ENABLE ROW LEVEL SECURITY;
-
---
--- Name: wallet wallet_insert_policy; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY wallet_insert_policy ON public.wallet FOR INSERT TO auth_user WITH CHECK (true);
-
-
---
--- Name: wallet wallet_select_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY wallet_select_all ON public.wallet FOR SELECT USING (true);
-
-
---
 -- Name: TABLE party; Type: ACL; Schema: public; Owner: -
 --
 
@@ -958,13 +870,6 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
 --
 
 GRANT UPDATE(name) ON TABLE public.party TO app_user;
-
-
---
--- Name: COLUMN party.wallet_id; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(wallet_id) ON TABLE public.party TO app_user;
 
 
 --
@@ -1073,13 +978,6 @@ GRANT UPDATE(on_chain_id) ON TABLE public.project TO auth_user;
 
 
 --
--- Name: COLUMN project.admin_wallet_id; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(admin_wallet_id) ON TABLE public.project TO auth_user;
-
-
---
 -- Name: COLUMN project.verifier_id; Type: ACL; Schema: public; Owner: -
 --
 
@@ -1091,14 +989,6 @@ GRANT UPDATE(verifier_id) ON TABLE public.project TO auth_user;
 --
 
 GRANT SELECT ON TABLE public.shacl_graph TO app_user;
-
-
---
--- Name: TABLE wallet; Type: ACL; Schema: public; Owner: -
---
-
-GRANT SELECT,INSERT ON TABLE public.wallet TO app_user;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.wallet TO auth_user;
 
 
 --
