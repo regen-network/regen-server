@@ -574,6 +574,14 @@ ALTER TABLE ONLY public.organization
 
 
 --
+-- Name: party party_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.party
+    ADD CONSTRAINT party_addr_key UNIQUE (addr);
+
+
+--
 -- Name: party party_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
