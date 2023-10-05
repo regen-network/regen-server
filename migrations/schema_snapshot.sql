@@ -295,6 +295,7 @@ CREATE TABLE public.party (
     creator_id uuid,
     email public.citext,
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
+    addr text,
     CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
 );
 
