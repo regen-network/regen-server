@@ -7,7 +7,7 @@ describe('update party', () => {
   test('that a user can update a party that belongs to them', async () => {
     await withRootDb(async client => {
       const { accountId } = await createAccount(client, walletAddr);
-      await becomeAuthUser(client, walletAddr, accountId);
+      await becomeAuthUser(client, accountId);
       const result = await client.query(
         `update party set name = 'my updated name'`,
       );
@@ -23,20 +23,16 @@ describe('update party', () => {
         client,
         walletAddr2,
       );
-      await becomeAuthUser(client, walletAddr, accountId);
+      await becomeAuthUser(client, accountId);
       const result = await client.query(
         `update party set name = 'my updated name'`,
       );
       expect(result.rowCount).toBe(1);
-      await becomeAuthUser(client, walletAddr2, accountId2);
-      client
-        .query(
-          `select p.name from wallet w join party p on p.wallet_id = w.id where w.addr = '${walletAddr2}'`,
-        )
-        .then(res => {
-          const name = res.rows[0].name;
-          expect(name).toBe('');
-        });
+      await becomeAuthUser(client, accountId2);
+      client.query('select name from get_current_party()').then(res => {
+        const name = res.rows[0].name;
+        expect(name).toBe('');
+      });
     });
   });
 
@@ -46,7 +42,7 @@ describe('update party', () => {
         client,
         walletAddr,
       );
-      await becomeAuthUser(client, walletAddr, creatorPartyId);
+      await becomeAuthUser(client, creatorPartyId);
       const insertResult = await client.query(
         `insert into party (type, creator_id) values ('user', $1) returning id`,
         [creatorPartyId],

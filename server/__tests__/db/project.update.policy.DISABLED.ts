@@ -74,7 +74,7 @@ describe('the UPDATE RLS policy for the project table...', () => {
         walletAddr2,
       );
       // become the first user...
-      await becomeAuthUser(client, walletAddr, accountId);
+      await becomeAuthUser(client, accountId);
       const addrsQ = await client.query(
         'select wallet_id from get_current_addrs() where addr=$1',
         [walletAddr],
@@ -87,7 +87,7 @@ describe('the UPDATE RLS policy for the project table...', () => {
       );
       const [{ project_id }] = insQuery.rows;
       // become the second user...
-      await becomeAuthUser(client, walletAddr2, accountId2);
+      await becomeAuthUser(client, accountId2);
       // try to update the first users project...
       const updQuery = await client.query(
         'UPDATE project SET metadata = $2 WHERE id=$1',
