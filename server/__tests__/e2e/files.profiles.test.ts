@@ -8,17 +8,17 @@ import {
 
 describe('files endpoint, profiles auth...', () => {
   it('allows a user to upload profile media...', async () => {
-    const { authHeaders, userAddr } = await createNewUserAndLogin();
+    const { authHeaders } = await createNewUserAndLogin();
 
     const query = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${userAddr}") { id partyByWalletId { id } } }`,
+        query: '{ getCurrentParty { id } }',
       }),
     });
     const result = await query.json();
-    const partyId = result.data.walletByAddr.partyByWalletId.id;
+    const partyId = result.data.getCurrentParty.id;
     const key = `profiles-test/${partyId}`;
     const fname = `test-${partyId}.txt`;
 

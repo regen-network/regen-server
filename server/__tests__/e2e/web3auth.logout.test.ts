@@ -45,7 +45,7 @@ describe('web3auth logout endpoint', () => {
       method: 'POST',
       headers: newAuthHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
+        query: '{ getCurrentParty { id addr } }',
       }),
     });
     const data = await resp.json();

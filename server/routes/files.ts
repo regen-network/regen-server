@@ -51,23 +51,18 @@ router.post(
       } else if (profilesMatch) {
         client = await pgPool.connect();
 
-        const partiesQuery = await client.query(
-          'SELECT party.id FROM party JOIN wallet ON wallet.id = party.wallet_id WHERE wallet.addr=$1',
-          [request.user?.address],
-        );
         const partyId = profilesMatch[1];
-        const partyIds = partiesQuery.rows.map(x => {
-          return x.id;
-        });
-        if (!partyIds.includes(partyId)) {
+        if (request.user?.partyId !== partyId) {
           return response.status(401).send({ error: 'unauthorized' });
         }
       } else if (projectsMatch) {
         const projectId = projectsMatch[1];
         client = await pgPool.connect();
+        // select the projects that the given party is an admin for
+        // AND then, make sure the project in question belongs to the party
         const queryRes = await client.query(
-          'SELECT project.id FROM project JOIN wallet ON wallet.id = project.admin_wallet_id WHERE wallet.addr = $1 AND project.id = $2',
-          [request.user?.address, projectId],
+          'SELECT project.id FROM project JOIN party ON party.id = project.admin_party_id WHERE party.id = $1 AND project.id = $2',
+          [request.user?.partyId, projectId],
         );
         if (queryRes.rowCount !== 1) {
           return response.status(401).send({ error: 'unauthorized' });

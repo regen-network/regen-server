@@ -27,7 +27,7 @@ export function genArbitraryAddAddressData(nonce: string): string {
 
 export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
-    let client: PoolClient;
+    let client: PoolClient | null = null;
     try {
       const { signature } = req.body;
       if (!signature) {
@@ -37,7 +37,7 @@ export function KeplrStrategy(): CustomStrategy {
       // is there an existing account for the given address?
       client = await pgPool.connect();
       const party = await client.query(
-        'select party.id, party.nonce from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
+        'select id, nonce from party where addr = $1',
         [address],
       );
       if (party.rowCount === 1) {
@@ -84,30 +84,12 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           const DEFAULT_PROFILE_TYPE = 'user';
-          try {
-            await client.query(
-              'select * from private.create_new_account_with_wallet($1, $2)',
-              [address, DEFAULT_PROFILE_TYPE],
-            );
-            try {
-              await client.query('select private.create_auth_user($1)', [
-                address,
-              ]);
-            } catch (err) {
-              if (err.message !== `role "${address}" already exists`) {
-                throw err;
-              }
-            }
-          } catch (err) {
-            if (
-              err.toString() !==
-              'error: this addr belongs to a different account'
-            ) {
-              throw err;
-            }
-          }
+          await client.query(
+            'select * from private.create_new_account_with_wallet($1, $2)',
+            [address, DEFAULT_PROFILE_TYPE],
+          );
           const party = await client.query(
-            'select party.id, party.nonce from party join wallet on wallet.id = party.wallet_id where wallet.addr = $1',
+            'select id, nonce from party where addr = $1',
             [address],
           );
           const [{ id: partyId, nonce }] = party.rows;

@@ -9,11 +9,11 @@ describe('party update policies', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${userAddr}") { id partyByWalletId { id } } }`,
+        query: '{ getCurrentParty { id } }',
       }),
     });
     const result = await query.json();
-    const partyId = result.data.walletByAddr.partyByWalletId.id;
+    const partyId = result.data.getCurrentParty.id;
 
     const NEW_NAME = 'FOO BAR';
     const update = await fetch(`${getMarketplaceURL()}/graphql`, {
@@ -60,11 +60,11 @@ describe('party update policies', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${otherAddr}") { id partyByWalletId { id } } }`,
+        query: `{ partyByAddr(addr: "${otherAddr}") { id } }`,
       }),
     });
     const result = await query.json();
-    const partyId = result.data.walletByAddr.partyByWalletId.id;
+    const partyId = result.data.partyByAddr.id;
 
     const NEW_NAME = 'FOO BAR';
     // try to update the other users party as the first user...

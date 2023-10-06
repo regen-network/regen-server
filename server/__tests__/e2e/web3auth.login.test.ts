@@ -60,15 +60,13 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
+        query: '{ getCurrentParty { id addr } }',
       }),
     });
     const data = await resp.json();
 
     // expect that the response contains the user's current party
-    expect(data).toHaveProperty('data.getCurrentParty.walletByWalletId', {
-      addr: userAddr,
-    });
+    expect(data).toHaveProperty('data.getCurrentParty.addr', userAddr);
     const loginRespJson = await loginResp.json();
     expect(data).toHaveProperty(
       'data.getCurrentParty.id',
@@ -101,13 +99,11 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
+        query: '{ getCurrentParty { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentParty.walletByWalletId', {
-      addr: signer,
-    });
+    expect(data).toHaveProperty('data.getCurrentParty.addr', signer);
   });
 
   it('returns a permissions error if the user session is manipulated...', async () => {
@@ -164,7 +160,7 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id walletByWalletId { addr } } }',
+        query: '{ getCurrentParty { id addr } }',
       }),
     });
     const data = await resp.json();

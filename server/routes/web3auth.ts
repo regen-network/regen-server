@@ -59,7 +59,7 @@ web3auth.get('/nonce', async (req, res, next) => {
     try {
       client = await pgPool.connect();
       const result = await client.query(
-        'select nonce from party join wallet on wallet.id=party.wallet_id where wallet.addr=$1',
+        'select nonce from party where addr=$1',
         [req.query.userAddress],
       );
       if (result.rowCount === 0) {
