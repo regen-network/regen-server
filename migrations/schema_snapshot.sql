@@ -244,29 +244,18 @@ CREATE FUNCTION private.create_new_account_with_wallet(addr text, v_party_type p
     AS $$
 DECLARE
     v_addr text = addr;
-    v_wallet_id uuid;
     v_party_id uuid;
 BEGIN
-    INSERT INTO wallet (addr)
-        VALUES (v_addr)
+    INSERT INTO party (TYPE, addr)
+        VALUES (v_party_type, v_addr)
     ON CONFLICT ON CONSTRAINT
-        wallet_addr_key
-    DO UPDATE SET
-        addr = v_addr
-    RETURNING
-        id INTO v_wallet_id;
-
-    INSERT INTO party (TYPE, wallet_id)
-        VALUES (v_party_type, v_wallet_id)
-    ON CONFLICT ON CONSTRAINT
-        party_wallet_id_key
+        party_addr_key
     DO UPDATE SET
         creator_id = null
     RETURNING
         id INTO v_party_id;
 
     RAISE LOG 'new party_id %', v_party_id;
-    RAISE LOG 'new wallet_id %', v_wallet_id;
     RETURN v_party_id;
 END;
 $$;

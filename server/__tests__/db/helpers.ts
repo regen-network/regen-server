@@ -116,33 +116,26 @@ export async function createAccount(
   const result = await client.query(
     `select * from private.create_new_account_with_wallet('${walletAddr}', '${partyType}') as account_id`,
   );
-  const [{ account_id }] = result.rows;
+  const [{ account_id: accountId }] = result.rows;
   try {
-    await client.query('select private.create_auth_user($1)', [walletAddr]);
-    await client.query('select private.create_auth_user($1)', [account_id]);
+    await client.query('select private.create_auth_user($1)', [accountId]);
   } catch {}
-  return { accountId: account_id, partyId: account_id };
+  return { accountId, partyId: accountId };
 }
 
-export async function createWalletAndParty(
+export async function createParty(
   client: PoolClient,
   walletAddr: string,
   partyName: string,
   partyType: 'user' | 'organization' = 'user',
   creatorAccountId?: string,
-): Promise<{ walletId: string; partyId: string }> {
-  const walletRes = await client.query(
-    `insert into wallet (addr) values ($1) returning id`,
-    [walletAddr],
-  );
-  expect(walletRes.rowCount).toBe(1);
-  const [{ id: walletId }] = walletRes.rows;
+): Promise<{ partyId: string; creatorId: string }> {
   const partyRes = await client.query(
-    `insert into party (name, type, wallet_id, creator_id) values ($1, $2, $3, $4) returning id`,
-    [partyName, partyType, walletId, creatorAccountId],
+    `insert into party (name, type, addr, creator_id) values ($1, $2, $3, $4) returning id, creator_id`,
+    [partyName, partyType, walletAddr, creatorAccountId],
   );
   expect(partyRes.rowCount).toBe(1);
-  const [{ id: partyId }] = partyRes.rows;
+  const [{ id: partyId, creator_id: creatorId }] = partyRes.rows;
 
-  return { walletId, partyId };
+  return { partyId, creatorId };
 }
