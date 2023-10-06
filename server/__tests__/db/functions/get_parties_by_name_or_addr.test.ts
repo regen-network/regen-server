@@ -6,14 +6,9 @@ const partyName = 'John Doe';
 describe('get_parties_by_name_or_addr', () => {
   it('returns parties by name or addr', async () => {
     await withRootDb(async client => {
-      const walletIdRes = await client.query(
-        'INSERT INTO wallet (addr) values ($1) returning id',
-        [walletAddr],
-      );
-      const [{ id: walletId }] = walletIdRes.rows;
       const partyIdRes = await client.query(
-        `INSERT INTO party (type, name, wallet_id) values ('user', $1, $2) returning id`,
-        [partyName, walletId],
+        `INSERT INTO party (type, name, addr) values ('user', $1, $2) returning id`,
+        [partyName, walletAddr],
       );
       const [{ id: partyId }] = partyIdRes.rows;
 
