@@ -295,18 +295,7 @@ CREATE TABLE public.party (
 CREATE FUNCTION public.get_current_party() RETURNS public.party
     LANGUAGE sql STABLE
     AS $$
-  SELECT party.* from party where id=nullif(current_setting('party.id', true),'')::uuid LIMIT 1;
-$$;
-
-
---
--- Name: get_current_user(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_current_user() RETURNS text
-    LANGUAGE sql STABLE
-    AS $$
-  SELECT current_user::text;
+  SELECT party.* from party where id=nullif(current_user,'')::uuid LIMIT 1;
 $$;
 
 
