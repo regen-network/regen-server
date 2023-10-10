@@ -981,6 +981,20 @@ GRANT UPDATE(verifier_id) ON TABLE public.project TO auth_user;
 
 
 --
+-- Name: COLUMN project.published; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(published) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: COLUMN project.admin_party_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(admin_party_id) ON TABLE public.project TO auth_user;
+
+
+--
 -- Name: TABLE shacl_graph; Type: ACL; Schema: public; Owner: -
 --
 
