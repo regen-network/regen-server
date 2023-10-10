@@ -53,7 +53,7 @@ describe('web3auth login endpoint', () => {
       authHeaders,
       userAddr,
     } = await createNewUserAndLogin();
-    loginResponseAssertions(loginResp, userAddr);
+    loginResponseAssertions(loginResp);
 
     // check that an authenticated user can use an authenticated graphql query
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
@@ -93,7 +93,7 @@ describe('web3auth login endpoint', () => {
       signer,
       nonce,
     );
-    loginResponseAssertions(loginResp, signer);
+    loginResponseAssertions(loginResp);
 
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',

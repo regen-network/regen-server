@@ -62,8 +62,6 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           return done(null, {
-            address: address,
-            nonce: nonce,
             partyId,
           });
         } else {
@@ -103,8 +101,6 @@ export function KeplrStrategy(): CustomStrategy {
             }
           }
           return done(null, {
-            address: address,
-            nonce: nonce,
             partyId,
           });
         } else {

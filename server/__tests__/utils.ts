@@ -118,7 +118,7 @@ export async function performLogin(
   return { authHeaders, response, csrfHeaders: req.headers };
 }
 
-export function loginResponseAssertions(resp: Response, signer: string): void {
+export function loginResponseAssertions(resp: Response): void {
   expect(resp.status).toBe(200);
   // these assertions on the cookies check for important fields that should be set
   // we expect that a session cookie is created here
@@ -131,7 +131,6 @@ export function loginResponseAssertions(resp: Response, signer: string): void {
   // assertions on the base64 encoded user session..
   const sessionString = cookies.match(/session=(.*?);/)[1];
   const sessionData = JSON.parse(atob(sessionString));
-  expect(sessionData).toHaveProperty('passport.user.address', signer);
   expect(sessionData).toHaveProperty('passport.user.partyId');
 }
 
