@@ -8,17 +8,17 @@ import {
 
 describe('files endpoint, projects auth...', () => {
   it('allows a user to upload project media to a project they are an admin for...', async () => {
-    const { authHeaders, userAddr } = await createNewUserAndLogin();
+    const { authHeaders } = await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    const partyIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${userAddr}") { id } }`,
+        query: `{ getCurrentParty { id } }`,
       }),
     });
-    const walletIdResult = await walletIdQuery.json();
-    const walletId = walletIdResult.data.walletByAddr.id;
+    const partyIdResult = await partyIdQuery.json();
+    const partyId = partyIdResult.data.getCurrentParty.id;
 
     const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
@@ -26,7 +26,7 @@ describe('files endpoint, projects auth...', () => {
       body: JSON.stringify({
         query:
           'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
-        variables: `{"input":{"project":{"adminWalletId":"${walletId}"}}}`,
+        variables: `{"input":{"project":{"adminPartyId":"${partyId}"}}}`,
       }),
     });
     const createProjectResult = await createProjectQuery.json();
@@ -50,18 +50,17 @@ describe('files endpoint, projects auth...', () => {
   it('disallows a user from uploading project media to a project they are not admin for...', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
-    const { authHeaders: authHeaders1, userAddr: userAddr1 } =
-      await createNewUserAndLogin();
+    const { authHeaders: authHeaders1 } = await createNewUserAndLogin();
 
-    const walletIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    const partyIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders1,
       body: JSON.stringify({
-        query: `{ walletByAddr(addr: "${userAddr1}") { id } }`,
+        query: `{ getCurrentParty { id } }`,
       }),
     });
-    const walletIdResult = await walletIdQuery.json();
-    const walletId1 = walletIdResult.data.walletByAddr.id;
+    const partyIdResult = await partyIdQuery.json();
+    const partyId1 = partyIdResult.data.getCurrentParty.id;
 
     const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
@@ -69,7 +68,7 @@ describe('files endpoint, projects auth...', () => {
       body: JSON.stringify({
         query:
           'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
-        variables: `{"input":{"project":{"adminWalletId": "${walletId1}"}}}`,
+        variables: `{"input":{"project":{"adminPartyId": "${partyId1}"}}}`,
       }),
     });
     const createProjectResult = await createProjectQuery.json();
