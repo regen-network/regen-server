@@ -11,14 +11,11 @@ describe('the UPDATE RLS policy for the project table...', () => {
   it('should allow a user to update a project they are admin for...', async () => {
     const walletAddr = genRandomRegenAddress();
     await withAuthUserDb(walletAddr, async (client: PoolClient) => {
-      const addrsQ = await client.query(
-        'select wallet_id from get_current_addrs() where addr=$1',
-        [walletAddr],
-      );
-      const [{ wallet_id }] = addrsQ.rows;
+      const query = await client.query('select id from get_current_party()');
+      const [{ id: accountId }] = query.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_wallet_id) VALUES ($1) RETURNING id AS project_id',
-        [wallet_id],
+        'INSERT INTO project (admin_party_id) VALUES ($1) RETURNING id AS project_id',
+        [accountId],
       );
       const [{ project_id }] = insQuery.rows;
       const updQuery = await client.query(
@@ -46,14 +43,11 @@ describe('the UPDATE RLS policy for the project table...', () => {
   it('does not allow non-superusers to update the approved column...', async () => {
     const walletAddr = genRandomRegenAddress();
     await withAuthUserDb(walletAddr, async (client: PoolClient) => {
-      const addrsQ = await client.query(
-        'select wallet_id from get_current_addrs() where addr=$1',
-        [walletAddr],
-      );
-      const [{ wallet_id }] = addrsQ.rows;
+      const query = await client.query('select id from get_current_party()');
+      const [{ id: accountId }] = query.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_wallet_id) VALUES ($1) RETURNING id AS project_id',
-        [wallet_id],
+        'INSERT INTO project (admin_party_id) VALUES ($1) RETURNING id AS project_id',
+        [accountId],
       );
       const [{ project_id }] = insQuery.rows;
       expect(
@@ -75,15 +69,9 @@ describe('the UPDATE RLS policy for the project table...', () => {
       );
       // become the first user...
       await becomeAuthUser(client, accountId);
-      const addrsQ = await client.query(
-        'select wallet_id from get_current_addrs() where addr=$1',
-        [walletAddr],
-      );
-      // get the wallet_id for the first user...
-      const [{ wallet_id }] = addrsQ.rows;
       const insQuery = await client.query(
-        'INSERT INTO project (admin_wallet_id) VALUES ($1) RETURNING id AS project_id',
-        [wallet_id],
+        'INSERT INTO project (admin_party_id) VALUES ($1) RETURNING id AS project_id',
+        [accountId],
       );
       const [{ project_id }] = insQuery.rows;
       // become the second user...
@@ -94,6 +82,44 @@ describe('the UPDATE RLS policy for the project table...', () => {
         [project_id, { foo: 'bar' }],
       );
       // expect that no rows are modified...
+      expect(updQuery.rowCount).toBe(0);
+    });
+  });
+
+  it('an admin WITH an address SHOULD be able to update an on chain project...', async () => {
+    const walletAddr = genRandomRegenAddress();
+    await withAuthUserDb(walletAddr, async (client: PoolClient) => {
+      const query = await client.query('select id from get_current_party()');
+      const [{ id: accountId }] = query.rows;
+      const insQuery = await client.query(
+        'INSERT INTO project (admin_party_id, on_chain_id) VALUES ($1, $2) RETURNING id AS project_id',
+        [accountId, 'FOO-ONCHAIN-ID'],
+      );
+      const [{ project_id }] = insQuery.rows;
+      const updQuery = await client.query(
+        'UPDATE project SET metadata = $2 WHERE id=$1',
+        [project_id, { foo: 'bar' }],
+      );
+      expect(updQuery.rowCount).toBe(1);
+    });
+  });
+
+  it('an admin WITHOUT an address SHOULD NOT be able to update an on chain project...', async () => {
+    const walletAddr = genRandomRegenAddress();
+    await withAuthUserDb(walletAddr, async (client: PoolClient) => {
+      const query = await client.query('select id from get_current_party()');
+      // this test requires an account that does not have an address...
+      await client.query('UPDATE party SET addr=null');
+      const [{ id: accountId }] = query.rows;
+      const insQuery = await client.query(
+        'INSERT INTO project (admin_party_id, on_chain_id) VALUES ($1, $2) RETURNING id AS project_id',
+        [accountId, 'FOO-ONCHAIN-ID'],
+      );
+      const [{ project_id }] = insQuery.rows;
+      const updQuery = await client.query(
+        'UPDATE project SET metadata = $2 WHERE id=$1',
+        [project_id, { foo: 'bar' }],
+      );
       expect(updQuery.rowCount).toBe(0);
     });
   });

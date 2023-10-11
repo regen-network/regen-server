@@ -780,6 +780,26 @@ ALTER TABLE ONLY public.project
 
 
 --
+-- Name: project account_admin_can_update_offchain_projects; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY account_admin_can_update_offchain_projects ON public.project FOR UPDATE TO auth_user USING ((EXISTS ( SELECT 1
+   FROM (public.project project_1
+     JOIN public.party ON ((project_1.admin_party_id = party.id)))
+  WHERE ((project_1.on_chain_id IS NULL) AND (party.* = public.get_current_party())))));
+
+
+--
+-- Name: project account_admin_with_addr_can_update_onchain_projects; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY account_admin_with_addr_can_update_onchain_projects ON public.project FOR UPDATE TO auth_user USING ((EXISTS ( SELECT 1
+   FROM (public.project project_1
+     JOIN public.party ON ((project_1.admin_party_id = party.id)))
+  WHERE ((project_1.on_chain_id IS NOT NULL) AND (party.addr IS NOT NULL) AND (party.* = public.get_current_party())))));
+
+
+--
 -- Name: party; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -833,13 +853,6 @@ CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WI
 --
 
 CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
-
-
---
--- Name: project project_update_policy; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY project_update_policy ON public.project FOR UPDATE TO auth_user USING (true) WITH CHECK (true);
 
 
 --
