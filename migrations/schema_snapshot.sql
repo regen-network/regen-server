@@ -171,10 +171,10 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
--- Name: party_type; Type: TYPE; Schema: public; Owner: -
+-- Name: account_type; Type: TYPE; Schema: public; Owner: -
 --
 
-CREATE TYPE public.party_type AS ENUM (
+CREATE TYPE public.account_type AS ENUM (
     'user',
     'organization'
 );
@@ -236,27 +236,27 @@ $$;
 
 
 --
--- Name: create_new_account_with_wallet(text, public.party_type); Type: FUNCTION; Schema: private; Owner: -
+-- Name: create_new_account_with_wallet(text, public.account_type); Type: FUNCTION; Schema: private; Owner: -
 --
 
-CREATE FUNCTION private.create_new_account_with_wallet(addr text, v_party_type public.party_type) RETURNS uuid
+CREATE FUNCTION private.create_new_account_with_wallet(addr text, v_account_type public.account_type) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 DECLARE
     v_addr text = addr;
-    v_party_id uuid;
+    v_account_id uuid;
 BEGIN
-    INSERT INTO party (TYPE, addr)
-        VALUES (v_party_type, v_addr)
+    INSERT INTO account (TYPE, addr)
+        VALUES (v_account_type, v_addr)
     ON CONFLICT ON CONSTRAINT
-        party_addr_key
+        account_addr_key
     DO UPDATE SET
         creator_id = null
     RETURNING
-        id INTO v_party_id;
+        id INTO v_account_id;
 
-    RAISE LOG 'new party_id %', v_party_id;
-    RETURN v_party_id;
+    RAISE LOG 'new party_id %', v_account_id;
+    RETURN v_account_id;
 END;
 $$;
 
@@ -266,14 +266,14 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: party; Type: TABLE; Schema: public; Owner: -
+-- Name: account; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.party (
+CREATE TABLE public.account (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    type public.party_type NOT NULL,
+    type public.account_type NOT NULL,
     name text DEFAULT ''::text NOT NULL,
     description character(160),
     image text DEFAULT ''::text,
@@ -284,34 +284,34 @@ CREATE TABLE public.party (
     email public.citext,
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
     addr text,
-    CONSTRAINT party_type_check CHECK ((type = ANY (ARRAY['user'::public.party_type, 'organization'::public.party_type])))
+    CONSTRAINT account_type_check CHECK ((type = ANY (ARRAY['user'::public.account_type, 'organization'::public.account_type])))
 );
 
 
 --
--- Name: get_current_party(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_accounts_by_name_or_addr(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_current_party() RETURNS public.party
+CREATE FUNCTION public.get_accounts_by_name_or_addr(input text) RETURNS SETOF public.account
     LANGUAGE sql STABLE
     AS $$
-  SELECT party.* from party where id=nullif(current_user,'')::uuid LIMIT 1;
+  SELECT
+    a.*
+  FROM
+    account as a
+  WHERE
+    a.name ILIKE CONCAT('%', input, '%') OR a.addr ILIKE CONCAT('%', input, '%');
 $$;
 
 
 --
--- Name: get_parties_by_name_or_addr(text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_current_account(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_parties_by_name_or_addr(input text) RETURNS SETOF public.party
+CREATE FUNCTION public.get_current_account() RETURNS public.account
     LANGUAGE sql STABLE
     AS $$
-  SELECT
-    p.*
-  FROM
-    party as p
-  WHERE
-    p.name ILIKE CONCAT('%', input, '%') OR p.addr ILIKE CONCAT('%', input, '%');
+  SELECT account.* from account where id=nullif(current_user,'')::uuid LIMIT 1;
 $$;
 
 
@@ -417,7 +417,7 @@ CREATE TABLE public.organization (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    party_id uuid NOT NULL,
+    account_id uuid NOT NULL,
     legal_name text DEFAULT ''::text NOT NULL
 );
 
@@ -438,7 +438,7 @@ CREATE TABLE public.project (
     verifier_id uuid,
     approved boolean DEFAULT false,
     published boolean DEFAULT false,
-    admin_party_id uuid
+    admin_account_id uuid
 );
 
 
@@ -468,6 +468,30 @@ ALTER TABLE ONLY graphile_migrate.current
 
 ALTER TABLE ONLY graphile_migrate.migrations
     ADD CONSTRAINT migrations_pkey PRIMARY KEY (hash);
+
+
+--
+-- Name: account account_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_addr_key UNIQUE (addr);
+
+
+--
+-- Name: account account_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_email_key UNIQUE (email);
+
+
+--
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
 
 
 --
@@ -539,7 +563,7 @@ ALTER TABLE ONLY public.metadata_graph
 --
 
 ALTER TABLE ONLY public.organization
-    ADD CONSTRAINT organization_party_id_key UNIQUE (party_id);
+    ADD CONSTRAINT organization_party_id_key UNIQUE (account_id);
 
 
 --
@@ -548,30 +572,6 @@ ALTER TABLE ONLY public.organization
 
 ALTER TABLE ONLY public.organization
     ADD CONSTRAINT organization_pkey PRIMARY KEY (id);
-
-
---
--- Name: party party_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_addr_key UNIQUE (addr);
-
-
---
--- Name: party party_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_email_key UNIQUE (email);
-
-
---
--- Name: party party_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_pkey PRIMARY KEY (id);
 
 
 --
@@ -604,6 +604,13 @@ ALTER TABLE ONLY public.project
 
 ALTER TABLE ONLY public.shacl_graph
     ADD CONSTRAINT shacl_graph_pkey PRIMARY KEY (uri);
+
+
+--
+-- Name: account_creator_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX account_creator_id_key ON public.account USING btree (creator_id);
 
 
 --
@@ -642,17 +649,10 @@ CREATE INDEX on_chain_id_idx ON public.project USING btree (on_chain_id);
 
 
 --
--- Name: party_creator_id_key; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX party_creator_id_key ON public.party USING btree (creator_id);
-
-
---
 -- Name: project_admin_party_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX project_admin_party_id_idx ON public.project USING btree (admin_party_id);
+CREATE INDEX project_admin_party_id_idx ON public.project USING btree (admin_account_id);
 
 
 --
@@ -692,6 +692,14 @@ ALTER TABLE ONLY graphile_migrate.migrations
 
 
 --
+-- Name: account account_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.account(id);
+
+
+--
 -- Name: credit_batch credit_batch_credit_class_version_id_credit_class_versio_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -712,7 +720,7 @@ ALTER TABLE ONLY public.credit_batch
 --
 
 ALTER TABLE ONLY public.credit_class
-    ADD CONSTRAINT credit_class_registry_id_fkey FOREIGN KEY (registry_id) REFERENCES public.party(id) ON DELETE SET NULL;
+    ADD CONSTRAINT credit_class_registry_id_fkey FOREIGN KEY (registry_id) REFERENCES public.account(id) ON DELETE SET NULL;
 
 
 --
@@ -732,27 +740,19 @@ ALTER TABLE ONLY public.document
 
 
 --
--- Name: organization organization_party_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: organization organization_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.organization
-    ADD CONSTRAINT organization_party_id_fkey FOREIGN KEY (party_id) REFERENCES public.party(id);
+    ADD CONSTRAINT organization_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
 
 
 --
--- Name: party party_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.party(id);
-
-
---
--- Name: project project_admin_party_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: project project_admin_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.project
-    ADD CONSTRAINT project_admin_party_id_fkey FOREIGN KEY (admin_party_id) REFERENCES public.party(id);
+    ADD CONSTRAINT project_admin_account_id_fkey FOREIGN KEY (admin_account_id) REFERENCES public.account(id);
 
 
 --
@@ -768,7 +768,7 @@ ALTER TABLE ONLY public.project
 --
 
 ALTER TABLE ONLY public.project
-    ADD CONSTRAINT project_developer_id_fkey FOREIGN KEY (developer_id) REFERENCES public.party(id);
+    ADD CONSTRAINT project_developer_id_fkey FOREIGN KEY (developer_id) REFERENCES public.account(id);
 
 
 --
@@ -776,8 +776,14 @@ ALTER TABLE ONLY public.project
 --
 
 ALTER TABLE ONLY public.project
-    ADD CONSTRAINT project_verifier_id_fkey FOREIGN KEY (verifier_id) REFERENCES public.party(id) ON DELETE SET NULL;
+    ADD CONSTRAINT project_verifier_id_fkey FOREIGN KEY (verifier_id) REFERENCES public.account(id) ON DELETE SET NULL;
 
+
+--
+-- Name: account; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.account ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: project account_admin_can_update_offchain_projects; Type: POLICY; Schema: public; Owner: -
@@ -785,8 +791,8 @@ ALTER TABLE ONLY public.project
 
 CREATE POLICY account_admin_can_update_offchain_projects ON public.project FOR UPDATE TO auth_user USING ((EXISTS ( SELECT 1
    FROM (public.project project_1
-     JOIN public.party ON ((project_1.admin_party_id = party.id)))
-  WHERE ((project_1.on_chain_id IS NULL) AND (party.* = public.get_current_party())))));
+     JOIN public.account ON ((project_1.admin_account_id = account.id)))
+  WHERE ((project_1.on_chain_id IS NULL) AND (account.* = public.get_current_account())))));
 
 
 --
@@ -795,44 +801,38 @@ CREATE POLICY account_admin_can_update_offchain_projects ON public.project FOR U
 
 CREATE POLICY account_admin_with_addr_can_update_onchain_projects ON public.project FOR UPDATE TO auth_user USING ((EXISTS ( SELECT 1
    FROM (public.project project_1
-     JOIN public.party ON ((project_1.admin_party_id = party.id)))
-  WHERE ((project_1.on_chain_id IS NOT NULL) AND (party.addr IS NOT NULL) AND (party.* = public.get_current_party())))));
+     JOIN public.account ON ((project_1.admin_account_id = account.id)))
+  WHERE ((project_1.on_chain_id IS NOT NULL) AND (account.addr IS NOT NULL) AND (account.* = public.get_current_account())))));
 
 
 --
--- Name: party; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: account account_insert_all; Type: POLICY; Schema: public; Owner: -
 --
 
-ALTER TABLE public.party ENABLE ROW LEVEL SECURITY;
-
---
--- Name: party party_insert_all; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY party_insert_all ON public.party FOR INSERT WITH CHECK (true);
+CREATE POLICY account_insert_all ON public.account FOR INSERT WITH CHECK (true);
 
 
 --
--- Name: party party_select_all; Type: POLICY; Schema: public; Owner: -
+-- Name: account account_select_all; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_select_all ON public.party FOR SELECT USING (true);
-
-
---
--- Name: party party_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY party_update_only_by_creator ON public.party FOR UPDATE USING ((creator_id IN ( SELECT get_current_party.id
-   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
+CREATE POLICY account_select_all ON public.account FOR SELECT USING (true);
 
 
 --
--- Name: party party_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
+-- Name: account account_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY party_update_only_by_owner ON public.party FOR UPDATE USING ((id IN ( SELECT get_current_party.id
-   FROM public.get_current_party() get_current_party(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce))));
+CREATE POLICY account_update_only_by_creator ON public.account FOR UPDATE USING ((creator_id IN ( SELECT get_current_account.id
+   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))));
+
+
+--
+-- Name: account account_update_only_by_owner; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY account_update_only_by_owner ON public.account FOR UPDATE USING ((id IN ( SELECT get_current_account.id
+   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))));
 
 
 --
@@ -856,32 +856,32 @@ CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
 
 
 --
--- Name: TABLE party; Type: ACL; Schema: public; Owner: -
+-- Name: TABLE account; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT ON TABLE public.party TO app_user;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.party TO auth_user;
-
-
---
--- Name: COLUMN party.name; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(name) ON TABLE public.party TO app_user;
+GRANT SELECT,INSERT ON TABLE public.account TO app_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.account TO auth_user;
 
 
 --
--- Name: COLUMN party.description; Type: ACL; Schema: public; Owner: -
+-- Name: COLUMN account.name; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(description) ON TABLE public.party TO app_user;
+GRANT UPDATE(name) ON TABLE public.account TO app_user;
 
 
 --
--- Name: COLUMN party.image; Type: ACL; Schema: public; Owner: -
+-- Name: COLUMN account.description; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(image) ON TABLE public.party TO app_user;
+GRANT UPDATE(description) ON TABLE public.account TO app_user;
+
+
+--
+-- Name: COLUMN account.image; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(image) ON TABLE public.account TO app_user;
 
 
 --
@@ -990,10 +990,10 @@ GRANT UPDATE(published) ON TABLE public.project TO auth_user;
 
 
 --
--- Name: COLUMN project.admin_party_id; Type: ACL; Schema: public; Owner: -
+-- Name: COLUMN project.admin_account_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT UPDATE(admin_party_id) ON TABLE public.project TO auth_user;
+GRANT UPDATE(admin_account_id) ON TABLE public.project TO auth_user;
 
 
 --

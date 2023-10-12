@@ -45,10 +45,10 @@ describe('web3auth logout endpoint', () => {
       method: 'POST',
       headers: newAuthHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id addr } }',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data.data.getCurrentParty).toBe(null);
+    expect(data.data.getCurrentAccount).toBe(null);
   });
 });

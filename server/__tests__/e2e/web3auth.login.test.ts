@@ -60,17 +60,17 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id addr } }',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
 
-    // expect that the response contains the user's current party
-    expect(data).toHaveProperty('data.getCurrentParty.addr', userAddr);
+    // expect that the response contains the user's current account
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', userAddr);
     const loginRespJson = await loginResp.json();
     expect(data).toHaveProperty(
-      'data.getCurrentParty.id',
-      loginRespJson.user.partyId,
+      'data.getCurrentAccount.id',
+      loginRespJson.user.accountId,
     );
   });
 
@@ -99,11 +99,11 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id addr } }',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentParty.addr', signer);
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', signer);
   });
 
   it('returns a permissions error if the user session is manipulated...', async () => {
@@ -160,7 +160,7 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{ getCurrentParty { id addr } }',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
@@ -168,6 +168,6 @@ describe('web3auth login endpoint', () => {
     // the user session is invalidated because the session is signed
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
-    expect(data.data.getCurrentParty).toBe(null);
+    expect(data.data.getCurrentAccount).toBe(null);
   });
 });

@@ -17,10 +17,9 @@ import {
   PrivKeySecp256k1,
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
-import {
-  genArbitraryLoginData,
-  genArbitraryAddAddressData,
-} from '../middleware/keplrStrategy';
+import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+
+export const longerTestTimeout = 30000;
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
@@ -54,24 +53,6 @@ export function genSignature(
   nonce: string,
 ) {
   const data = genArbitraryLoginData(nonce);
-  const signDoc = makeADR36AminoSignDoc(signer, data);
-  const msg = serializeSignDoc(signDoc);
-  // these next lines are equivalent to the keplr.signArbitrary browser API
-  const signatureBytes = privKey.signDigest32(Hash.sha256(msg));
-  const signature = encodeSecp256k1Signature(
-    pubKey.toBytes(false),
-    signatureBytes,
-  );
-  return signature;
-}
-
-export function genAddAddressSignature(
-  privKey: PrivKeySecp256k1,
-  pubKey: PubKeySecp256k1,
-  signer: string,
-  nonce: string,
-) {
-  const data = genArbitraryAddAddressData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
@@ -131,7 +112,7 @@ export function loginResponseAssertions(resp: Response): void {
   // assertions on the base64 encoded user session..
   const sessionString = cookies.match(/session=(.*?);/)[1];
   const sessionData = JSON.parse(atob(sessionString));
-  expect(sessionData).toHaveProperty('passport.user.partyId');
+  expect(sessionData).toHaveProperty('passport.user.accountId');
 }
 
 export function parseSessionCookies(resp: Response): string {

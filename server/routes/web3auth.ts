@@ -1,19 +1,10 @@
-import { pubkeyToAddress, decodeSignature } from '@cosmjs/amino';
-import { verifyADR36Amino } from '@keplr-wallet/cosmos';
 import * as express from 'express';
 import passport from 'passport';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
-import { User } from '../types';
-import {
-  InvalidSignature,
-  InvalidLoginParameter,
-  InvalidQueryParam,
-  NotFoundError,
-} from '../errors';
+import { InvalidQueryParam, NotFoundError } from '../errors';
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
-import { genArbitraryAddAddressData } from '../middleware/keplrStrategy';
 
 export const web3auth = express.Router();
 
@@ -59,7 +50,7 @@ web3auth.get('/nonce', async (req, res, next) => {
     try {
       client = await pgPool.connect();
       const result = await client.query(
-        'select nonce from party where addr=$1',
+        'select nonce from account where addr=$1',
         [req.query.userAddress],
       );
       if (result.rowCount === 0) {

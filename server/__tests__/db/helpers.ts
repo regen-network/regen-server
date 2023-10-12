@@ -89,7 +89,6 @@ export const becomeAuthUser = async (
 ): Promise<void> => {
   await becomeRoot(client);
   await client.query(`set role "${accountId}"`);
-  await client.query(`select set_config('party.id', '${accountId}', false)`);
 };
 
 export const withAuthUserDb = <T>(
@@ -97,39 +96,39 @@ export const withAuthUserDb = <T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<void> =>
   withRootDb(async client => {
-    const { accountId } = await createAccount(client, addr);
+    const { accountId } = await createAccountWithAuthUser(client, addr);
     await becomeAuthUser(client, accountId);
     await fn(client);
   });
 
-export async function createAccount(
+export async function createAccountWithAuthUser(
   client: PoolClient,
   walletAddr: string,
-  partyType: 'user' | 'organization' = 'user',
-): Promise<{ accountId: string; partyId: string }> {
+  accountType: 'user' | 'organization' = 'user',
+): Promise<{ accountId: string }> {
   const result = await client.query(
-    `select * from private.create_new_account_with_wallet('${walletAddr}', '${partyType}') as account_id`,
+    `select * from private.create_new_account_with_wallet('${walletAddr}', '${accountType}') as account_id`,
   );
   const [{ account_id: accountId }] = result.rows;
   try {
     await client.query('select private.create_auth_user($1)', [accountId]);
   } catch {}
-  return { accountId, partyId: accountId };
+  return { accountId };
 }
 
-export async function createParty(
+export async function createAccount(
   client: PoolClient,
   walletAddr: string,
-  partyName: string,
-  partyType: 'user' | 'organization' = 'user',
+  accountName: string,
+  accountType: 'user' | 'organization' = 'user',
   creatorAccountId?: string,
-): Promise<{ partyId: string; creatorId: string }> {
-  const partyRes = await client.query(
-    `insert into party (name, type, addr, creator_id) values ($1, $2, $3, $4) returning id, creator_id`,
-    [partyName, partyType, walletAddr, creatorAccountId],
+): Promise<{ accountId: string; creatorId: string }> {
+  const accountRes = await client.query(
+    `insert into account (name, type, addr, creator_id) values ($1, $2, $3, $4) returning id, creator_id`,
+    [accountName, accountType, walletAddr, creatorAccountId],
   );
-  expect(partyRes.rowCount).toBe(1);
-  const [{ id: partyId, creator_id: creatorId }] = partyRes.rows;
+  expect(accountRes.rowCount).toBe(1);
+  const [{ id: accountId, creator_id: creatorId }] = accountRes.rows;
 
-  return { partyId, creatorId };
+  return { accountId, creatorId };
 }

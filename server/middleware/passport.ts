@@ -22,7 +22,7 @@ export function initializePassport(
     // cookie in terms of user data. very important to not include
     // private information here.
     console.log(`serializeUser user: ${JSON.stringify(user)}`);
-    done(null, { id: user.id, partyId: user.partyId });
+    done(null, { accountId: user.accountId });
   });
 
   passport.deserializeUser(function (user: User, done) {
@@ -31,9 +31,9 @@ export function initializePassport(
     // here, as it could potentially expose that info if this is being
     // used in a response.
     console.log(`deserializeUser user: ${JSON.stringify(user)}`);
-    const { id, partyId } = user;
+    const { accountId } = user;
     // todo: add more fields here probably based on a lookup in db...
-    done(null, { id, partyId });
+    done(null, { accountId });
   });
 
   passport.use(magicLogin);

@@ -40,7 +40,7 @@ router.post(
       const projectsMatch = key.match(projectsRe);
 
       // block any unauthenticated requests are made to filePath that includes profiles
-      // otherwise, check if the filePath belongs to the current user based on their party id
+      // otherwise, check if the filePath belongs to the current user based on their account id
       // if not, block the request...
       // otherwise, allow the request to update the file to proceed
       if (
@@ -51,18 +51,18 @@ router.post(
       } else if (profilesMatch) {
         client = await pgPool.connect();
 
-        const partyId = profilesMatch[1];
-        if (request.user?.partyId !== partyId) {
+        const accountId = profilesMatch[1];
+        if (request.user?.accountId !== accountId) {
           return response.status(401).send({ error: 'unauthorized' });
         }
       } else if (projectsMatch) {
         const projectId = projectsMatch[1];
         client = await pgPool.connect();
-        // select the projects that the given party is an admin for
-        // AND then, make sure the project in question belongs to the party
+        // select the projects that the given account is an admin for
+        // AND then, make sure the project in question belongs to the account
         const queryRes = await client.query(
-          'SELECT project.id FROM project JOIN party ON party.id = project.admin_party_id WHERE party.id = $1 AND project.id = $2',
-          [request.user?.partyId, projectId],
+          'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
+          [request.user?.accountId, projectId],
         );
         if (queryRes.rowCount !== 1) {
           return response.status(401).send({ error: 'unauthorized' });
@@ -80,6 +80,7 @@ router.post(
         Key: `${key}/${image.name}`,
       });
       const cmdResp = await s3.send(cmd);
+      console.dir({ cmdResp }, { depth: null });
       const status = cmdResp['$metadata'].httpStatusCode;
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });

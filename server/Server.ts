@@ -212,10 +212,9 @@ app.use(
         const { sub } = req.user;
         const settings = { role: sub };
         return settings;
-      } else if (req.user && req.user.partyId) {
+      } else if (req.user && req.user.accountId) {
         return {
-          role: req.user.partyId,
-          'party.id': req.user.partyId,
+          role: req.user.accountId,
         };
       } else {
         return {

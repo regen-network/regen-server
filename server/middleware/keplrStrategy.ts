@@ -15,16 +15,6 @@ export function genArbitraryLoginData(nonce: string): string {
   return data;
 }
 
-export function genArbitraryAddAddressData(nonce: string): string {
-  const data = JSON.stringify({
-    title: 'Regen Network Login',
-    description:
-      'This is a transaction that allows Regen Network to add an address to your account.',
-    nonce: nonce,
-  });
-  return data;
-}
-
 export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
     let client: PoolClient | null = null;
@@ -36,21 +26,21 @@ export function KeplrStrategy(): CustomStrategy {
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       // is there an existing account for the given address?
       client = await pgPool.connect();
-      const party = await client.query(
-        'select id, nonce from party where addr = $1',
+      const account = await client.query(
+        'select id, nonce from account where addr = $1',
         [address],
       );
-      if (party.rowCount === 1) {
+      if (account.rowCount === 1) {
         // if there is an existing account, then we need to verify the signature and log them in.
-        const [{ id: partyId, nonce }] = party.rows;
+        const [{ id: accountId, nonce }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
         const data = genArbitraryLoginData(nonce);
         // generate a new nonce for the user to invalidate the current
         // signature...
         await client.query(
-          'update party set nonce = md5(gen_random_bytes(256)) where id = $1',
-          [partyId],
+          'UPDATE account set nonce = md5(gen_random_bytes(256)) where id = $1',
+          [accountId],
         );
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
@@ -62,7 +52,7 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           return done(null, {
-            partyId,
+            accountId,
           });
         } else {
           return done(null, false);
@@ -86,22 +76,22 @@ export function KeplrStrategy(): CustomStrategy {
             'select * from private.create_new_account_with_wallet($1, $2)',
             [address, DEFAULT_PROFILE_TYPE],
           );
-          const party = await client.query(
-            'select id, nonce from party where addr = $1',
+          const account = await client.query(
+            'select id, nonce from account where addr = $1',
             [address],
           );
-          const [{ id: partyId, nonce }] = party.rows;
+          const [{ id: accountId }] = account.rows;
           try {
             await client.query('select private.create_auth_user($1)', [
-              partyId,
+              accountId,
             ]);
           } catch (err) {
-            if (err.message !== `role "${partyId}" already exists`) {
+            if (err.message !== `role "${accountId}" already exists`) {
               throw err;
             }
           }
           return done(null, {
-            partyId,
+            accountId,
           });
         } else {
           return done(null, false);
