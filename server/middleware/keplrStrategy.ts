@@ -51,6 +51,15 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
+          try {
+            await client.query('select private.create_auth_user($1)', [
+              accountId,
+            ]);
+          } catch (err) {
+            if (err.message !== `role "${accountId}" already exists`) {
+              throw err;
+            }
+          }
           return done(null, {
             accountId,
           });
