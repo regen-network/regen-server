@@ -1,5 +1,10 @@
 import fetch from 'node-fetch';
-import { createNewUserAndLogin, getMarketplaceURL } from '../../utils';
+import {
+  createNewUser,
+  createNewUserAndLogin,
+  getMarketplaceURL,
+  performLogin,
+} from '../../utils';
 
 describe('account update policies', () => {
   it('allow a user to update an account that belongs to them', async () => {
@@ -158,5 +163,70 @@ describe('account update policies', () => {
     const checkAccountResp = await checkAccount.json();
 
     expect(checkAccountResp.data.accountById.name).toBe(NEW_NAME);
+  });
+
+  it('disallow a user to update an account that he/she created BUT has since been logged in with...', async () => {
+    const { authHeaders } = await createNewUserAndLogin();
+
+    const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        query: `{ getCurrentAccount { id } }`,
+      }),
+    });
+    const accountIdResult = await accountIdQuery.json();
+
+    // create user with an address and key-pair
+    const user = await createNewUser();
+    // Create an account with the users address specified
+    const createQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        operationName: 'CreateAccount',
+        variables: {
+          input: {
+            account: {
+              type: 'USER',
+              creatorId: accountIdResult.data.getCurrentAccount.id,
+              addr: user.userAddr,
+            },
+          },
+        },
+        query:
+          'mutation CreateAccount($input: CreateAccountInput!) { createAccount(input: $input) { account { id nonce } } }',
+      }),
+    });
+    const createResp = await createQuery.json();
+    const newAccountId = createResp.data.createAccount.account.id;
+
+    // login with the user...
+    const { nonce } = createResp.data.createAccount.account;
+    await performLogin(user.userPrivKey, user.userPubKey, user.userAddr, nonce);
+
+    const NEW_NAME = 'FOO BAR';
+    const update = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        operationName: 'UpdateAccountById',
+        variables: {
+          input: {
+            id: newAccountId,
+            accountPatch: {
+              name: NEW_NAME,
+            },
+          },
+        },
+        query:
+          'mutation UpdateAccountById($input: UpdateAccountByIdInput!) { updateAccountById(input: $input) { account { id } } }',
+      }),
+    });
+    const updResp = await update.json();
+    expect(updResp.errors[0]).toHaveProperty(
+      'message',
+      "No values were updated in collection 'accounts' because no values you can update were found matching these criteria.",
+    );
   });
 });

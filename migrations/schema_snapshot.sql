@@ -823,8 +823,10 @@ CREATE POLICY account_select_all ON public.account FOR SELECT USING (true);
 -- Name: account account_update_only_by_creator; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY account_update_only_by_creator ON public.account FOR UPDATE USING ((creator_id IN ( SELECT get_current_account.id
-   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))));
+CREATE POLICY account_update_only_by_creator ON public.account FOR UPDATE USING (((creator_id IN ( SELECT get_current_account.id
+   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))) AND (NOT (EXISTS ( SELECT 1
+   FROM pg_roles
+  WHERE (pg_roles.rolname = (account.id)::text))))));
 
 
 --
