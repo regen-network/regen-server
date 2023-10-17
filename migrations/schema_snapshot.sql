@@ -255,7 +255,7 @@ BEGIN
     RETURNING
         id INTO v_account_id;
 
-    RAISE LOG 'new party_id %', v_account_id;
+    RAISE LOG 'new account_id %', v_account_id;
     RETURN v_account_id;
 END;
 $$;
