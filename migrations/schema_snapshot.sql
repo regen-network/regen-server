@@ -559,11 +559,11 @@ ALTER TABLE ONLY public.metadata_graph
 
 
 --
--- Name: organization organization_party_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: organization organization_account_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.organization
-    ADD CONSTRAINT organization_party_id_key UNIQUE (account_id);
+    ADD CONSTRAINT organization_account_id_key UNIQUE (account_id);
 
 
 --
@@ -649,10 +649,10 @@ CREATE INDEX on_chain_id_idx ON public.project USING btree (on_chain_id);
 
 
 --
--- Name: project_admin_party_id_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: project_admin_account_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX project_admin_party_id_idx ON public.project USING btree (admin_account_id);
+CREATE INDEX project_admin_account_id_idx ON public.project USING btree (admin_account_id);
 
 
 --
