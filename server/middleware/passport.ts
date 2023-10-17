@@ -5,6 +5,7 @@ import { KeplrStrategy } from './keplrStrategy';
 import { UnauthorizedError } from '../errors';
 import { magicLoginStrategy } from './magicLoginStrategy';
 import { googleStrategy } from './googleStrategy';
+import { PasscodeStrategy } from './passcodeStrategy';
 
 export function initializePassport(
   app: Application,
@@ -40,6 +41,7 @@ export function initializePassport(
   passport.use(magicLoginStrategy);
   passport.use(googleStrategy);
   passport.use('keplr', KeplrStrategy());
+  passport.use('passcode', PasscodeStrategy());
 }
 
 export function ensureLoggedIn() {
