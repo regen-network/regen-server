@@ -83,6 +83,7 @@ export async function performLogin(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  headers?: Headers,
 ): Promise<PerformLogin> {
   // sign the data
   const signature = genSignature(privKey, pubKey, signer, nonce);
@@ -94,9 +95,24 @@ export async function performLogin(
   );
   const response = await fetch(req, {
     body: JSON.stringify({ signature: signature }),
+    headers: headers ? headers : undefined,
   });
   const authHeaders = genAuthHeaders(response.headers, req.headers);
   return { authHeaders, response, csrfHeaders: req.headers };
+}
+
+export function parseSessionData(resp: Response) {
+  const cookies = resp.headers.get('set-cookie');
+  if (!cookies) {
+    throw new Error('set cookie headers are missing..');
+  }
+  const sessionMatch = cookies.match(/session=(.*?);/);
+  if (!sessionMatch) {
+    throw new Error('session cookie not found..');
+  }
+  const sessionString = sessionMatch[1];
+  const sessionData = JSON.parse(atob(sessionString));
+  return { cookies, sessionData };
 }
 
 export function loginResponseAssertions(resp: Response): void {
@@ -104,15 +120,15 @@ export function loginResponseAssertions(resp: Response): void {
   // these assertions on the cookies check for important fields that should be set
   // we expect that a session cookie is created here
   // this session cookie is where the user session is stored
-  const cookies = resp.headers.get('set-cookie');
+  const { cookies, sessionData } = parseSessionData(resp);
   expect(cookies).toMatch(/session=(.*?);/);
   expect(cookies).toMatch(/session.sig=(.*?);/);
   expect(cookies).toMatch(/expires=(.*?);/);
 
   // assertions on the base64 encoded user session..
-  const sessionString = cookies.match(/session=(.*?);/)[1];
-  const sessionData = JSON.parse(atob(sessionString));
   expect(sessionData).toHaveProperty('passport.user.accountId');
+  expect(sessionData).toHaveProperty('activeAccountId');
+  expect(sessionData).toHaveProperty('activeAccountIds');
 }
 
 export function parseSessionCookies(resp: Response): string {

@@ -6,6 +6,8 @@ import {
   setUpTestAccount,
   createNewUserAndLogin,
   getMarketplaceURL,
+  createNewUser,
+  parseSessionData,
 } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
@@ -169,5 +171,45 @@ describe('web3auth login endpoint', () => {
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
     expect(data.data.getCurrentAccount).toBe(null);
+  });
+
+  it('when a user signs in with multiple accounts, there is an active account and a list of all active accounts, in the user session', async () => {
+    // set up a key pair and sign the required login transaction...
+    const { response: loginResp1, authHeaders } = await createNewUserAndLogin();
+    loginResponseAssertions(loginResp1);
+
+    // get the users account id...
+    const {
+      user: { accountId: user1AccountId },
+    } = await loginResp1.json();
+
+    // using the same session from the user above, sign in with another users address...
+    const {
+      userPrivKey,
+      userPubKey,
+      userAddr: userAddr2,
+    } = await createNewUser();
+    const nonce = '';
+    const { response: loginResp2 } = await performLogin(
+      userPrivKey,
+      userPubKey,
+      userAddr2,
+      nonce,
+      authHeaders, // authHeaders is where session cookies are stored
+    );
+
+    // get the users account id...
+    const {
+      user: { accountId: user2AccountId },
+    } = await loginResp2.json();
+
+    const { sessionData } = parseSessionData(loginResp2);
+    // check that the sessions active account is the most recently logged in user...
+    expect(sessionData).toHaveProperty('activeAccountId', user2AccountId);
+    // check that both accounts are stored as active accounts...
+    expect(sessionData).toHaveProperty('activeAccountIds', [
+      user1AccountId,
+      user2AccountId,
+    ]);
   });
 });
