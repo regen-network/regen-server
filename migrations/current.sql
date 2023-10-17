@@ -19,8 +19,9 @@ $$;
 CREATE TABLE IF NOT EXISTS private.passcode (
   id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
-  email CITEXT NOT NULL,
+  email CITEXT UNIQUE NOT NULL,
   consumed boolean DEFAULT 'f' NOT NULL,
-  code char(6) DEFAULT private.random_passcode() NOT NULL
+  code char(6) DEFAULT private.random_passcode() NOT NULL,
+  max_try_count smallint DEFAULT 0 NOT NULL
 );
 

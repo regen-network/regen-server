@@ -11,7 +11,6 @@ import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { runnerPromise } from '../runner';
 import { Runner } from 'graphile-worker';
-import ms from 'ms';
 
 let runner: Runner | undefined;
 runnerPromise.then(res => {
@@ -43,7 +42,7 @@ router.get(
 );
 
 router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
-  let client: PoolClient | undefined = undefined;
+  let client: PoolClient;
   try {
     const { email } = req.body;
     if (!email) {
@@ -74,7 +73,7 @@ router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
         template: 'login_with_passcode.mjml',
         variables: {
           passcode,
-          expiresIn: process.env.PASSCODE_EXPIRES_IN_MS,
+          expiresIn: process.env.PASSCODE_EXPIRES_IN,
         },
       });
       res.send(200);
