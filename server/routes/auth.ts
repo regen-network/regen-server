@@ -32,7 +32,7 @@ router.get(
   },
 );
 
-router.get('/accounts', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
+router.get('/accounts', ensureLoggedIn(), (req, res) => {
   if (!req.session) {
     return res.sendStatus(500).json({ error: 'req.session is falsy' });
   }
