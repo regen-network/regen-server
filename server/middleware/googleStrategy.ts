@@ -17,14 +17,14 @@ export const googleStrategy = new Strategy(
     try {
       const [{ value: email, verified }] = emails;
       client = await pgPool.connect();
-      const id = await verifyGoogleAccount({
+      const accountId = await verifyGoogleAccount({
         email,
         verified,
         googleId,
         client,
       });
-      if (id) {
-        callback(null, { id });
+      if (accountId) {
+        callback(null, { accountId });
       }
     } catch (err) {
       callback(err);
@@ -80,15 +80,15 @@ export async function verifyGoogleAccount({
     if (existingUserWithEmail || googleAccountQuery.rowCount === 1) {
       if (existingUserWithEmail) {
         // Set google id for existing user
-        const [{ id }] = emailAccountQuery.rows;
+        const [{ id: accountId }] = emailAccountQuery.rows;
         await client.query('update account set google = $1 where email = $2', [
           googleId,
           email,
         ]);
-        return id;
+        return accountId;
       } else {
-        const [{ id }] = googleAccountQuery.rows;
-        return id;
+        const [{ id: accountId }] = googleAccountQuery.rows;
+        return accountId;
       }
     } else {
       const createAccountQuery = await client.query(
@@ -96,9 +96,9 @@ export async function verifyGoogleAccount({
         ['user', email, googleId],
       );
       if (createAccountQuery.rowCount === 1) {
-        const [{ id }] = createAccountQuery.rows;
-        await client.query('select private.create_auth_user($1)', [id]);
-        return id;
+        const [{ id: accountId }] = createAccountQuery.rows;
+        await client.query('select private.create_auth_user($1)', [accountId]);
+        return accountId;
       }
     }
   } catch (err) {
