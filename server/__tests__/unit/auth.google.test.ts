@@ -6,7 +6,7 @@ const email = 'john@doe.com';
 const google = '12345';
 
 describe('auth google strategy verify', () => {
-  it('should create a new party and role', async () => {
+  test('when a user signs in for the first time, a new account and role should be created', async () => {
     await withRootDb(async (client: PoolClient) => {
       const id = await verify(email, 'true', google, client);
       const partyQuery = await client.query(
@@ -24,7 +24,7 @@ describe('auth google strategy verify', () => {
       expect(roleQuery.rowCount).toBe(1);
     });
   });
-  it('should update a party with same email but no google id', async () => {
+  test('when an existing user signs in with google for the first time, it should update the account with the same email', async () => {
     await withRootDb(async (client: PoolClient) => {
       const insertQuery = await client.query(
         'INSERT INTO party (type, email) values ($1, $2) returning id',
@@ -44,7 +44,7 @@ describe('auth google strategy verify', () => {
       expect(partyQuery.rows[0].google).toEqual(google);
     });
   });
-  it('should verify an existing party', async () => {
+  test('when an existing user signs in, it should verify the existing account', async () => {
     await withRootDb(async (client: PoolClient) => {
       const insertQuery = await client.query(
         'INSERT INTO party (type, email, google) values ($1, $2, $3) returning id',
@@ -57,7 +57,7 @@ describe('auth google strategy verify', () => {
       expect(newId).toEqual(id);
     });
   });
-  it('should throw an error if email not verified', async () => {
+  test('when a user signs in, it should throw an error if the email from google is not verified', async () => {
     await withRootDb(async (client: PoolClient) => {
       expect(verify(email, 'false', google, client)).rejects.toThrow(
         'Email not verified',
