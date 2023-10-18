@@ -6,11 +6,11 @@ import {
 } from '../middleware/magicLoginStrategy';
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { GOOGLE_CALLBACK_URL } from '../middleware/googleStrategy';
-import { InvalidLoginParameter } from '../errors';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { runnerPromise } from '../runner';
 import { Runner } from 'graphile-worker';
+import { createPasscode } from '../middleware/passcodeStrategy';
 
 let runner: Runner | undefined;
 runnerPromise.then(res => {
@@ -44,27 +44,13 @@ router.get(
 router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
   let client: PoolClient;
   try {
-    const { email } = req.body;
-    if (!email) {
-      throw new InvalidLoginParameter('invalid email parameter');
-    }
     client = await pgPool.connect();
+    const email = req.body;
 
-    // Delete unconsumed passcodes for the given email
-    await client.query(
-      'delete from private.passcode where email = $1 and consumed = false',
-      [email],
-    );
-
-    // Create new passcode
-    const passcodeResp = await client.query(
-      'insert into private.passcode (email) values ($1) returning code',
-      [email],
-    );
-    const passcode = passcodeResp.rows[0].code;
+    const passcode = await createPasscode({ email, client });
 
     // Send email with this passcode
-    if (runner) {
+    if (runner && passcode) {
       await runner.addJob('send_email', {
         options: {
           to: email,
@@ -76,7 +62,9 @@ router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
           expiresIn: process.env.PASSCODE_EXPIRES_IN,
         },
       });
-      res.send(200);
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(500);
     }
   } catch (err) {
     return next(err);

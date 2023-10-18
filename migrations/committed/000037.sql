@@ -1,5 +1,5 @@
 --! Previous: sha1:3dd6808797e38b3d56a481872c81292adca3d190
---! Hash: sha1:7bcdb97db96133598707230a843d51c3c94d3cf8
+--! Hash: sha1:61e1ba27be33be6958c143488c970ef82707b159
 
 DROP FUNCTION IF EXISTS private.shuffle CASCADE;
 CREATE OR REPLACE FUNCTION private.shuffle(text)
@@ -22,7 +22,8 @@ $$;
 COMMENT ON FUNCTION private.random_passcode() IS 'Generates a 6 digits random code';
 
 
-CREATE TABLE IF NOT EXISTS private.passcode (
+DROP TABLE IF EXISTS private.passcode;
+CREATE TABLE private.passcode (
   id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   email CITEXT NOT NULL,
