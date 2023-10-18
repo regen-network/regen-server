@@ -45,10 +45,10 @@ describe('web3auth logout endpoint', () => {
       method: 'POST',
       headers: newAuthHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data.data.getCurrentAddrs).toBe(null);
+    expect(data.data.getCurrentAccount).toBe(null);
   });
 });

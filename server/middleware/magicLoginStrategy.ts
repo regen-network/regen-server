@@ -36,25 +36,25 @@ export const magicLogin = new MagicLoginStrategy({
     let client: PoolClient;
     try {
       client = await pgPool.connect();
-      const partyQuery = await client.query(
-        'select id from party where email = $1',
+      const accountQuery = await client.query(
+        'select id from account where email = $1',
         [payload.destination],
       );
-      if (partyQuery.rowCount === 1) {
-        const [{ id }] = partyQuery.rows;
-        callback(null, { id });
+      if (accountQuery.rowCount === 1) {
+        const [{ id: accountId }] = accountQuery.rows;
+        callback(null, { accountId });
       } else {
         // TODO (#375): we'll need to adjust how we define roles/session variables in the db because right now,
         // they are based on wallet address that we don't necessarily have here for email based-login.
-        // For now, we just create a new entry in the party table but we'll need to create a db role as well
+        // For now, we just create a new entry in the account table but we'll need to create a db role as well
         // if we want to continue using the db role approach along with our RLS policies.
-        const createPartyQuery = await client.query(
-          'insert into party (type, email) values ($1, $2) returning id',
+        const createAccountQuery = await client.query(
+          'INSERT INTO account (type, email) values ($1, $2) returning id',
           ['user', payload.destination],
         );
-        if (createPartyQuery.rowCount === 1) {
-          const [{ id: createdPartyId }] = createPartyQuery.rows;
-          callback(null, { id: createdPartyId });
+        if (createAccountQuery.rowCount === 1) {
+          const [{ id: accountId }] = createAccountQuery.rows;
+          callback(null, { accountId });
         }
       }
     } catch (err) {

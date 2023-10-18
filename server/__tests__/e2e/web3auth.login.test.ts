@@ -53,22 +53,25 @@ describe('web3auth login endpoint', () => {
       authHeaders,
       userAddr,
     } = await createNewUserAndLogin();
-    loginResponseAssertions(loginResp, userAddr);
+    loginResponseAssertions(loginResp);
 
     // check that an authenticated user can use an authenticated graphql query
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    // expect that the response contains the user's current addresses
-    // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: userAddr },
-    ]);
+
+    // expect that the response contains the user's current account
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', userAddr);
+    const loginRespJson = await loginResp.json();
+    expect(data).toHaveProperty(
+      'data.getCurrentAccount.id',
+      loginRespJson.user.accountId,
+    );
   });
 
   it('authenticates an existing user successfully and creates a session...', async () => {
@@ -90,19 +93,17 @@ describe('web3auth login endpoint', () => {
       signer,
       nonce,
     );
-    loginResponseAssertions(loginResp, signer);
+    loginResponseAssertions(loginResp);
 
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: signer },
-    ]);
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', signer);
   });
 
   it('returns a permissions error if the user session is manipulated...', async () => {
@@ -159,7 +160,7 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
@@ -167,6 +168,6 @@ describe('web3auth login endpoint', () => {
     // the user session is invalidated because the session is signed
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
-    expect(data.data.getCurrentAddrs).toBe(null);
+    expect(data.data.getCurrentAccount).toBe(null);
   });
 });

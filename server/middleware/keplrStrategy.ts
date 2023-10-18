@@ -15,19 +15,9 @@ export function genArbitraryLoginData(nonce: string): string {
   return data;
 }
 
-export function genArbitraryAddAddressData(nonce: string): string {
-  const data = JSON.stringify({
-    title: 'Regen Network Login',
-    description:
-      'This is a transaction that allows Regen Network to add an address to your account.',
-    nonce: nonce,
-  });
-  return data;
-}
-
 export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
-    let client: PoolClient;
+    let client: PoolClient | null = null;
     try {
       const { signature } = req.body;
       if (!signature) {
@@ -37,20 +27,20 @@ export function KeplrStrategy(): CustomStrategy {
       // is there an existing account for the given address?
       client = await pgPool.connect();
       const account = await client.query(
-        'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        'select id, nonce from account where addr = $1',
         [address],
       );
       if (account.rowCount === 1) {
         // if there is an existing account, then we need to verify the signature and log them in.
-        const [{ id, nonce }] = account.rows;
+        const [{ id: accountId, nonce }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
         const data = genArbitraryLoginData(nonce);
         // generate a new nonce for the user to invalidate the current
         // signature...
         await client.query(
-          'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
-          [id],
+          'UPDATE account set nonce = md5(gen_random_bytes(256)) where id = $1',
+          [accountId],
         );
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
@@ -61,7 +51,18 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
-          return done(null, { id: id, address: address, nonce: nonce });
+          try {
+            await client.query('select private.create_auth_user($1)', [
+              accountId,
+            ]);
+          } catch (err) {
+            if (err.message !== `role "${accountId}" already exists`) {
+              throw err;
+            }
+          }
+          return done(null, {
+            accountId,
+          });
         } else {
           return done(null, false);
         }
@@ -80,34 +81,27 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           const DEFAULT_PROFILE_TYPE = 'user';
+          await client.query(
+            'select * from private.create_new_account_with_wallet($1, $2)',
+            [address, DEFAULT_PROFILE_TYPE],
+          );
+          const account = await client.query(
+            'select id, nonce from account where addr = $1',
+            [address],
+          );
+          const [{ id: accountId }] = account.rows;
           try {
-            try {
-              await client.query('select private.create_auth_user($1)', [
-                address,
-              ]);
-            } catch (err) {
-              if (err.message !== `role "${address}" already exists`) {
-                throw err;
-              }
-            }
-            await client.query(
-              'select * from private.create_new_account($1, $2)',
-              [address, DEFAULT_PROFILE_TYPE],
-            );
+            await client.query('select private.create_auth_user($1)', [
+              accountId,
+            ]);
           } catch (err) {
-            if (
-              err.toString() !==
-              'error: this addr belongs to a different account'
-            ) {
+            if (err.message !== `role "${accountId}" already exists`) {
               throw err;
             }
           }
-          const newAccount = await client.query(
-            'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
-            [address],
-          );
-          const [{ id, nonce }] = newAccount.rows;
-          return done(null, { id: id, address: address, nonce: nonce });
+          return done(null, {
+            accountId,
+          });
         } else {
           return done(null, false);
         }
