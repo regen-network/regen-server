@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Homebrew)
--- Dumped by pg_dump version 14.9 (Homebrew)
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,6 +35,13 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -284,8 +291,16 @@ CREATE TABLE public.account (
     email public.citext,
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
     addr text,
+    google text,
     CONSTRAINT account_type_check CHECK ((type = ANY (ARRAY['user'::public.account_type, 'organization'::public.account_type])))
 );
+
+
+--
+-- Name: COLUMN account.google; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.account.google IS 'Unique google identifier for the account.';
 
 
 --
@@ -484,6 +499,14 @@ ALTER TABLE ONLY public.account
 
 ALTER TABLE ONLY public.account
     ADD CONSTRAINT account_email_key UNIQUE (email);
+
+
+--
+-- Name: account account_google_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_google_key UNIQUE (google);
 
 
 --
@@ -855,6 +878,14 @@ CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WI
 --
 
 CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
