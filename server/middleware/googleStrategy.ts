@@ -17,7 +17,12 @@ export const googleStrategy = new Strategy(
     try {
       const [{ value: email, verified }] = emails;
       client = await pgPool.connect();
-      const id = await verify(email, verified, googleId, client);
+      const id = await verifyGoogleAccount({
+        email,
+        verified,
+        googleId,
+        client,
+      });
       if (id) {
         callback(null, { id });
       }
@@ -31,12 +36,30 @@ export const googleStrategy = new Strategy(
   },
 );
 
-export async function verify(
-  email: string,
-  verified: 'true' | 'false',
-  googleId: string,
-  client: PoolClient,
-) {
+type VerifyParams = {
+  email: string;
+  verified: 'true' | 'false';
+  googleId: string;
+  client: PoolClient;
+};
+
+/**
+ * Verifies that a google account has a verified email,
+ * if so, it creates or updates an account in the database if needed
+ * and returns the account id
+ * @param verifyParams Params for verifyGoogleAccount function
+ * @param verifyParams.email The email of the google account
+ * @param verifyParams.verified The verified state of the google account email
+ * @param verifyParams.googleId The id of the google account
+ * @param verifyParams.client The pg PoolClient
+ * @returns Promise<accountId>
+ */
+export async function verifyGoogleAccount({
+  email,
+  verified,
+  googleId,
+  client,
+}: VerifyParams) {
   try {
     // Adding the toString() conversion here,
     // because even though passport-google-oauth20 expects a string 'true' or 'false',
@@ -45,35 +68,35 @@ export async function verify(
       throw new Error('Email not verified');
     }
 
-    const emailPartyQuery = await client.query(
-      'select id from party where email = $1 and google is null',
+    const emailAccountQuery = await client.query(
+      'select id from account where email = $1 and google is null',
       [email],
     );
-    const googlePartyQuery = await client.query(
-      'select id from party where google = $1',
+    const googleAccountQuery = await client.query(
+      'select id from account where google = $1',
       [googleId],
     );
-    const existingUserWithEmail = emailPartyQuery.rowCount === 1;
-    if (existingUserWithEmail || googlePartyQuery.rowCount === 1) {
+    const existingUserWithEmail = emailAccountQuery.rowCount === 1;
+    if (existingUserWithEmail || googleAccountQuery.rowCount === 1) {
       if (existingUserWithEmail) {
         // Set google id for existing user
-        const [{ id }] = emailPartyQuery.rows;
-        await client.query('update party set google = $1 where email = $2', [
+        const [{ id }] = emailAccountQuery.rows;
+        await client.query('update account set google = $1 where email = $2', [
           googleId,
           email,
         ]);
         return id;
       } else {
-        const [{ id }] = googlePartyQuery.rows;
+        const [{ id }] = googleAccountQuery.rows;
         return id;
       }
     } else {
-      const createPartyQuery = await client.query(
-        'insert into party (type, email, google) values ($1, $2, $3) returning id',
+      const createAccountQuery = await client.query(
+        'insert into account (type, email, google) values ($1, $2, $3) returning id',
         ['user', email, googleId],
       );
-      if (createPartyQuery.rowCount === 1) {
-        const [{ id }] = createPartyQuery.rows;
+      if (createAccountQuery.rowCount === 1) {
+        const [{ id }] = createAccountQuery.rows;
         await client.query('select private.create_auth_user($1)', [id]);
         return id;
       }
