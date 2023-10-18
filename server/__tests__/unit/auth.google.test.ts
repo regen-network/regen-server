@@ -54,7 +54,7 @@ describe('auth google strategy verifyGoogleAccount', () => {
       expect(accountQuery.rows[0].google).toEqual(googleId);
     });
   });
-  test('when an existing user signs in, it should verifyGoogleAccount the existing account', async () => {
+  test('when an existing user signs in, it should verify the existing account', async () => {
     await withRootDb(async (client: PoolClient) => {
       const insertQuery = await client.query(
         'INSERT INTO account (type, email, google) values ($1, $2, $3) returning id',
