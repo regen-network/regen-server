@@ -36,6 +36,8 @@ jobs:
       AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      PASSCODE_EXPIRES_IN: "5 minutes"
+      PASSCODE_MAX_TRY_COUNT: 3
 
     strategy:
       matrix:
