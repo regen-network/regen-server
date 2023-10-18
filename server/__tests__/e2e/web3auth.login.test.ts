@@ -258,7 +258,7 @@ describe('web3auth login endpoint', () => {
     for (const entry of currentCookies) {
       const parts = entry.split(';');
       for (const part of parts) {
-        if (part.startsWith('regen-dev.x-csrf-token')) {
+        if (part.includes('regen-dev.x-csrf-token')) {
           cookies.push(part);
         }
       }
