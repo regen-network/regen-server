@@ -1,4 +1,4 @@
-import fetch, { Headers } from 'node-fetch';
+import fetch from 'node-fetch';
 import {
   CSRFRequest,
   performLogin,
@@ -6,8 +6,6 @@ import {
   setUpTestAccount,
   createNewUserAndLogin,
   getMarketplaceURL,
-  createNewUser,
-  parseSessionData,
 } from '../utils';
 import { Bech32Address } from '@keplr-wallet/cosmos';
 import { Mnemonic, PrivKeySecp256k1 } from '@keplr-wallet/crypto';
