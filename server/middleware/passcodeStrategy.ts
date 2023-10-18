@@ -33,6 +33,13 @@ type CreatePasscodeParams = {
   client?: PoolClient;
 };
 
+/**
+ * Deletes unconsumed passcodes and create a new passcode for the given email
+ * @param createPasscodeParams Params for createPasscode function
+ * @param createPasscodeParams.email The email of the user requesting a passcode to sign in
+ * @param createPasscodeParams.client The pg PoolClient
+ * @returns Promise<passcode>
+ */
 export async function createPasscode({ email, client }: CreatePasscodeParams) {
   try {
     if (!email) {
@@ -64,6 +71,16 @@ type VerifyPasscodeParams = {
   client?: PoolClient;
 };
 
+/**
+ * Verifies that the provided passcode matches with the given email,
+ * if so, it creates an account in the database if it doesn't exist
+ * and returns the account id
+ * @param verifyPasscodeParams Params for createPasscode function
+ * @param verifyPasscodeParams.email The email of the user providing a passcode to sign in
+ * @param verifyPasscodeParams.passcode The passcode to verify
+ * @param verifyPasscodeParams.client The pg PoolClient
+ * @returns Promise<passcode>
+ */
 export async function verifyPasscode({
   email,
   passcode,
