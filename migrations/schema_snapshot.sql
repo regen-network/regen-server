@@ -268,6 +268,48 @@ END;
 $$;
 
 
+--
+-- Name: random_passcode(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private.random_passcode() RETURNS character
+    LANGUAGE sql
+    AS $$
+  SELECT string_agg(private.shuffle('0123456789')::char, '')
+  FROM generate_series(1, 6)
+$$;
+
+
+--
+-- Name: FUNCTION random_passcode(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private.random_passcode() IS 'Generates a 6 digits random code';
+
+
+--
+-- Name: shuffle(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private.shuffle(text) RETURNS text
+    LANGUAGE sql
+    AS $_$
+  SELECT string_agg(ch, '')
+  FROM (
+      SELECT substr($1, i, 1) ch
+      FROM generate_series(1, length($1)) i
+      ORDER BY random()
+      ) s
+$_$;
+
+
+--
+-- Name: FUNCTION shuffle(text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private.shuffle(text) IS 'Shuffles an incoming string and aggregates the resulting rows to a string';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -351,6 +393,27 @@ CREATE TABLE graphile_migrate.migrations (
     filename text NOT NULL,
     date timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: passcode; Type: TABLE; Schema: private; Owner: -
+--
+
+CREATE TABLE private.passcode (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    email public.citext NOT NULL,
+    consumed boolean DEFAULT false NOT NULL,
+    code character(6) DEFAULT private.random_passcode() NOT NULL,
+    max_try_count smallint DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: TABLE passcode; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON TABLE private.passcode IS 'Passcodes for signing in with email';
 
 
 --
