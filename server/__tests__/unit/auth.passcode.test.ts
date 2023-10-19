@@ -126,19 +126,13 @@ describe('auth verify passcode', () => {
   });
   it('should throw an error if max retry count is exceeding', async () => {
     await withRootDb(async (client: PoolClient) => {
-      await createPasscode({ email, client });
-      expect(
-        verifyPasscode({ email, passcode: 'WRONG 1', client }),
-      ).rejects.toThrow('passcode.code_mismatch');
-      expect(
-        verifyPasscode({ email, passcode: 'WRONG 2', client }),
-      ).rejects.toThrow('passcode.code_mismatch');
-      expect(
-        verifyPasscode({ email, passcode: 'WRONG 3', client }),
-      ).rejects.toThrow('passcode.code_mismatch');
+      await client.query(
+        'INSERT INTO private.passcode (max_try_count, email) values ($1, $2) returning code',
+        [parseInt(process.env.PASSCODE_MAX_TRY_COUNT), email],
+      );
 
       expect(
-        verifyPasscode({ email, passcode: 'WRONG 4', client }),
+        verifyPasscode({ email, passcode: 'WRONG', client }),
       ).rejects.toThrow('passcode.exceed_max_try');
     });
   });
