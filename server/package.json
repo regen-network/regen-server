@@ -50,7 +50,6 @@
     "passport": "^0.6.0",
     "passport-custom": "^1.1.1",
     "passport-google-oauth20": "^2.0.0",
-    "passport-magic-login": "^1.2.2",
     "postgraphile": "^4.7.0",
     "postgraphile-plugin-connection-filter": "^2.3.0",
     "redis": "^3.1.1",
