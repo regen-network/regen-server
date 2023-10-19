@@ -7,6 +7,7 @@ import {
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { GOOGLE_CALLBACK_URL } from '../middleware/googleStrategy';
 import { ensureLoggedIn } from '../middleware/passport';
+import { updateActiveAccounts } from '../middleware/loginHelpers';
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.get(
     failureRedirect: process.env.MARKETPLACE_APP_URL,
   }),
   function (req, res) {
+    updateActiveAccounts(req);
     res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
   },
 );
