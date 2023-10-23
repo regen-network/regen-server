@@ -28,7 +28,7 @@ router.get(
 );
 
 router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
-  let client: PoolClient;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const email = req.body;

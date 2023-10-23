@@ -10,7 +10,7 @@ import ms from 'ms';
 
 export function PasscodeStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
-    let client: PoolClient;
+    let client: PoolClient | null = null;
     try {
       client = await pgPool.connect();
       const { email, passcode } = req.body;
@@ -30,7 +30,7 @@ export function PasscodeStrategy(): CustomStrategy {
 
 type CreatePasscodeParams = {
   email?: string;
-  client?: PoolClient;
+  client: PoolClient;
 };
 
 /**
@@ -68,7 +68,7 @@ export async function createPasscode({ email, client }: CreatePasscodeParams) {
 type VerifyPasscodeParams = {
   email?: string;
   passcode?: string;
-  client?: PoolClient;
+  client: PoolClient;
 };
 
 /**

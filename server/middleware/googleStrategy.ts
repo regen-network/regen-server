@@ -12,7 +12,7 @@ export const googleStrategy = new Strategy(
   },
   async function (accessToken, refreshToken, profile, callback) {
     const { id: googleId, emails } = profile;
-    let client: PoolClient;
+    let client: PoolClient | null = null;
 
     try {
       const [{ value: email, verified }] = emails;
