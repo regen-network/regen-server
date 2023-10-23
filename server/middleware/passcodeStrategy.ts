@@ -14,7 +14,7 @@ export function PasscodeStrategy(): CustomStrategy {
     try {
       client = await pgPool.connect();
       const { email, passcode } = req.body;
-      const accountId = verifyPasscode({ email, passcode, client });
+      const accountId = await verifyPasscode({ email, passcode, client });
       if (accountId) {
         return done(null, { accountId });
       }
