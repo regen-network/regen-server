@@ -1,5 +1,8 @@
+import * as env from 'env-var';
 import ms from 'ms';
 import {
+  PASSCODE_EXPIRES_IN_DEFAULT,
+  PASSCODE_MAX_TRY_COUNT_DEFAULT,
   createPasscode,
   verifyPasscode,
 } from '../../middleware/passcodeStrategy';
@@ -110,12 +113,13 @@ describe('auth verify passcode', () => {
   });
   it('should throw an error if passcode has expired', async () => {
     await withRootDb(async (client: PoolClient) => {
+      const expiresIn = env
+        .get('PASSCODE_EXPIRES_IN')
+        .default(PASSCODE_EXPIRES_IN_DEFAULT)
+        .asString();
       const insertQuery = await client.query(
         'INSERT INTO private.passcode (created_at, email) values ($1, $2) returning code',
-        [
-          new Date(Date.now() - ms(process.env.PASSCODE_EXPIRES_IN) - 100),
-          email,
-        ],
+        [new Date(Date.now() - ms(expiresIn) - 100), email],
       );
       const [{ code }] = insertQuery.rows;
 
@@ -126,9 +130,13 @@ describe('auth verify passcode', () => {
   });
   it('should throw an error if max retry count is exceeding', async () => {
     await withRootDb(async (client: PoolClient) => {
+      const maxTryCount = env
+        .get('PASSCODE_MAX_TRY_COUNT')
+        .default(PASSCODE_MAX_TRY_COUNT_DEFAULT)
+        .asIntPositive();
       await client.query(
         'INSERT INTO private.passcode (max_try_count, email) values ($1, $2) returning code',
-        [parseInt(process.env.PASSCODE_MAX_TRY_COUNT), email],
+        [maxTryCount, email],
       );
 
       expect(

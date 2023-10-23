@@ -1,3 +1,4 @@
+import * as env from 'env-var';
 import * as express from 'express';
 import passport from 'passport';
 import { doubleCsrfProtection } from '../middleware/csrf';
@@ -6,7 +7,10 @@ import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { runnerPromise } from '../runner';
 import { Runner } from 'graphile-worker';
-import { createPasscode } from '../middleware/passcodeStrategy';
+import {
+  PASSCODE_EXPIRES_IN_DEFAULT,
+  createPasscode,
+} from '../middleware/passcodeStrategy';
 
 let runner: Runner | undefined;
 runnerPromise.then(res => {
@@ -45,7 +49,10 @@ router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
         template: 'login_with_passcode.mjml',
         variables: {
           passcode,
-          expiresIn: process.env.PASSCODE_EXPIRES_IN,
+          expiresIn: env
+            .get('PASSCODE_EXPIRES_IN')
+            .default(PASSCODE_EXPIRES_IN_DEFAULT)
+            .asString(),
         },
       });
       res.sendStatus(200);

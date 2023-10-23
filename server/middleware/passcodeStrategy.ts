@@ -1,3 +1,5 @@
+import * as env from 'env-var';
+import ms from 'ms';
 import { pgPool } from 'common/pool';
 import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
@@ -6,7 +8,9 @@ import {
   UnauthorizedError,
   NotFoundError,
 } from '../errors';
-import ms from 'ms';
+
+export const PASSCODE_EXPIRES_IN_DEFAULT = '5 minutes';
+export const PASSCODE_MAX_TRY_COUNT_DEFAULT = 3;
 
 export function PasscodeStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
@@ -97,12 +101,20 @@ export async function verifyPasscode({
     if (passcodeQuery.rowCount === 1) {
       const [{ id, code, created_at, max_try_count }] = passcodeQuery.rows;
 
-      const expiresInMs = ms(process.env.PASSCODE_EXPIRES_IN);
+      const expiresIn = env
+        .get('PASSCODE_EXPIRES_IN')
+        .default(PASSCODE_EXPIRES_IN_DEFAULT)
+        .asString();
+      const expiresInMs = ms(expiresIn);
       if (new Date(created_at).getTime() + expiresInMs < Date.now()) {
         throw new UnauthorizedError('passcode.expired');
       }
 
-      if (max_try_count >= process.env.PASSCODE_MAX_TRY_COUNT) {
+      const maxTryCount = env
+        .get('PASSCODE_MAX_TRY_COUNT')
+        .default(PASSCODE_MAX_TRY_COUNT_DEFAULT)
+        .asIntPositive();
+      if (max_try_count >= maxTryCount) {
         throw new UnauthorizedError('passcode.exceed_max_try');
       }
 
