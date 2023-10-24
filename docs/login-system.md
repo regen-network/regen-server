@@ -128,7 +128,7 @@ Now imagine that the user wants to sign-in with wallet address "B".
 At this point, we just need to complete Step 3 through Step 5 for wallet address "B".
 Because all login requests are credentialed requests, each new login will be added to the same user session.
 
-### Getting the active accounts
+### Getting the authenticated accounts and the active account
 
 We provide an API endpoint for retreiving a JSON representation of the active accounts.
 You must send a credentialed GET request to the following endpoint:
