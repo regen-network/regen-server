@@ -40,7 +40,7 @@ router.get('/accounts', ensureLoggedIn(), (req, res) => {
   }
   return res.json({
     activeAccountId: req.session.activeAccountId,
-    activeAccountIds: req.session.activeAccountIds,
+    authenticatedAccountIds: req.session.authenticatedAccountIds,
   });
 });
 
@@ -52,11 +52,11 @@ router.post('/accounts', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
   if (!accountId) {
     return res.status(400).json({ error: 'missing accountId query parameter' });
   }
-  if (req.session.activeAccountIds.includes(accountId)) {
+  if (req.session.authenticatedAccountIds.includes(accountId)) {
     req.session.activeAccountId = accountId;
     return res.json({
       activeAccountId: req.session.activeAccountId,
-      activeAccountIds: req.session.activeAccountIds,
+      authenticatedAccountIds: req.session.authenticatedAccountIds,
     });
   } else {
     return res

@@ -146,7 +146,7 @@ HTTP/1.1 200 OK
 
 {
   activeAccountId: '7907fede-71d1-11ee-bd77-c26700a3bae4',
-  activeAccountIds: [
+  authenticatedAccountIds: [
     '7907fede-71d1-11ee-bd77-c26700a3bae4',
     '7916a88a-71d1-11ee-bd77-c26700a3bae4'
   ]
@@ -172,7 +172,7 @@ HTTP/1.1 200 OK
 
 {
   activeAccountId: '7916a88a-71d1-11ee-bd77-c26700a3bae4',
-  activeAccountIds: [
+  authenticatedAccountIds: [
     '7907fede-71d1-11ee-bd77-c26700a3bae4',
     '7916a88a-71d1-11ee-bd77-c26700a3bae4'
   ]

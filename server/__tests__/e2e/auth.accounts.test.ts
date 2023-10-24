@@ -25,9 +25,9 @@ describe('auth accounts endpoint', () => {
       method: 'GET',
       headers: authHeaders,
     });
-    const { activeAccountId, activeAccountIds } = await resp.json();
+    const { activeAccountId, authenticatedAccountIds } = await resp.json();
     expect(activeAccountId).toBe(accountId);
-    expect(activeAccountIds).toStrictEqual([accountId]);
+    expect(authenticatedAccountIds).toStrictEqual([accountId]);
   });
   it('POST /accounts is CSRF protected...', async () => {
     const resp = await fetch(`${getMarketplaceURL()}/auth/accounts`, {
@@ -112,7 +112,7 @@ describe('auth accounts endpoint', () => {
     // check that the sessions active account is the most recently logged in user...
     expect(sessionData).toHaveProperty('activeAccountId', user2AccountId);
     // check that both accounts are stored as active accounts...
-    expect(sessionData).toHaveProperty('activeAccountIds', [
+    expect(sessionData).toHaveProperty('authenticatedAccountIds', [
       user1AccountId,
       user2AccountId,
     ]);
@@ -126,7 +126,7 @@ describe('auth accounts endpoint', () => {
     const getResult = await getQuery.json();
     // we expect the same result from the API response as we saw in the session cookie...
     expect(getResult).toHaveProperty('activeAccountId', user2AccountId);
-    expect(getResult).toHaveProperty('activeAccountIds', [
+    expect(getResult).toHaveProperty('authenticatedAccountIds', [
       user1AccountId,
       user2AccountId,
     ]);

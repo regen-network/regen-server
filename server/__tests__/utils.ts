@@ -128,7 +128,7 @@ export function loginResponseAssertions(resp: Response): void {
   // assertions on the base64 encoded user session..
   expect(sessionData).toHaveProperty('passport.user.accountId');
   expect(sessionData).toHaveProperty('activeAccountId');
-  expect(sessionData).toHaveProperty('activeAccountIds');
+  expect(sessionData).toHaveProperty('authenticatedAccountIds');
 }
 
 export function parseSessionCookies(resp: Response): string {
