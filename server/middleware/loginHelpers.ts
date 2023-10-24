@@ -6,7 +6,6 @@ export function updateActiveAccounts(req: UserRequest, accountId?: string) {
   // in the case where the express.request is not available within the strategy, can instead get the accountId of the user that just authenticated from the request.user.accountId that passport provides.
   if (req.session) {
     if (!('authenticatedAccountIds' in req.session)) {
-      console.log('setting authenticatedAccountIds...');
       req.session.authenticatedAccountIds = [];
     }
     if (accountId) {
