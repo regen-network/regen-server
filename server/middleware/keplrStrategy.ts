@@ -4,6 +4,7 @@ import { pgPool } from 'common/pool';
 import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { InvalidLoginParameter } from '../errors';
+import { updateActiveAccounts } from './loginHelpers';
 
 export function genArbitraryLoginData(nonce: string): string {
   const data = JSON.stringify({
@@ -60,6 +61,7 @@ export function KeplrStrategy(): CustomStrategy {
               throw err;
             }
           }
+          updateActiveAccounts(req, accountId);
           return done(null, {
             accountId,
           });
@@ -99,6 +101,7 @@ export function KeplrStrategy(): CustomStrategy {
               throw err;
             }
           }
+          updateActiveAccounts(req, accountId);
           return done(null, {
             accountId,
           });

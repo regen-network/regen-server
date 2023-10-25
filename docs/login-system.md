@@ -1,23 +1,11 @@
 # Login system specification
 
 This document is a specification of the login system.
+We currently support the following methods for login:
 
-At high-level the steps to log-in a user are:
-
-1. Retrieve and save the CSRF tokens
-2. Retrieve the nonce for the user
-3. Generate the signature for the login request
-4. Submit the signature to the login endpoint
-5. Save the session info from the login endpoint response
-
-To log-out a user:
-
-1. Submit a request to logout endpoint
-
-To add an address to a logged-in user account:
-
-1. Generate the signature for the add address request
-2. Submit the signature to add address endpoint
+1. Keplr Wallet
+2. Google OAuth 2.0
+3. Email + OTPW
 
 ## Definitions
 
@@ -25,6 +13,14 @@ To add an address to a logged-in user account:
   The "with-credentials" feature means that cookies for the domain are automatically saved and used in subsequent requests.
 
 ## Keplr Login
+
+At high-level the steps to log-in a user with Keplr Wallet are:
+
+1. Retrieve and save the CSRF tokens
+2. Retrieve the nonce for the user
+3. Generate the signature for the login request
+4. Submit the signature to the login endpoint
+5. Save the session info from the login endpoint response
 
 ### Step 1: Retrieve and save the CSRF tokens
 
@@ -116,6 +112,72 @@ Set-Cookie: session=eyJwYXNzcG9ydCI6e319; path=/; expires=Wed, 15 Feb 2023 20:53
 ```
 
 At this point the user is no longer allowed to make requests to protected endpoints.
+Additionally, the user is logged out of any accounts that they have authenticated with previously, see "Multiple logins per session".
+
+## Multiple logins per session
+
+The login system supports multiple logins per session.
+Practically, this means that a user can sign in with multiple accounts in the same browser.
+
+### Example of multiple logins
+
+Suppose that the "Keplr Login" process above has been completed with wallet address "A".
+The user session has been established and it is stored in the users browser in an http-only cookie.
+
+Now imagine that the user wants to sign-in with wallet address "B".
+At this point, we just need to complete Step 3 through Step 5 for wallet address "B".
+Because all login requests are credentialed requests, each new login will be added to the same user session.
+
+### Getting the authenticated accounts and the active account
+
+We provide an API endpoint for retreiving a JSON representation of the active accounts.
+You must send a credentialed GET request to the following endpoint:
+
+```
+GET /auth/accounts HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+```
+
+In the example provided above, we would expect the following response:
+
+```
+HTTP/1.1 200 OK
+
+{
+  activeAccountId: '7907fede-71d1-11ee-bd77-c26700a3bae4',
+  authenticatedAccountIds: [
+    '7907fede-71d1-11ee-bd77-c26700a3bae4',
+    '7916a88a-71d1-11ee-bd77-c26700a3bae4'
+  ]
+}
+```
+
+### Switching the active account
+
+In order for the server to know which account the user wants to request data for, the server needs to have a single active account id.
+Since we allow the user to sign-in with multiple accounts, we need to allow the application to set the active account id.
+To set the active account id you must send a credentialed POST request to the following endpoint:
+
+```
+POST /auth/accounts?accountId=7916a88a-71d1-11ee-bd77-c26700a3bae4 HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+```
+
+In the example provided above, we would expect the following response (notice how the active account has been switched):
+
+```
+HTTP/1.1 200 OK
+
+{
+  activeAccountId: '7916a88a-71d1-11ee-bd77-c26700a3bae4',
+  authenticatedAccountIds: [
+    '7907fede-71d1-11ee-bd77-c26700a3bae4',
+    '7916a88a-71d1-11ee-bd77-c26700a3bae4'
+  ]
+}
+```
 
 ## References
 
