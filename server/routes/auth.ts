@@ -45,7 +45,7 @@ router.get('/accounts', ensureLoggedIn(), (req, res) => {
 });
 
 router.post('/accounts', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
-  const { accountId } = req.query;
+  const { accountId } = req.body;
   if (!req.session) {
     return res.sendStatus(500).json({ error: 'req.session is falsy' });
   }
