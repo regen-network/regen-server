@@ -137,6 +137,19 @@ describe('auth accounts endpoint', () => {
       user2AccountId,
     ]);
 
+    // check that the new active user can use an authenticated graphql query
+    const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
+      method: 'POST',
+      headers: authHeaders2,
+      body: JSON.stringify({
+        query: '{ getCurrentAccount { id } }',
+      }),
+    });
+    const data = await resp.json();
+
+    // expect that the response contains the user's current account
+    expect(data).toHaveProperty('data.getCurrentAccount.id', user2AccountId);
+
     // now since the current active account is user 2,
     // let's test the POST API endpoint and make sure we can switch back to user 1 as the active user...
     const postQuery = await fetch(`${getMarketplaceURL()}/auth/accounts`, {

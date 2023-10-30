@@ -44,26 +44,38 @@ router.get('/accounts', ensureLoggedIn(), (req, res) => {
   });
 });
 
-router.post('/accounts', doubleCsrfProtection, ensureLoggedIn(), (req, res) => {
-  const { accountId } = req.body;
-  if (!req.session) {
-    return res.sendStatus(500).json({ error: 'req.session is falsy' });
-  }
-  if (!accountId) {
-    return res.status(400).json({ error: 'missing accountId query parameter' });
-  }
-  if (req.session.authenticatedAccountIds.includes(accountId)) {
-    req.session.activeAccountId = accountId;
-    return res.json({
-      activeAccountId: req.session.activeAccountId,
-      authenticatedAccountIds: req.session.authenticatedAccountIds,
-    });
-  } else {
-    return res
-      .status(401)
-      .json({ error: 'user is not authorized to use the given accountId' });
-  }
-});
+router.post(
+  '/accounts',
+  doubleCsrfProtection,
+  ensureLoggedIn(),
+  (req, res, next) => {
+    const { accountId } = req.body;
+    if (!req.session) {
+      return res.sendStatus(500).json({ error: 'req.session is falsy' });
+    }
+    if (!accountId) {
+      return res
+        .status(400)
+        .json({ error: 'missing accountId query parameter' });
+    }
+    if (req.session.authenticatedAccountIds.includes(accountId)) {
+      req.session.activeAccountId = accountId;
+      req.login({ accountId }, err => {
+        if (err) {
+          next(err);
+        }
+      });
+      return res.json({
+        activeAccountId: req.session.activeAccountId,
+        authenticatedAccountIds: req.session.authenticatedAccountIds,
+      });
+    } else {
+      return res
+        .status(401)
+        .json({ error: 'user is not authorized to use the given accountId' });
+    }
+  },
+);
 
 router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
   let client: PoolClient | null = null;
