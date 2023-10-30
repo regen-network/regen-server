@@ -89,7 +89,7 @@ router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
             .asString(),
         },
       });
-      res.sendStatus(200);
+      res.send({ message: 'Email sent with passcode' });
     } else {
       res.sendStatus(500);
     }
