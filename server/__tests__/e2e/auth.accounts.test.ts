@@ -62,18 +62,24 @@ describe('auth accounts endpoint', () => {
     );
     const { activeAccountId } = await getAccountsResp.json();
     const updateActiveAccountResp1 = await fetch(
-      `${getMarketplaceURL()}/auth/accounts?accountId=${activeAccountId}`,
+      `${getMarketplaceURL()}/auth/accounts`,
       {
         method: 'POST',
         headers: authHeaders,
+        body: JSON.stringify({
+          accountId: activeAccountId,
+        }),
       },
     );
     expect(updateActiveAccountResp1.status).toBe(200);
     const updateActiveAccountResp2 = await fetch(
-      `${getMarketplaceURL()}/auth/accounts?accountId=foobar`,
+      `${getMarketplaceURL()}/auth/accounts`,
       {
         method: 'POST',
         headers: authHeaders,
+        body: JSON.stringify({
+          accountId: 'foobar',
+        }),
       },
     );
     expect(updateActiveAccountResp2.status).toBe(401);
@@ -133,13 +139,13 @@ describe('auth accounts endpoint', () => {
 
     // now since the current active account is user 2,
     // let's test the POST API endpoint and make sure we can switch back to user 1 as the active user...
-    const postQuery = await fetch(
-      `${getMarketplaceURL()}/auth/accounts?accountId=${user1AccountId}`,
-      {
-        method: 'POST',
-        headers: authHeaders2,
-      },
-    );
+    const postQuery = await fetch(`${getMarketplaceURL()}/auth/accounts`, {
+      method: 'POST',
+      headers: authHeaders2,
+      body: JSON.stringify({
+        accountId: user1AccountId,
+      }),
+    });
     expect(postQuery.status).toBe(200);
 
     // given that the query to switch the current active account modifies the user session,
