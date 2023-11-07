@@ -14,6 +14,7 @@ import {
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+import { UserRequest } from '../types';
 
 export const web3auth = express.Router();
 
@@ -84,14 +85,16 @@ web3auth.get('/nonce', async (req, res, next) => {
 web3auth.post(
   '/connect-wallet',
   doubleCsrfProtection,
-  async (req, res, next) => {
+  async (req: UserRequest, res, next) => {
     let client: PoolClient | null = null;
     try {
-      const { signature, accountId } = req.body;
-      if (!accountId || !signature) {
-        throw new InvalidLoginParameter(
-          'invalid account id or signature parameter',
-        );
+      const { signature } = req.body;
+      const accountId = req.user?.accountId;
+      if (!signature) {
+        throw new InvalidLoginParameter('Invalid signature parameter');
+      }
+      if (!accountId) {
+        throw new UnauthorizedError('No logged in account');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       client = await pgPool.connect();
