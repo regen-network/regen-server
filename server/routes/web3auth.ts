@@ -85,6 +85,7 @@ web3auth.get('/nonce', async (req, res, next) => {
 web3auth.post(
   '/connect-wallet',
   doubleCsrfProtection,
+  ensureLoggedIn(),
   async (req: UserRequest, res, next) => {
     let client: PoolClient | null = null;
     try {
@@ -92,9 +93,6 @@ web3auth.post(
       const accountId = req.user?.accountId;
       if (!signature) {
         throw new InvalidLoginParameter('Invalid signature parameter');
-      }
-      if (!accountId) {
-        throw new UnauthorizedError('No logged in account');
       }
       const address = pubkeyToAddress(signature.pub_key, 'regen');
       client = await pgPool.connect();
