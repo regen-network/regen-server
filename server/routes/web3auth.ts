@@ -1,4 +1,4 @@
-import { pubkeyToAddress, decodeSignature } from '@cosmjs/amino';
+import { pubkeyToAddress, decodeSignature, StdSignature } from '@cosmjs/amino';
 import { verifyADR36Amino } from '@keplr-wallet/cosmos';
 import * as express from 'express';
 import passport from 'passport';
@@ -89,48 +89,11 @@ web3auth.post(
   async (req: UserRequest, res, next) => {
     let client: PoolClient | null = null;
     try {
+      client = await pgPool.connect();
       const { signature } = req.body;
       const accountId = req.user?.accountId;
-      if (!signature) {
-        throw new InvalidLoginParameter('Invalid signature parameter');
-      }
-      const address = pubkeyToAddress(signature.pub_key, 'regen');
-      client = await pgPool.connect();
-      const accountByAddr = await client.query(
-        'select id, nonce from account where addr = $1',
-        [address],
-      );
-      if (accountByAddr.rowCount === 1) {
-        throw new Conflict('Wallet address used by another account');
-      } else {
-        const accountById = await client.query(
-          'select nonce from account where id = $2',
-          [accountId],
-        );
-        if (accountById.rowCount === 1) {
-          const nonce = accountById.rows[0].nonce;
-          const { pubkey: decodedPubKey, signature: decodedSignature } =
-            decodeSignature(signature);
-          const data = genArbitraryLoginData(nonce);
-          const verified = verifyADR36Amino(
-            'regen',
-            address,
-            data,
-            decodedPubKey,
-            decodedSignature,
-          );
-          if (verified) {
-            await client.query('update account set addr = $1 where id = $2', [
-              accountId,
-            ]);
-            res.send({ message: 'Wallet address successfully connected' });
-          } else {
-            throw new UnauthorizedError('Invalid signature');
-          }
-        } else {
-          throw new UnauthorizedError('Account not found for the given id');
-        }
-      }
+      await connectWallet({ signature, accountId, client });
+      res.send({ message: 'Wallet address successfully connected' });
     } catch (err) {
       return next(err);
     } finally {
@@ -140,3 +103,74 @@ web3auth.post(
     }
   },
 );
+
+type ConnectWalletParams = {
+  signature?: StdSignature;
+  accountId?: string;
+  client: PoolClient;
+};
+
+/**
+ * Connects a wallet address to an existing account if the provided signature is verified.
+ * @param connectWalletParams Params for connectWallet function
+ * @param connectWalletParams.signature The signature that will be verified
+ * @param connectWalletParams.accountId The id of the account to connect the wallet address to
+ * @param connectWalletParams.client The pg PoolClient
+ * @returns Promise<accountId>
+ */
+export async function connectWallet({
+  signature,
+  accountId,
+  client,
+}: ConnectWalletParams) {
+  console.log('accountId', accountId);
+  if (!signature) {
+    throw new InvalidLoginParameter('Invalid signature parameter');
+  }
+  const address = pubkeyToAddress(signature.pub_key, 'regen');
+  console.log('address', address);
+  const accountByAddr = await client.query(
+    'select id, nonce from account where addr = $1',
+    [address],
+  );
+  console.log('accountByAddr', accountByAddr?.rows);
+
+  if (accountByAddr.rowCount === 1) {
+    throw new Conflict('Wallet address used by another account');
+  } else {
+    const accountById = await client.query(
+      'select nonce from account where id = $1',
+      [accountId],
+    );
+    console.log('accountById', accountById);
+    if (accountById.rowCount === 1) {
+      const nonce = accountById.rows[0].nonce;
+      const { pubkey: decodedPubKey, signature: decodedSignature } =
+        decodeSignature(signature);
+      const data = genArbitraryLoginData(nonce);
+      // generate a new nonce for the user to invalidate the current
+      // signature...
+      await client.query(
+        'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
+        [accountId],
+      );
+      const verified = verifyADR36Amino(
+        'regen',
+        address,
+        data,
+        decodedPubKey,
+        decodedSignature,
+      );
+      if (verified) {
+        await client.query('update account set addr = $1 where id = $2', [
+          address,
+          accountId,
+        ]);
+      } else {
+        throw new UnauthorizedError('Invalid signature');
+      }
+    } else {
+      throw new UnauthorizedError('Account not found for the given id');
+    }
+  }
+}

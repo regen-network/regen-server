@@ -38,7 +38,7 @@ describe('auth create passcode', () => {
         'Invalid email parameter',
       );
     });
-  });
+  }); 
 });
 
 describe('auth verify passcode', () => {
