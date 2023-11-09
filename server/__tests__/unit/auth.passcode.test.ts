@@ -8,6 +8,11 @@ import {
 } from '../../middleware/passcodeStrategy';
 import { withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
+import {
+  InvalidLoginParameter,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../errors';
 
 const email = 'john@doe.com';
 
@@ -35,7 +40,7 @@ describe('auth create passcode', () => {
   it('should throw an error if email is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       expect(createPasscode({ client })).rejects.toThrow(
-        'Invalid email parameter',
+        new InvalidLoginParameter('Invalid email parameter'),
       );
     });
   });
@@ -98,14 +103,14 @@ describe('auth verify passcode', () => {
   it('should throw an error if email is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       expect(verifyPasscode({ passcode: '123456', client })).rejects.toThrow(
-        'Invalid email or passcode parameter',
+        new InvalidLoginParameter('Invalid email or passcode parameter'),
       );
     });
   });
   it('should throw an error if passcode is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       expect(verifyPasscode({ email, client })).rejects.toThrow(
-        'Invalid email or passcode parameter',
+        new InvalidLoginParameter('Invalid email or passcode parameter'),
       );
     });
   });
@@ -113,7 +118,7 @@ describe('auth verify passcode', () => {
     await withRootDb(async (client: PoolClient) => {
       expect(
         verifyPasscode({ email, passcode: 'AAAAAA', client }),
-      ).rejects.toThrow('passcode.not_found');
+      ).rejects.toThrow(new NotFoundError('passcode.not_found'));
     });
   });
   it('should throw an error if passcode has expired', async () => {
@@ -129,7 +134,7 @@ describe('auth verify passcode', () => {
       const [{ code }] = insertQuery.rows;
 
       expect(verifyPasscode({ email, passcode: code, client })).rejects.toThrow(
-        'passcode.expired',
+        new UnauthorizedError('passcode.expired'),
       );
     });
   });
@@ -146,7 +151,7 @@ describe('auth verify passcode', () => {
 
       expect(
         verifyPasscode({ email, passcode: 'WRONG', client }),
-      ).rejects.toThrow('passcode.exceed_max_try');
+      ).rejects.toThrow(new UnauthorizedError('passcode.exceed_max_try'));
     });
   });
   it('should throw an error if the wrong code is provided', async () => {
@@ -155,7 +160,7 @@ describe('auth verify passcode', () => {
 
       expect(
         verifyPasscode({ email, passcode: 'WRONG', client }),
-      ).rejects.toThrow('passcode.code_mismatch');
+      ).rejects.toThrow(new UnauthorizedError('passcode.code_mismatch'));
     });
   });
 });

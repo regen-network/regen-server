@@ -2,6 +2,11 @@ import { withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
 import { connectWallet } from '../../routes/web3auth';
 import { createNewUser, genSignature } from '../utils';
+import {
+  Conflict,
+  InvalidLoginParameter,
+  UnauthorizedError,
+} from '../../errors';
 
 describe('web3auth connect wallet', () => {
   it('should update the account address and nonce when a verified signature is provided', async () => {
@@ -45,13 +50,13 @@ describe('web3auth connect wallet', () => {
 
       await expect(
         connectWallet({ client, signature, accountId }),
-      ).rejects.toThrow('Invalid signature');
+      ).rejects.toThrow(new UnauthorizedError('Invalid signature'));
     });
   });
   it('should throw an error if signature is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       await expect(connectWallet({ client })).rejects.toThrow(
-        'Invalid signature parameter',
+        new InvalidLoginParameter('Invalid signature parameter'),
       );
     });
   });
@@ -74,7 +79,7 @@ describe('web3auth connect wallet', () => {
 
       await expect(
         connectWallet({ client, signature, accountId }),
-      ).rejects.toThrow('Wallet address used by another account');
+      ).rejects.toThrow(new Conflict('Wallet address used by another account'));
     });
   });
   it('should throw an error if the account does not exist', async () => {
@@ -93,7 +98,9 @@ describe('web3auth connect wallet', () => {
 
       await expect(
         connectWallet({ client, signature, accountId }),
-      ).rejects.toThrow('Account not found for the given id');
+      ).rejects.toThrow(
+        new UnauthorizedError('Account not found for the given id'),
+      );
     });
   });
 });
