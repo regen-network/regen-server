@@ -123,17 +123,14 @@ export async function connectWallet({
   accountId,
   client,
 }: ConnectWalletParams) {
-  console.log('accountId', accountId);
   if (!signature) {
     throw new InvalidLoginParameter('Invalid signature parameter');
   }
   const address = pubkeyToAddress(signature.pub_key, 'regen');
-  console.log('address', address);
   const accountByAddr = await client.query(
     'select id, nonce from account where addr = $1',
     [address],
   );
-  console.log('accountByAddr', accountByAddr?.rows);
 
   if (accountByAddr.rowCount === 1) {
     throw new Conflict('Wallet address used by another account');
@@ -142,7 +139,6 @@ export async function connectWallet({
       'select nonce from account where id = $1',
       [accountId],
     );
-    console.log('accountById', accountById);
     if (accountById.rowCount === 1) {
       const nonce = accountById.rows[0].nonce;
       const { pubkey: decodedPubKey, signature: decodedSignature } =

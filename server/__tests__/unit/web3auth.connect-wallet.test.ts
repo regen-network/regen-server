@@ -37,20 +37,20 @@ describe('web3auth connect wallet', () => {
         'INSERT INTO account (type) values ($1) returning id, nonce',
         ['user'],
       );
-      const [{ id: accountId, nonce }] = insQuery.rows;
+      const [{ id: accountId }] = insQuery.rows;
 
       // generate signature
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
       const signature = genSignature(userPrivKey, userPubKey, userAddr, '123');
 
-      expect(connectWallet({ client, signature, accountId })).rejects.toThrow(
-        'Invalid signature',
-      );
+      await expect(
+        connectWallet({ client, signature, accountId }),
+      ).rejects.toThrow('Invalid signature');
     });
   });
   it('should throw an error if signature is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
-      expect(connectWallet({ client })).rejects.toThrow(
+      await expect(connectWallet({ client })).rejects.toThrow(
         'Invalid signature parameter',
       );
     });
@@ -73,9 +73,9 @@ describe('web3auth connect wallet', () => {
       ]);
       const signature = genSignature(userPrivKey, userPubKey, userAddr, nonce);
 
-      expect(connectWallet({ client, signature, accountId })).rejects.toThrow(
-        'Wallet address used by another account',
-      );
+      await expect(
+        connectWallet({ client, signature, accountId }),
+      ).rejects.toThrow('Wallet address used by another account');
     });
   });
   it('should throw an error if the account does not exist', async () => {
@@ -92,9 +92,9 @@ describe('web3auth connect wallet', () => {
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
       const signature = genSignature(userPrivKey, userPubKey, userAddr, '');
 
-      expect(connectWallet({ client, signature, accountId })).rejects.toThrow(
-        'Account not found for the given id',
-      );
+      await expect(
+        connectWallet({ client, signature, accountId }),
+      ).rejects.toThrow('Account not found for the given id');
     });
   });
 });
