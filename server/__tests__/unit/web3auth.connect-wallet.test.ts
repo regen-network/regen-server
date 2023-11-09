@@ -39,7 +39,7 @@ describe('web3auth connect wallet', () => {
       );
       const [{ id: accountId }] = insQuery.rows;
 
-      // generate signature
+      // generate signature with invalid nonce '123'
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
       const signature = genSignature(userPrivKey, userPubKey, userAddr, '123');
 
@@ -55,7 +55,6 @@ describe('web3auth connect wallet', () => {
       );
     });
   });
-
   it('should throw an error if the wallet address is already used by another account', async () => {
     await withRootDb(async (client: PoolClient) => {
       // inserting some account
@@ -82,15 +81,15 @@ describe('web3auth connect wallet', () => {
     await withRootDb(async (client: PoolClient) => {
       // inserting some account and delete it
       const insQuery = await client.query(
-        'INSERT INTO account (type) values ($1) returning id',
+        'INSERT INTO account (type) values ($1) returning id, nonce',
         ['user'],
       );
-      const [{ id: accountId }] = insQuery.rows;
+      const [{ id: accountId, nonce }] = insQuery.rows;
       await client.query('DELETE FROM account where id = $1', [accountId]);
 
-      // generate signature for an address already used by another account
+      // generate signature
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
-      const signature = genSignature(userPrivKey, userPubKey, userAddr, '');
+      const signature = genSignature(userPrivKey, userPubKey, userAddr, nonce);
 
       await expect(
         connectWallet({ client, signature, accountId }),
