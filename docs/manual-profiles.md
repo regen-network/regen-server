@@ -14,13 +14,13 @@ There are scenarios that this document will walk through:
 If you need a user type account:
 
 ```sql
-SELECT * FROM private.create_new_account('regen12345', 'user');
+SELECT * FROM private.create_new_account_with_wallet('regen12345', 'user');
 ```
 
 If you need an organization type account:
 
 ```sql
-SELECT * FROM private.create_new_account('regen12345', 'organization');
+SELECT * FROM private.create_new_account_with_wallet('regen12345', 'organization');
 ```
 
 ## Step 2: Finding the profile id for an address

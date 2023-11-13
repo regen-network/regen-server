@@ -69,11 +69,11 @@ export async function verifyGoogleAccount({
     }
 
     const emailAccountQuery = await client.query(
-      'select id from account where email = $1 and google is null',
+      'select id from private.account where email = $1 and google is null',
       [email],
     );
     const googleAccountQuery = await client.query(
-      'select id from account where google = $1',
+      'select id from private.account where google = $1',
       [googleId],
     );
     const existingUserWithEmail = emailAccountQuery.rowCount === 1;
@@ -81,10 +81,10 @@ export async function verifyGoogleAccount({
       if (existingUserWithEmail) {
         // Set google id for existing user
         const [{ id: accountId }] = emailAccountQuery.rows;
-        await client.query('update account set google = $1 where email = $2', [
-          googleId,
-          email,
-        ]);
+        await client.query(
+          'update private.account set google = $1 where email = $2',
+          [googleId, email],
+        );
         return accountId;
       } else {
         const [{ id: accountId }] = googleAccountQuery.rows;
@@ -92,11 +92,11 @@ export async function verifyGoogleAccount({
       }
     } else {
       const createAccountQuery = await client.query(
-        'insert into account (type, email, google) values ($1, $2, $3) returning id',
+        'select * from private.create_new_web2_account($1, $2, $3)',
         ['user', email, googleId],
       );
       if (createAccountQuery.rowCount === 1) {
-        const [{ id: accountId }] = createAccountQuery.rows;
+        const [{ create_new_account: accountId }] = createAccountQuery.rows;
         await client.query('select private.create_auth_user($1)', [accountId]);
         return accountId;
       }

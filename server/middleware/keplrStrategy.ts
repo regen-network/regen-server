@@ -53,6 +53,12 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           try {
+            // If account was initially created by another account,
+            // unset creator_id so the creator can't update this account anymore.
+            await client.query(
+              'update account set creator_id = null where id = $1',
+              [accountId],
+            );
             await client.query('select private.create_auth_user($1)', [
               accountId,
             ]);
