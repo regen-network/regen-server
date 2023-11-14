@@ -603,6 +603,22 @@ ALTER TABLE ONLY private.account
 
 
 --
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: passcode passcode_pkey; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.passcode
+    ADD CONSTRAINT passcode_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: account account_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 

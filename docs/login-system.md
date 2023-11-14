@@ -130,7 +130,7 @@ Because all login requests are credentialed requests, each new login will be add
 
 ### Getting the authenticated accounts and the active account
 
-We provide an API endpoint for retreiving a JSON representation of the active accounts.
+We provide an API endpoint for retreiving a JSON representation of the authenticated accounts and the active accounts.
 You must send a credentialed GET request to the following endpoint:
 
 ```
@@ -146,9 +146,9 @@ HTTP/1.1 200 OK
 
 {
   activeAccountId: '7907fede-71d1-11ee-bd77-c26700a3bae4',
-  authenticatedAccountIds: [
-    '7907fede-71d1-11ee-bd77-c26700a3bae4',
-    '7916a88a-71d1-11ee-bd77-c26700a3bae4'
+  authenticatedAccounts: [
+    { id: '7907fede-71d1-11ee-bd77-c26700a3bae4', email: 'some@email.com', google: null },
+    { id: '7916a88a-71d1-11ee-bd77-c26700a3bae4', email: null, google: '12345' },
   ]
 }
 ```
@@ -172,9 +172,9 @@ HTTP/1.1 200 OK
 
 {
   activeAccountId: '7916a88a-71d1-11ee-bd77-c26700a3bae4',
-  authenticatedAccountIds: [
-    '7907fede-71d1-11ee-bd77-c26700a3bae4',
-    '7916a88a-71d1-11ee-bd77-c26700a3bae4'
+  authenticatedAccounts: [
+    { id: '7907fede-71d1-11ee-bd77-c26700a3bae4', email: 'some@email.com', google: null },
+    { id: '7916a88a-71d1-11ee-bd77-c26700a3bae4', email: null, google: '12345' },
   ]
 }
 ```
