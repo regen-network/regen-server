@@ -130,7 +130,7 @@ Because all login requests are credentialed requests, each new login will be add
 
 ### Getting the authenticated accounts and the active account
 
-We provide an API endpoint for retreiving a JSON representation of the authenticated accounts and the active accounts.
+We provide an API endpoint for retreiving a JSON representation of the authenticated accounts and the active account.
 You must send a credentialed GET request to the following endpoint:
 
 ```
