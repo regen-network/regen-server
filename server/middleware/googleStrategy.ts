@@ -96,7 +96,8 @@ export async function verifyGoogleAccount({
         ['user', email, googleId],
       );
       if (createAccountQuery.rowCount === 1) {
-        const [{ create_new_account: accountId }] = createAccountQuery.rows;
+        const [{ create_new_web2_account: accountId }] =
+          createAccountQuery.rows;
         await client.query('select private.create_auth_user($1)', [accountId]);
         return accountId;
       }

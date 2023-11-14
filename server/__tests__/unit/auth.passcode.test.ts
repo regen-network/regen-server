@@ -48,11 +48,16 @@ describe('auth verify passcode', () => {
       const accountId = await verifyPasscode({ email, passcode, client });
 
       const accountQuery = await client.query(
-        'SELECT * FROM account WHERE email = $1',
-        [email],
+        'SELECT * FROM public.account WHERE id = $1',
+        [accountId],
       );
       expect(accountQuery.rowCount).toBe(1);
-      expect(accountQuery.rows[0].id).toEqual(accountId);
+      const privateAccountQuery = await client.query(
+        'SELECT * FROM private.account WHERE email = $1',
+        [email],
+      );
+      expect(privateAccountQuery.rowCount).toBe(1);
+      expect(privateAccountQuery.rows[0].id).toEqual(accountId);
 
       const roleQuery = await client.query(
         'SELECT 1 FROM pg_roles WHERE rolname = $1',
@@ -71,10 +76,10 @@ describe('auth verify passcode', () => {
   it('when an existing user signs in with a valid code, it should return the user account id', async () => {
     await withRootDb(async (client: PoolClient) => {
       const insertQuery = await client.query(
-        'INSERT INTO account (type, email) values ($1, $2) returning id',
+        'select * from private.create_new_web2_account($1, $2)',
         ['user', email],
       );
-      const [{ id: newAccountId }] = insertQuery.rows;
+      const [{ create_new_web2_account: newAccountId }] = insertQuery.rows;
       await client.query('select private.create_auth_user($1)', [newAccountId]);
 
       const passcode = await createPasscode({ email, client });
