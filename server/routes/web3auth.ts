@@ -13,7 +13,7 @@ import {
 } from '../errors';
 import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
-import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
 
 export const web3auth = express.Router();
@@ -143,7 +143,7 @@ export async function connectWallet({
       const nonce = accountById.rows[0].nonce;
       const { pubkey: decodedPubKey, signature: decodedSignature } =
         decodeSignature(signature);
-      const data = genArbitraryLoginData(nonce);
+      const data = genArbitraryConnectWalletData(nonce);
       // generate a new nonce for the user to invalidate the current
       // signature...
       await client.query(

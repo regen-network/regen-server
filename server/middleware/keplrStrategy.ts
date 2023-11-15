@@ -16,6 +16,16 @@ export function genArbitraryLoginData(nonce: string): string {
   return data;
 }
 
+export function genArbitraryConnectWalletData(nonce: string): string {
+  const data = JSON.stringify({
+    title: 'Regen Network Login',
+    description:
+      'This is a transaction that allows Regen Network to connect a wallet address to your account.',
+    nonce: nonce,
+  });
+  return data;
+}
+
 export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
     let client: PoolClient | null = null;

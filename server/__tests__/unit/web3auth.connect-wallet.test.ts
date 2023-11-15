@@ -7,6 +7,7 @@ import {
   InvalidLoginParameter,
   UnauthorizedError,
 } from '../../errors';
+import { genArbitraryConnectWalletData } from '../../middleware/keplrStrategy';
 
 describe('web3auth connect wallet', () => {
   it('should update the account address and nonce when a verified signature is provided', async () => {
@@ -20,7 +21,13 @@ describe('web3auth connect wallet', () => {
 
       // generate signature
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
-      const signature = genSignature(userPrivKey, userPubKey, userAddr, nonce);
+      const signature = genSignature(
+        userPrivKey,
+        userPubKey,
+        userAddr,
+        nonce,
+        genArbitraryConnectWalletData(nonce),
+      );
 
       await connectWallet({ signature, accountId, client });
 
@@ -75,7 +82,13 @@ describe('web3auth connect wallet', () => {
         'user',
         userAddr,
       ]);
-      const signature = genSignature(userPrivKey, userPubKey, userAddr, nonce);
+      const signature = genSignature(
+        userPrivKey,
+        userPubKey,
+        userAddr,
+        nonce,
+        genArbitraryConnectWalletData(nonce),
+      );
 
       await expect(
         connectWallet({ client, signature, accountId }),
@@ -94,7 +107,13 @@ describe('web3auth connect wallet', () => {
 
       // generate signature
       const { userPrivKey, userPubKey, userAddr } = await createNewUser();
-      const signature = genSignature(userPrivKey, userPubKey, userAddr, nonce);
+      const signature = genSignature(
+        userPrivKey,
+        userPubKey,
+        userAddr,
+        nonce,
+        genArbitraryConnectWalletData(nonce),
+      );
 
       await expect(
         connectWallet({ client, signature, accountId }),

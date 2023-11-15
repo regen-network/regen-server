@@ -51,8 +51,8 @@ export function genSignature(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  data: string = genArbitraryLoginData(nonce),
 ) {
-  const data = genArbitraryLoginData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
