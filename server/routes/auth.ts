@@ -39,7 +39,7 @@ router.get('/accounts', ensureLoggedIn(), async (req, res, next) => {
     return res.sendStatus(500).json({ error: 'req.session is falsy' });
   }
   try {
-    const authenticatedAccounts = await getPrivateAccounts(
+    const authenticatedAccounts = await getPrivateAccountInfo(
       req.session.authenticatedAccountIds,
     );
     return res.json({
@@ -73,7 +73,7 @@ router.post(
         }
       });
       try {
-        const authenticatedAccounts = await getPrivateAccounts(
+        const authenticatedAccounts = await getPrivateAccountInfo(
           req.session.authenticatedAccountIds,
         );
         return res.json({
@@ -91,16 +91,12 @@ router.post(
   },
 );
 
-type GetPrivateAccountsParams = {
-  authenticatedAccountIds: string[];
-};
-
 /**
- * getPrivateAccounts returns the private accounts info for a list of ids.
+ * getPrivateAccountInfo returns the private accounts info for a list of ids.
  * @param authenticatedAccountIds The list of authenticated accounts ids
- * @returns Promise<Array<{id: string; email: string | null, google: string | null}>>
+ * @returns Promise<Array<{id: string; email: string | null, google: string | null}> | undefined>
  */
-export async function getPrivateAccounts(
+export async function getPrivateAccountInfo(
   authenticatedAccountIds: string[],
 ): Promise<
   | Array<{
