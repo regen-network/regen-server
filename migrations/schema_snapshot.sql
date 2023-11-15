@@ -283,11 +283,12 @@ CREATE FUNCTION private.create_new_web2_account(v_account_type public.account_ty
 DECLARE
     v_account_id uuid;
 BEGIN
-    INSERT INTO private.account (email, google)
-      VALUES (v_email, v_google)
+    INSERT INTO public.account (type)
+      VALUES (v_account_type)
       RETURNING id INTO v_account_id;
-    INSERT INTO public.account (id, type)
-      VALUES (v_account_id, v_account_type);
+    
+    INSERT INTO private.account (id, email, google)
+      VALUES (v_account_id, v_email, v_google);
     
     RAISE LOG 'new account_id %', v_account_id;
     RETURN v_account_id;
@@ -834,6 +835,14 @@ CREATE INDEX project_verifier_id_key ON public.project USING btree (verifier_id)
 
 ALTER TABLE ONLY graphile_migrate.migrations
     ADD CONSTRAINT migrations_previous_hash_fkey FOREIGN KEY (previous_hash) REFERENCES graphile_migrate.migrations(hash);
+
+
+--
+-- Name: account public_account_id_fkey; Type: FK CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT public_account_id_fkey FOREIGN KEY (id) REFERENCES public.account(id);
 
 
 --
