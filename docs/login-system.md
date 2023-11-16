@@ -41,10 +41,10 @@ The `token` will be submitted to the regen server in the `X-CSRF-TOKEN` header.
 
 ### Step 2: Retrieve a nonce for the account by address
 
-Send a GET request to the `/web3auth/nonce` endpoint that includes the `userAddress` query parameter:
+Send a GET request to the `/wallet-auth/nonce` endpoint that includes the `userAddress` query parameter:
 
 ```http
-GET /web3auth/nonce?userAddress=regen1yte5v5g6hez6zpplz7zffp5m5tcxajnpxpkh69 HTTP/1.1
+GET /wallet-auth/nonce?userAddress=regen1yte5v5g6hez6zpplz7zffp5m5tcxajnpxpkh69 HTTP/1.1
 
 HTTP/1.1 200 OK
 
@@ -78,7 +78,7 @@ Note: The data being signed must be identical between client and server, otherwi
 Send a credentialed POST request which includes the token and cookie acquired in step #1 and a JSON request body that includes the `signature`:
 
 ```http
-POST /web3auth/login HTTP/1.1
+POST /wallet-auth/login HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f
 
@@ -112,7 +112,7 @@ The steps are:
 
 ### Step 2: Retrieve the nonce for the account by id
 
-We can't use the `/web3auth/nonce` endpoint here since it looks for a nonce for an account by address. Instead, a graphql query `GetAccountById` can be used.
+We can't use the `/wallet-auth/nonce` endpoint here since it looks for a nonce for an account by address. Instead, a graphql query `GetAccountById` can be used.
 
 ### Step 3: Generate the signature for the /connect-wallet request
 
@@ -135,7 +135,7 @@ Generate the `signature` for the login request using the keplr wallet sign arbit
 Send a credentialed POST request and a JSON request body that includes the `signature`:
 
 ```http
-POST /web3auth/connect-wallet HTTP/1.1
+POST /wallet-auth/connect-wallet HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
 
@@ -154,7 +154,7 @@ HTTP/1.1 200 OK
 Send a credentialed POST request to the logout endpoint:
 
 ```http
-POST /web3auth/logout HTTP/1.1
+POST /wallet-auth/logout HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
 
@@ -230,7 +230,6 @@ HTTP/1.1 200 OK
   ]
 }
 ```
-
 
 ## References
 

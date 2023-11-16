@@ -1,6 +1,6 @@
 import { withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
-import { connectWallet } from '../../routes/web3auth';
+import { connectWallet } from '../../routes/wallet-auth';
 import { createNewUser, genSignature } from '../utils';
 import {
   Conflict,
@@ -9,7 +9,7 @@ import {
 } from '../../errors';
 import { genArbitraryConnectWalletData } from '../../middleware/keplrStrategy';
 
-describe('web3auth connect wallet', () => {
+describe('wallet-auth connect wallet', () => {
   it('should update the account address and nonce when a verified signature is provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       // inserting some account

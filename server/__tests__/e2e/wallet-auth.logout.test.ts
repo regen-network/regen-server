@@ -6,9 +6,9 @@ import {
   getMarketplaceURL,
 } from '../utils';
 
-describe('web3auth logout endpoint', () => {
+describe('wallet-auth logout endpoint', () => {
   it('returns 403 if double csrf is not used', async () => {
-    const resp = await fetch(`${getMarketplaceURL()}/web3auth/logout`, {
+    const resp = await fetch(`${getMarketplaceURL()}/wallet-auth/logout`, {
       method: 'POST',
     });
     expect(resp.status).toBe(403);
@@ -16,7 +16,7 @@ describe('web3auth logout endpoint', () => {
 
   it('returns 401 if request is unauthorized', async () => {
     const req = await CSRFRequest(
-      `${getMarketplaceURL()}/web3auth/logout`,
+      `${getMarketplaceURL()}/wallet-auth/logout`,
       'POST',
     );
     const resp = await fetch(req);
@@ -27,10 +27,13 @@ describe('web3auth logout endpoint', () => {
     const { authHeaders, csrfHeaders } = await createNewUserAndLogin();
 
     // now we pass the combined headers for the logout request
-    const logoutResp = await fetch(`${getMarketplaceURL()}/web3auth/logout`, {
-      method: 'POST',
-      headers: authHeaders,
-    });
+    const logoutResp = await fetch(
+      `${getMarketplaceURL()}/wallet-auth/logout`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+      },
+    );
     expect(logoutResp.status).toBe(200);
     const logoutRespData = await logoutResp.json();
     expect(logoutRespData).toHaveProperty(

@@ -14,13 +14,13 @@ const TEST_ACCOUNT_MNEMONIC =
   'culture photo express fantasy draft world dress waste side mask page valve';
 const TEST_ADDRESS = 'regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm';
 
-describe('web3auth login endpoint', () => {
+describe('wallet-auth login endpoint', () => {
   beforeAll(async () => {
     await setUpTestAccount(TEST_ACCOUNT_MNEMONIC);
   });
 
   it('returns 403 if double csrf is not used', async () => {
-    const resp = await fetch(`${getMarketplaceURL()}/web3auth/login`, {
+    const resp = await fetch(`${getMarketplaceURL()}/wallet-auth/login`, {
       method: 'POST',
     });
     expect(resp.status).toBe(403);
@@ -28,7 +28,7 @@ describe('web3auth login endpoint', () => {
 
   it('does not return 403 if double csrf is used', async () => {
     const req = await CSRFRequest(
-      `${getMarketplaceURL()}/web3auth/login`,
+      `${getMarketplaceURL()}/wallet-auth/login`,
       'POST',
     );
     const resp = await fetch(req);
@@ -37,7 +37,7 @@ describe('web3auth login endpoint', () => {
 
   it('an invalid signature returns a 500 error', async () => {
     const req = await CSRFRequest(
-      `${getMarketplaceURL()}/web3auth/login`,
+      `${getMarketplaceURL()}/wallet-auth/login`,
       'POST',
     );
     const resp = await fetch(req, {
@@ -82,7 +82,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
@@ -114,7 +114,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();

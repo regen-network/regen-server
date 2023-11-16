@@ -16,9 +16,9 @@ import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
 
-export const web3auth = express.Router();
+export const walletAuth = express.Router();
 
-web3auth.use(
+walletAuth.use(
   '/login',
   doubleCsrfProtection,
   passport.authenticate('keplr'),
@@ -30,7 +30,7 @@ web3auth.use(
   },
 );
 
-web3auth.post(
+walletAuth.post(
   '/logout',
   doubleCsrfProtection,
   ensureLoggedIn(),
@@ -46,7 +46,7 @@ web3auth.post(
   },
 );
 
-web3auth.get('/nonce', async (req, res, next) => {
+walletAuth.get('/nonce', async (req, res, next) => {
   // this endpoint fetches a nonce for a given user by their wallet
   // address. this is a piece of public information so it is ok to
   // have this public.
@@ -82,7 +82,7 @@ web3auth.get('/nonce', async (req, res, next) => {
   }
 });
 
-web3auth.post(
+walletAuth.post(
   '/connect-wallet',
   doubleCsrfProtection,
   ensureLoggedIn(),
