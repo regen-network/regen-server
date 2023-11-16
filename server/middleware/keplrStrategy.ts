@@ -50,7 +50,7 @@ export function KeplrStrategy(): CustomStrategy {
         // generate a new nonce for the user to invalidate the current
         // signature...
         await client.query(
-          'UPDATE account set nonce = md5(gen_random_bytes(256)) where id = $1',
+          `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
           [accountId],
         );
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts

@@ -365,7 +365,7 @@ CREATE TABLE public.account (
     twitter_link text,
     website_link text,
     creator_id uuid,
-    nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
+    nonce text DEFAULT encode(sha256(public.gen_random_bytes(256)), 'hex'::text) NOT NULL,
     addr text,
     CONSTRAINT account_type_check CHECK ((type = ANY (ARRAY['user'::public.account_type, 'organization'::public.account_type])))
 );

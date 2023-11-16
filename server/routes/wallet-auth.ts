@@ -147,7 +147,7 @@ export async function connectWallet({
       // generate a new nonce for the user to invalidate the current
       // signature...
       await client.query(
-        'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
+        `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
         [accountId],
       );
       const verified = verifyADR36Amino(
