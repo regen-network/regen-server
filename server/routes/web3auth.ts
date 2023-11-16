@@ -116,7 +116,7 @@ type ConnectWalletParams = {
  * @param connectWalletParams.signature The signature that will be verified
  * @param connectWalletParams.accountId The id of the account to connect the wallet address to
  * @param connectWalletParams.client The pg PoolClient
- * @returns Promise<accountId>
+ * @returns Promise<void>
  */
 export async function connectWallet({
   signature,
