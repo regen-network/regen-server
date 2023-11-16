@@ -15,6 +15,11 @@ describe('create_new_account_with_wallet', () => {
         accountId,
       ]);
       expect(result.rowCount).toBe(1);
+      const privateAccountResult = await client.query(
+        'select 1 from private.account where id=$1',
+        [accountId],
+      );
+      expect(privateAccountResult.rowCount).toBe(1);
     });
   });
   it('account creation is an idempotent operation...', async () => {

@@ -250,22 +250,57 @@ CREATE FUNCTION private.create_new_account_with_wallet(addr text, v_account_type
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    v_addr text = addr;
+  v_addr text = addr;
+  v_account_id uuid;
+BEGIN    
+  INSERT INTO account (TYPE, addr)
+    VALUES (v_account_type, v_addr)
+  ON CONFLICT ON CONSTRAINT
+    account_addr_key
+  DO UPDATE SET
+    creator_id = null
+  RETURNING id INTO v_account_id;
+
+  INSERT INTO private.account (id)
+    VALUES (v_account_id)
+  ON CONFLICT ON CONSTRAINT
+    account_pkey
+  DO NOTHING;
+
+  RAISE LOG 'new account_id %', v_account_id;
+  RETURN v_account_id;
+END;
+$$;
+
+
+--
+-- Name: create_new_web2_account(public.account_type, public.citext, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private.create_new_web2_account(v_account_type public.account_type, v_email public.citext DEFAULT NULL::public.citext, v_google text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
     v_account_id uuid;
 BEGIN
-    INSERT INTO account (TYPE, addr)
-        VALUES (v_account_type, v_addr)
-    ON CONFLICT ON CONSTRAINT
-        account_addr_key
-    DO UPDATE SET
-        creator_id = null
-    RETURNING
-        id INTO v_account_id;
-
+    INSERT INTO public.account (type)
+      VALUES (v_account_type)
+      RETURNING id INTO v_account_id;
+    
+    INSERT INTO private.account (id, email, google)
+      VALUES (v_account_id, v_email, v_google);
+    
     RAISE LOG 'new account_id %', v_account_id;
     RETURN v_account_id;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private.create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text) IS 'Insert a new account with email or google id in both private.account and public.account tables';
 
 
 --
@@ -330,19 +365,10 @@ CREATE TABLE public.account (
     twitter_link text,
     website_link text,
     creator_id uuid,
-    email public.citext,
     nonce text DEFAULT md5(public.gen_random_bytes(256)) NOT NULL,
     addr text,
-    google text,
     CONSTRAINT account_type_check CHECK ((type = ANY (ARRAY['user'::public.account_type, 'organization'::public.account_type])))
 );
-
-
---
--- Name: COLUMN account.google; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.account.google IS 'Unique google identifier for the account.';
 
 
 --
@@ -393,6 +419,24 @@ CREATE TABLE graphile_migrate.migrations (
     filename text NOT NULL,
     date timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: account; Type: TABLE; Schema: private; Owner: -
+--
+
+CREATE TABLE private.account (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    email public.citext,
+    google text
+);
+
+
+--
+-- Name: TABLE account; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON TABLE private.account IS 'Table to store private account fields like email or google id';
 
 
 --
@@ -549,27 +593,43 @@ ALTER TABLE ONLY graphile_migrate.migrations
 
 
 --
+-- Name: account account_email_key; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_email_key UNIQUE (email);
+
+
+--
+-- Name: account account_google_key; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_google_key UNIQUE (google);
+
+
+--
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: passcode passcode_pkey; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.passcode
+    ADD CONSTRAINT passcode_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: account account_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.account
     ADD CONSTRAINT account_addr_key UNIQUE (addr);
-
-
---
--- Name: account account_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.account
-    ADD CONSTRAINT account_email_key UNIQUE (email);
-
-
---
--- Name: account account_google_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.account
-    ADD CONSTRAINT account_google_key UNIQUE (google);
 
 
 --
@@ -778,6 +838,14 @@ ALTER TABLE ONLY graphile_migrate.migrations
 
 
 --
+-- Name: account public_account_id_fkey; Type: FK CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT public_account_id_fkey FOREIGN KEY (id) REFERENCES public.account(id);
+
+
+--
 -- Name: account account_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -910,7 +978,7 @@ CREATE POLICY account_select_all ON public.account FOR SELECT USING (true);
 --
 
 CREATE POLICY account_update_only_by_creator ON public.account FOR UPDATE USING (((creator_id IN ( SELECT get_current_account.id
-   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))) AND (NOT (EXISTS ( SELECT 1
+   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, nonce, addr))) AND (NOT (EXISTS ( SELECT 1
    FROM pg_roles
   WHERE (pg_roles.rolname = (account.id)::text))))));
 
@@ -920,7 +988,7 @@ CREATE POLICY account_update_only_by_creator ON public.account FOR UPDATE USING 
 --
 
 CREATE POLICY account_update_only_by_owner ON public.account FOR UPDATE USING ((id IN ( SELECT get_current_account.id
-   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, email, nonce, addr))));
+   FROM public.get_current_account() get_current_account(id, created_at, updated_at, type, name, description, image, bg_image, twitter_link, website_link, creator_id, nonce, addr))));
 
 
 --

@@ -132,7 +132,7 @@ export async function verifyPasscode({
       );
 
       const accountQuery = await client.query(
-        'select id from account where email = $1',
+        'select id from private.account where email = $1',
         [email],
       );
       if (accountQuery.rowCount === 1) {
@@ -140,11 +140,12 @@ export async function verifyPasscode({
         return accountId;
       } else {
         const createAccountQuery = await client.query(
-          'insert into account (type, email) values ($1, $2) returning id',
+          'select * from private.create_new_web2_account($1, $2)',
           ['user', email],
         );
         if (createAccountQuery.rowCount === 1) {
-          const [{ id: accountId }] = createAccountQuery.rows;
+          const [{ create_new_web2_account: accountId }] =
+            createAccountQuery.rows;
           await client.query('select private.create_auth_user($1)', [
             accountId,
           ]);

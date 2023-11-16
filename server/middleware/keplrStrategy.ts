@@ -53,6 +53,18 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           try {
+            // If account was initially created by another account,
+            // unset creator_id so the creator can't update this account anymore.
+            await client.query(
+              'update account set creator_id = null where id = $1',
+              [accountId],
+            );
+            // Insert a corresponding private.account if there wasn't already one.
+            // This can happen in the case just above, where the public.account was initially created by another account.
+            await client.query(
+              'insert into private.account (id) values ($1) on conflict on constraint account_pkey do nothing',
+              [accountId],
+            );
             await client.query('select private.create_auth_user($1)', [
               accountId,
             ]);

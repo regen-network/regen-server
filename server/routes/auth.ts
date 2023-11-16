@@ -34,21 +34,28 @@ router.get(
   },
 );
 
-router.get('/accounts', ensureLoggedIn(), (req, res) => {
+router.get('/accounts', ensureLoggedIn(), async (req, res, next) => {
   if (!req.session) {
     return res.sendStatus(500).json({ error: 'req.session is falsy' });
   }
-  return res.json({
-    activeAccountId: req.session.activeAccountId,
-    authenticatedAccountIds: req.session.authenticatedAccountIds,
-  });
+  try {
+    const authenticatedAccounts = await getPrivateAccountInfo(
+      req.session.authenticatedAccountIds,
+    );
+    return res.json({
+      activeAccountId: req.session.activeAccountId,
+      authenticatedAccounts,
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post(
   '/accounts',
   doubleCsrfProtection,
   ensureLoggedIn(),
-  (req, res, next) => {
+  async (req, res, next) => {
     const { accountId } = req.body;
     if (!req.session) {
       return res.sendStatus(500).json({ error: 'req.session is falsy' });
@@ -65,10 +72,17 @@ router.post(
           next(err);
         }
       });
-      return res.json({
-        activeAccountId: req.session.activeAccountId,
-        authenticatedAccountIds: req.session.authenticatedAccountIds,
-      });
+      try {
+        const authenticatedAccounts = await getPrivateAccountInfo(
+          req.session.authenticatedAccountIds,
+        );
+        return res.json({
+          activeAccountId: req.session.activeAccountId,
+          authenticatedAccounts,
+        });
+      } catch (err) {
+        next(err);
+      }
     } else {
       return res
         .status(401)
@@ -76,6 +90,40 @@ router.post(
     }
   },
 );
+
+/**
+ * getPrivateAccountInfo returns the private accounts info for a list of ids.
+ * @param authenticatedAccountIds The list of authenticated accounts ids
+ * @returns Promise<Array<{id: string; email: string | null, google: string | null}> | undefined>
+ */
+export async function getPrivateAccountInfo(
+  authenticatedAccountIds: string[],
+): Promise<
+  | Array<{
+      id: string;
+      email: string | null;
+      google: string | null;
+    }>
+  | undefined
+> {
+  let client: PoolClient | null = null;
+  try {
+    client = await pgPool.connect();
+    const accountsQuery = await client.query(
+      'select * from private.account where id = ANY ($1)',
+      [authenticatedAccountIds],
+    );
+    if (accountsQuery.rowCount === authenticatedAccountIds.length) {
+      return accountsQuery.rows;
+    }
+  } catch (e) {
+    throw new Error(e);
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+}
 
 router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
   let client: PoolClient | null = null;
