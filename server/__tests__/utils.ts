@@ -51,8 +51,8 @@ export function genSignature(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  data: string = genArbitraryLoginData(nonce),
 ) {
-  const data = genArbitraryLoginData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
@@ -90,7 +90,7 @@ export async function performLogin(
   // send the request to login API endpoint
   // this step requires retrieving CSRF tokens first
   const req = await CSRFRequest(
-    `${getMarketplaceURL()}/web3auth/login`,
+    `${getMarketplaceURL()}/wallet-auth/login`,
     'POST',
   );
   const response = await fetch(req, {
@@ -176,7 +176,7 @@ export async function setUpTestAccount(mnemonic: string): Promise<void> {
   const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
 
   const resp = await fetch(
-    `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+    `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
   );
   // if the nonce was not found then the account does not yet exist
   if (resp.status === 404) {

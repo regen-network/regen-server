@@ -45,28 +45,24 @@ type CreatePasscodeParams = {
  * @returns Promise<passcode>
  */
 export async function createPasscode({ email, client }: CreatePasscodeParams) {
-  try {
-    if (!email) {
-      throw new InvalidLoginParameter('Invalid email parameter');
-    }
-
-    // Delete unconsumed passcodes for the given email
-    await client.query(
-      'delete from private.passcode where email = $1 and consumed = false',
-      [email],
-    );
-
-    // Create new passcode
-    const passcodeResp = await client.query(
-      'insert into private.passcode (email) values ($1) returning code',
-      [email],
-    );
-
-    const passcode = passcodeResp.rows[0].code;
-    return passcode;
-  } catch (err) {
-    throw new Error(err);
+  if (!email) {
+    throw new InvalidLoginParameter('Invalid email parameter');
   }
+
+  // Delete unconsumed passcodes for the given email
+  await client.query(
+    'delete from private.passcode where email = $1 and consumed = false',
+    [email],
+  );
+
+  // Create new passcode
+  const passcodeResp = await client.query(
+    'insert into private.passcode (email) values ($1) returning code',
+    [email],
+  );
+
+  const passcode = passcodeResp.rows[0].code;
+  return passcode;
 }
 
 type VerifyPasscodeParams = {
@@ -93,69 +89,63 @@ export async function verifyPasscode({
   if (!email || !passcode) {
     throw new InvalidLoginParameter('Invalid email or passcode parameter');
   }
-  try {
-    const passcodeQuery = await client.query(
-      'select * from private.passcode where email = $1 and consumed = false limit 1',
-      [email],
-    );
-    if (passcodeQuery.rowCount === 1) {
-      const [{ id, code, created_at, max_try_count }] = passcodeQuery.rows;
+  const passcodeQuery = await client.query(
+    'select * from private.passcode where email = $1 and consumed = false limit 1',
+    [email],
+  );
+  if (passcodeQuery.rowCount === 1) {
+    const [{ id, code, created_at, max_try_count }] = passcodeQuery.rows;
 
-      const expiresIn = env
-        .get('PASSCODE_EXPIRES_IN')
-        .default(PASSCODE_EXPIRES_IN_DEFAULT)
-        .asString();
-      const expiresInMs = ms(expiresIn);
-      if (new Date(created_at).getTime() + expiresInMs < Date.now()) {
-        throw new UnauthorizedError('passcode.expired');
-      }
+    const expiresIn = env
+      .get('PASSCODE_EXPIRES_IN')
+      .default(PASSCODE_EXPIRES_IN_DEFAULT)
+      .asString();
+    const expiresInMs = ms(expiresIn);
+    if (new Date(created_at).getTime() + expiresInMs < Date.now()) {
+      throw new UnauthorizedError('passcode.expired');
+    }
 
-      const maxTryCount = env
-        .get('PASSCODE_MAX_TRY_COUNT')
-        .default(PASSCODE_MAX_TRY_COUNT_DEFAULT)
-        .asIntPositive();
-      if (max_try_count >= maxTryCount) {
-        throw new UnauthorizedError('passcode.exceed_max_try');
-      }
+    const maxTryCount = env
+      .get('PASSCODE_MAX_TRY_COUNT')
+      .default(PASSCODE_MAX_TRY_COUNT_DEFAULT)
+      .asIntPositive();
+    if (max_try_count >= maxTryCount) {
+      throw new UnauthorizedError('passcode.exceed_max_try');
+    }
 
-      if (code !== passcode) {
-        await client.query(
-          'update private.passcode set max_try_count = max_try_count + 1 where id = $1',
-          [id],
-        );
-        throw new UnauthorizedError('passcode.code_mismatch');
-      }
-
+    if (code !== passcode) {
       await client.query(
-        'update private.passcode set consumed = true where id = $1',
+        'update private.passcode set max_try_count = max_try_count + 1 where id = $1',
         [id],
       );
-
-      const accountQuery = await client.query(
-        'select id from private.account where email = $1',
-        [email],
-      );
-      if (accountQuery.rowCount === 1) {
-        const [{ id: accountId }] = accountQuery.rows;
-        return accountId;
-      } else {
-        const createAccountQuery = await client.query(
-          'select * from private.create_new_web2_account($1, $2)',
-          ['user', email],
-        );
-        if (createAccountQuery.rowCount === 1) {
-          const [{ create_new_web2_account: accountId }] =
-            createAccountQuery.rows;
-          await client.query('select private.create_auth_user($1)', [
-            accountId,
-          ]);
-          return accountId;
-        }
-      }
-    } else {
-      throw new NotFoundError('passcode.not_found');
+      throw new UnauthorizedError('passcode.code_mismatch');
     }
-  } catch (err) {
-    throw new Error(err);
+
+    await client.query(
+      'update private.passcode set consumed = true where id = $1',
+      [id],
+    );
+
+    const accountQuery = await client.query(
+      'select id from private.account where email = $1',
+      [email],
+    );
+    if (accountQuery.rowCount === 1) {
+      const [{ id: accountId }] = accountQuery.rows;
+      return accountId;
+    } else {
+      const createAccountQuery = await client.query(
+        'select * from private.create_new_web2_account($1, $2)',
+        ['user', email],
+      );
+      if (createAccountQuery.rowCount === 1) {
+        const [{ create_new_web2_account: accountId }] =
+          createAccountQuery.rows;
+        await client.query('select private.create_auth_user($1)', [accountId]);
+        return accountId;
+      }
+    }
+  } else {
+    throw new NotFoundError('passcode.not_found');
   }
 }

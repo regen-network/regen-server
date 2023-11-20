@@ -16,13 +16,13 @@ We currently support the following methods for login:
 
 At high-level the steps to log-in a user with Keplr Wallet are:
 
-1. Retrieve and save the CSRF tokens
-2. Retrieve the nonce for the user
+1. Retrieve and save the CSRF token
+2. Retrieve the nonce for the account by address
 3. Generate the signature for the login request
 4. Submit the signature to the login endpoint
 5. Save the session info from the login endpoint response
 
-### Step 1: Retrieve and save the CSRF tokens
+### Step 1: Retrieve and save the CSRF token
 
 Send a credentialed GET request to the `/csrfToken` endpoint:
 
@@ -39,12 +39,12 @@ The `token` in the JSON response body must also be saved.
 The `token` and the cookie must be submitted together for all subsequent requests to the regen server.
 The `token` will be submitted to the regen server in the `X-CSRF-TOKEN` header.
 
-### Step 2: Retrieve a nonce for the user
+### Step 2: Retrieve a nonce for the account by address
 
-Send a GET request to the `/web3auth/nonce` endpoint that includes the `userAddress` query parameter:
+Send a GET request to the `/wallet-auth/nonce` endpoint that includes the `userAddress` query parameter:
 
 ```http
-GET /web3auth/nonce?userAddress=regen1yte5v5g6hez6zpplz7zffp5m5tcxajnpxpkh69 HTTP/1.1
+GET /wallet-auth/nonce?userAddress=regen1yte5v5g6hez6zpplz7zffp5m5tcxajnpxpkh69 HTTP/1.1
 
 HTTP/1.1 200 OK
 
@@ -78,7 +78,7 @@ Note: The data being signed must be identical between client and server, otherwi
 Send a credentialed POST request which includes the token and cookie acquired in step #1 and a JSON request body that includes the `signature`:
 
 ```http
-POST /web3auth/login HTTP/1.1
+POST /wallet-auth/login HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f
 
@@ -97,12 +97,64 @@ Set-Cookie: session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVk
 
 At this point the user is authenticated and any requests to protected endpoints will be allowed.
 
+## Connect a Keplr wallet address to existing web2 account
+
+Users that have logged in via Google or Email (i.e. web2 account) can later on add a wallet address to their account. This means that [Keplr Login](#keplr-login) could then be used to authenticate, instead of using Google or Email.
+
+The steps are:
+
+1. Retrieve and save the CSRF token
+1. Retrieve the nonce for the account by id
+1. Generate the signature for the /connect-wallet request
+1. Submit the signature to the /connect-wallet endpoint
+
+### [Step 1: Retrieve and save the CSRF token](#step-1-retrieve-and-save-the-csrf-token)
+
+### Step 2: Retrieve the nonce for the account by id
+
+We can't use the `/wallet-auth/nonce` endpoint here since it looks for a nonce for an account by address. Instead, a graphql query `GetAccountById` can be used.
+
+### Step 3: Generate the signature for the /connect-wallet request
+
+Generate the `signature` for the login request using the keplr wallet sign arbitrary API:
+
+```javascript
+  const signature = await window.keplr!.signArbitrary(
+    "regen-1",
+    key.bech32Address,
+    JSON.stringify({
+      title: 'Regen Network Login',
+      description: 'This is a transaction that allows Regen Network to connect a wallet address to your account.',
+      nonce: nonce,
+    })
+  );
+```
+
+### Step 4: Submit the signature to the /connect-wallet endpoint
+
+Send a credentialed POST request and a JSON request body that includes the `signature`:
+
+```http
+POST /wallet-auth/connect-wallet HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+
+{"signature":{"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"A56RnHlm6rfDLIBdEAibUtRFwXB0HNP3pVU+9V9nvlMU"},"signature":"a9A8q+C6FsroiVOcIT+641RsDu0j6uylmNMOjGGyrGRuyu8eP4AJGOzoBcbcQw1ZH2VRmGhksdFQGR0dFopOeg=="}}
+```
+
+Pending success of that request the server will respond with the following:
+
+```http
+HTTP/1.1 200 OK
+{"message":"'Wallet address successfully connected'"}
+```
+
 ## Logout
 
 Send a credentialed POST request to the logout endpoint:
 
 ```http
-POST /web3auth/logout HTTP/1.1
+POST /wallet-auth/logout HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
 
