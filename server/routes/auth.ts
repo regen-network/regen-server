@@ -29,13 +29,19 @@ router.get(
   passport.authenticate('google', {
     failureRedirect: process.env.MARKETPLACE_APP_URL,
   }),
-  function (req, res) {
-    updateActiveAccounts(req);
-    res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
+  function (req: UserRequest, res) {
+    // There's already a currently logged in account,
+    // so we redirect to the settings page from where the connect google request has been initiated
+    if (req.user?.accountId) {
+      res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile/edit/settings`);
+    } else {
+      updateActiveAccounts(req);
+      res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
+    }
   },
 );
 
-router.get(
+router.post(
   '/google/disconnect',
   doubleCsrfProtection,
   ensureLoggedIn(),
