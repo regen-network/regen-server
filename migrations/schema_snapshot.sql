@@ -428,7 +428,8 @@ CREATE TABLE graphile_migrate.migrations (
 CREATE TABLE private.account (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     email public.citext,
-    google text
+    google text,
+    google_email text
 );
 
 
@@ -437,6 +438,13 @@ CREATE TABLE private.account (
 --
 
 COMMENT ON TABLE private.account IS 'Table to store private account fields like email or google id';
+
+
+--
+-- Name: COLUMN account.google_email; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON COLUMN private.account.google_email IS 'Email corresponding to the google account used for logging in, which can be different from the main account email';
 
 
 --
@@ -598,6 +606,14 @@ ALTER TABLE ONLY graphile_migrate.migrations
 
 ALTER TABLE ONLY private.account
     ADD CONSTRAINT account_email_key UNIQUE (email);
+
+
+--
+-- Name: account account_google_email_key; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_google_email_key UNIQUE (google_email);
 
 
 --
