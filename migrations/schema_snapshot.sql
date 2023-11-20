@@ -287,20 +287,13 @@ BEGIN
       VALUES (v_account_type)
       RETURNING id INTO v_account_id;
     
-    INSERT INTO private.account (id, email, google)
-      VALUES (v_account_id, v_email, v_google);
+    INSERT INTO private.account (id, email, google, google_email)
+      VALUES (v_account_id, v_email, v_google, case when v_google is not null then v_email else null end);
     
     RAISE LOG 'new account_id %', v_account_id;
     RETURN v_account_id;
 END;
 $$;
-
-
---
--- Name: FUNCTION create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text); Type: COMMENT; Schema: private; Owner: -
---
-
-COMMENT ON FUNCTION private.create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text) IS 'Insert a new account with email or google id in both private.account and public.account tables';
 
 
 --

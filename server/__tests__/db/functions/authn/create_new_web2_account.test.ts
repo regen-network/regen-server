@@ -28,6 +28,8 @@ describe('create_new_account_with_wallet', () => {
       );
       expect(privateAccountQuery.rowCount).toBe(1);
       expect(privateAccountQuery.rows[0].email).toBe(email);
+      expect(privateAccountQuery.rows[0].google).toBe(null);
+      expect(privateAccountQuery.rows[0].google_email).toBe(null);
     });
   });
   it('should be able to create a new account with an email and a google id', async () => {
@@ -54,6 +56,7 @@ describe('create_new_account_with_wallet', () => {
       expect(privateAccountQuery.rowCount).toBe(1);
       expect(privateAccountQuery.rows[0].email).toBe(email);
       expect(privateAccountQuery.rows[0].google).toBe(googleId);
+      expect(privateAccountQuery.rows[0].google_email).toBe(email);
     });
   });
 });

@@ -26,6 +26,7 @@ describe('auth google strategy', () => {
       );
       expect(privateAccountQuery.rowCount).toBe(1);
       expect(privateAccountQuery.rows[0].email).toEqual(email);
+      expect(privateAccountQuery.rows[0].google_email).toEqual(email);
       expect(privateAccountQuery.rows[0].google).toEqual(googleId);
 
       const roleQuery = await client.query(
@@ -57,6 +58,7 @@ describe('auth google strategy', () => {
       expect(newId).toEqual(accountId);
       expect(privateAccountQuery.rowCount).toBe(1);
       expect(privateAccountQuery.rows[0].email).toEqual(email);
+      expect(privateAccountQuery.rows[0].google_email).toEqual(email);
       expect(privateAccountQuery.rows[0].google).toEqual(googleId);
     });
   });
