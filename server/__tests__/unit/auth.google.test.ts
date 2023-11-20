@@ -87,4 +87,32 @@ describe('auth google strategy', () => {
       ).rejects.toThrow('Email not verified');
     });
   });
+  test('when a logged-in user connects to google, it should update the account google id and google email', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const googleEmail = 'google@email.com';
+      const insertQuery = await client.query(
+        'select * from private.create_new_web2_account($1, $2)',
+        ['user', email],
+      );
+      const [{ create_new_web2_account: newId }] = insertQuery.rows;
+      await client.query('select private.create_auth_user($1)', [newId]);
+
+      const accountId = await verifyGoogleAccount({
+        email: googleEmail,
+        verified: 'true',
+        googleId,
+        currentAccountId: newId,
+        client,
+      });
+      const privateAccountQuery = await client.query(
+        'SELECT * FROM private.account WHERE id = $1',
+        [accountId],
+      );
+      expect(newId).toEqual(accountId);
+      expect(privateAccountQuery.rowCount).toBe(1);
+      expect(privateAccountQuery.rows[0].email).toEqual(email);
+      expect(privateAccountQuery.rows[0].google_email).toEqual(googleEmail);
+      expect(privateAccountQuery.rows[0].google).toEqual(googleId);
+    });
+  });
 });
