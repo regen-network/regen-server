@@ -17,10 +17,9 @@ import {
   PrivKeySecp256k1,
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
-import {
-  genArbitraryLoginData,
-  genArbitraryAddAddressData,
-} from '../middleware/keplrStrategy';
+import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+
+export const longerTestTimeout = 30000;
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
@@ -52,26 +51,8 @@ export function genSignature(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  data: string = genArbitraryLoginData(nonce),
 ) {
-  const data = genArbitraryLoginData(nonce);
-  const signDoc = makeADR36AminoSignDoc(signer, data);
-  const msg = serializeSignDoc(signDoc);
-  // these next lines are equivalent to the keplr.signArbitrary browser API
-  const signatureBytes = privKey.signDigest32(Hash.sha256(msg));
-  const signature = encodeSecp256k1Signature(
-    pubKey.toBytes(false),
-    signatureBytes,
-  );
-  return signature;
-}
-
-export function genAddAddressSignature(
-  privKey: PrivKeySecp256k1,
-  pubKey: PubKeySecp256k1,
-  signer: string,
-  nonce: string,
-) {
-  const data = genArbitraryAddAddressData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
@@ -102,37 +83,52 @@ export async function performLogin(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  headers?: Headers,
 ): Promise<PerformLogin> {
   // sign the data
   const signature = genSignature(privKey, pubKey, signer, nonce);
   // send the request to login API endpoint
   // this step requires retrieving CSRF tokens first
   const req = await CSRFRequest(
-    `${getMarketplaceURL()}/web3auth/login`,
+    `${getMarketplaceURL()}/wallet-auth/login`,
     'POST',
   );
   const response = await fetch(req, {
     body: JSON.stringify({ signature: signature }),
+    headers: headers ? headers : undefined,
   });
   const authHeaders = genAuthHeaders(response.headers, req.headers);
   return { authHeaders, response, csrfHeaders: req.headers };
 }
 
-export function loginResponseAssertions(resp: Response, signer: string): void {
+export function parseSessionData(resp: Response) {
+  const cookies = resp.headers.get('set-cookie');
+  if (!cookies) {
+    throw new Error('set cookie headers are missing..');
+  }
+  const sessionMatch = cookies.match(/session=(.*?);/);
+  if (!sessionMatch) {
+    throw new Error('session cookie not found..');
+  }
+  const sessionString = sessionMatch[1];
+  const sessionData = JSON.parse(atob(sessionString));
+  return { cookies, sessionData };
+}
+
+export function loginResponseAssertions(resp: Response): void {
   expect(resp.status).toBe(200);
   // these assertions on the cookies check for important fields that should be set
   // we expect that a session cookie is created here
   // this session cookie is where the user session is stored
-  const cookies = resp.headers.get('set-cookie');
+  const { cookies, sessionData } = parseSessionData(resp);
   expect(cookies).toMatch(/session=(.*?);/);
   expect(cookies).toMatch(/session.sig=(.*?);/);
   expect(cookies).toMatch(/expires=(.*?);/);
 
   // assertions on the base64 encoded user session..
-  const sessionString = cookies.match(/session=(.*?);/)[1];
-  const sessionData = JSON.parse(atob(sessionString));
-  expect(sessionData).toHaveProperty('passport.user.id');
-  expect(sessionData).toHaveProperty('passport.user.address', signer);
+  expect(sessionData).toHaveProperty('passport.user.accountId');
+  expect(sessionData).toHaveProperty('activeAccountId');
+  expect(sessionData).toHaveProperty('authenticatedAccountIds');
 }
 
 export function parseSessionCookies(resp: Response): string {
@@ -180,7 +176,7 @@ export async function setUpTestAccount(mnemonic: string): Promise<void> {
   const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
 
   const resp = await fetch(
-    `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+    `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
   );
   // if the nonce was not found then the account does not yet exist
   if (resp.status === 404) {

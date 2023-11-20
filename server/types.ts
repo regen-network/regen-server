@@ -1,9 +1,8 @@
 import { Request } from 'express';
 
 export interface User {
-  id?: number;
   sub?: string;
-  address?: string;
+  accountId?: string;
 }
 
 export interface UserRequest extends Request {

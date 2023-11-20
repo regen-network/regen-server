@@ -14,13 +14,13 @@ const TEST_ACCOUNT_MNEMONIC =
   'culture photo express fantasy draft world dress waste side mask page valve';
 const TEST_ADDRESS = 'regen1hscq3r6zz9ucut2d0jqqdc9lqwvu8h47x73lvm';
 
-describe('web3auth login endpoint', () => {
+describe('wallet-auth login endpoint', () => {
   beforeAll(async () => {
     await setUpTestAccount(TEST_ACCOUNT_MNEMONIC);
   });
 
   it('returns 403 if double csrf is not used', async () => {
-    const resp = await fetch(`${getMarketplaceURL()}/web3auth/login`, {
+    const resp = await fetch(`${getMarketplaceURL()}/wallet-auth/login`, {
       method: 'POST',
     });
     expect(resp.status).toBe(403);
@@ -28,7 +28,7 @@ describe('web3auth login endpoint', () => {
 
   it('does not return 403 if double csrf is used', async () => {
     const req = await CSRFRequest(
-      `${getMarketplaceURL()}/web3auth/login`,
+      `${getMarketplaceURL()}/wallet-auth/login`,
       'POST',
     );
     const resp = await fetch(req);
@@ -37,7 +37,7 @@ describe('web3auth login endpoint', () => {
 
   it('an invalid signature returns a 500 error', async () => {
     const req = await CSRFRequest(
-      `${getMarketplaceURL()}/web3auth/login`,
+      `${getMarketplaceURL()}/wallet-auth/login`,
       'POST',
     );
     const resp = await fetch(req, {
@@ -53,22 +53,25 @@ describe('web3auth login endpoint', () => {
       authHeaders,
       userAddr,
     } = await createNewUserAndLogin();
-    loginResponseAssertions(loginResp, userAddr);
+    loginResponseAssertions(loginResp);
 
     // check that an authenticated user can use an authenticated graphql query
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    // expect that the response contains the user's current addresses
-    // because this test is for a new user they should only have one address
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: userAddr },
-    ]);
+
+    // expect that the response contains the user's current account
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', userAddr);
+    const loginRespJson = await loginResp.json();
+    expect(data).toHaveProperty(
+      'data.getCurrentAccount.id',
+      loginRespJson.user.accountId,
+    );
   });
 
   it('authenticates an existing user successfully and creates a session...', async () => {
@@ -79,7 +82,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
@@ -90,19 +93,17 @@ describe('web3auth login endpoint', () => {
       signer,
       nonce,
     );
-    loginResponseAssertions(loginResp, signer);
+    loginResponseAssertions(loginResp);
 
     const resp = await fetch(`${getMarketplaceURL()}/graphql`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
-    expect(data).toHaveProperty('data.getCurrentAddrs.nodes', [
-      { addr: signer },
-    ]);
+    expect(data).toHaveProperty('data.getCurrentAccount.addr', signer);
   });
 
   it('returns a permissions error if the user session is manipulated...', async () => {
@@ -113,7 +114,7 @@ describe('web3auth login endpoint', () => {
     const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
     expect(signer).toBe(TEST_ADDRESS);
     const nonceResp = await fetch(
-      `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+      `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
     );
     expect(nonceResp.status).toBe(200);
     const { nonce } = await nonceResp.json();
@@ -159,7 +160,7 @@ describe('web3auth login endpoint', () => {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
-        query: '{getCurrentAddrs { nodes {addr}}}',
+        query: '{ getCurrentAccount { id addr } }',
       }),
     });
     const data = await resp.json();
@@ -167,6 +168,6 @@ describe('web3auth login endpoint', () => {
     // the user session is invalidated because the session is signed
     // with a secret that only the backend knows,
     // an attacker could only succeed if they knew the secret and created a new signature.
-    expect(data.data.getCurrentAddrs).toBe(null);
+    expect(data.data.getCurrentAccount).toBe(null);
   });
 });

@@ -14,19 +14,19 @@ There are scenarios that this document will walk through:
 If you need a user type account:
 
 ```sql
-SELECT * FROM private.create_new_account('regen12345', 'user');
+SELECT * FROM private.create_new_account_with_wallet('regen12345', 'user');
 ```
 
 If you need an organization type account:
 
 ```sql
-SELECT * FROM private.create_new_account('regen12345', 'organization');
+SELECT * FROM private.create_new_account_with_wallet('regen12345', 'organization');
 ```
 
 ## Step 2: Finding the profile id for an address
 
 ```sql
-SELECT party.id FROM party JOIN wallet ON party.wallet_id = wallet.id WHERE wallet.addr = 'regen12345';
+SELECT id FROM account WHERE addr = 'regen12345';
 ```
 
 ```
@@ -40,7 +40,7 @@ SELECT party.id FROM party JOIN wallet ON party.wallet_id = wallet.id WHERE wall
 
 ```sql
 UPDATE
-  party
+  account
 SET
   name = 'Name',
   description = '160 character description',
@@ -57,7 +57,7 @@ WHERE
 ## Step 1: Finding the profile id for an address
 
 ```sql
-SELECT party.id FROM party JOIN wallet ON party.wallet_id = wallet.id WHERE wallet.addr = 'regen12345';
+SELECT id FROM account WHERE addr = 'regen12345';
 ```
 
 ```
@@ -71,7 +71,7 @@ SELECT party.id FROM party JOIN wallet ON party.wallet_id = wallet.id WHERE wall
 
 ```sql
 UPDATE
-  party
+  account
 SET
   name = 'Name',
   description = '160 character description',
@@ -91,10 +91,10 @@ These images are typically given to use by Erika since they usually are custom d
 The same applies for all of the other fields for the profile, they are given by Erika.
 
 The images must be uploaded to the `regen-registry` bucket, within the `profiles` folder.
-Within the `profiles` folder, we create a folder whose name equals the `party_id` for the profile.
+Within the `profiles` folder, we create a folder whose name equals the `account.id` for the profile.
 The profile image and the background image can be uploaded within the newly created folder with any name.
 Then you can copy the URL to the file, it will be publically available by default based on the configuration of the `profiles` folder.
-These URLs are what can be used in the `party.image` and `party.bg_image` fields.
+These URLs are what can be used in the `account.image` and `account.bg_image` fields.
 
 # Testing profile changes
 

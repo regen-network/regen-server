@@ -45,10 +45,11 @@
     "lodash": "^4.17.21",
     "mailerlite-api-v2-node": "^1.1.2",
     "mjml": "^4.14.1",
+    "ms": "^2.1.3",
     "nodemailer": "^6.6.3",
     "passport": "^0.6.0",
     "passport-custom": "^1.1.1",
-    "passport-magic-login": "^1.2.2",
+    "passport-google-oauth20": "^2.0.0",
     "postgraphile": "^4.7.0",
     "postgraphile-plugin-connection-filter": "^2.3.0",
     "redis": "^3.1.1",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
     "@types/cookie-session": "^2.0.44",
+    "@types/passport-google-oauth20": "^2.0.12",
     "@types/swagger-jsdoc": "^6.0.1",
     "@types/swagger-ui-express": "^4.1.3",
     "nodemon": "^2.0.22"

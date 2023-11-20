@@ -4,6 +4,7 @@ import { pgPool } from 'common/pool';
 import { PoolClient } from 'pg';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import { InvalidLoginParameter } from '../errors';
+import { updateActiveAccounts } from './loginHelpers';
 
 export function genArbitraryLoginData(nonce: string): string {
   const data = JSON.stringify({
@@ -15,11 +16,11 @@ export function genArbitraryLoginData(nonce: string): string {
   return data;
 }
 
-export function genArbitraryAddAddressData(nonce: string): string {
+export function genArbitraryConnectWalletData(nonce: string): string {
   const data = JSON.stringify({
     title: 'Regen Network Login',
     description:
-      'This is a transaction that allows Regen Network to add an address to your account.',
+      'This is a transaction that allows Regen Network to connect a wallet address to your account.',
     nonce: nonce,
   });
   return data;
@@ -27,7 +28,7 @@ export function genArbitraryAddAddressData(nonce: string): string {
 
 export function KeplrStrategy(): CustomStrategy {
   return new CustomStrategy(async function (req, done) {
-    let client: PoolClient;
+    let client: PoolClient | null = null;
     try {
       const { signature } = req.body;
       if (!signature) {
@@ -37,20 +38,20 @@ export function KeplrStrategy(): CustomStrategy {
       // is there an existing account for the given address?
       client = await pgPool.connect();
       const account = await client.query(
-        'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
+        'select id, nonce from account where addr = $1',
         [address],
       );
       if (account.rowCount === 1) {
         // if there is an existing account, then we need to verify the signature and log them in.
-        const [{ id, nonce }] = account.rows;
+        const [{ id: accountId, nonce }] = account.rows;
         const { pubkey: decodedPubKey, signature: decodedSignature } =
           decodeSignature(signature);
         const data = genArbitraryLoginData(nonce);
         // generate a new nonce for the user to invalidate the current
         // signature...
         await client.query(
-          'update account set nonce = md5(gen_random_bytes(256)) where id = $1',
-          [id],
+          `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
+          [accountId],
         );
         // https://github.com/chainapsis/keplr-wallet/blob/master/packages/cosmos/src/adr-36/amino.ts
         const verified = verifyADR36Amino(
@@ -61,7 +62,31 @@ export function KeplrStrategy(): CustomStrategy {
           decodedSignature,
         );
         if (verified) {
-          return done(null, { id: id, address: address, nonce: nonce });
+          try {
+            // If account was initially created by another account,
+            // unset creator_id so the creator can't update this account anymore.
+            await client.query(
+              'update account set creator_id = null where id = $1',
+              [accountId],
+            );
+            // Insert a corresponding private.account if there wasn't already one.
+            // This can happen in the case just above, where the public.account was initially created by another account.
+            await client.query(
+              'insert into private.account (id) values ($1) on conflict on constraint account_pkey do nothing',
+              [accountId],
+            );
+            await client.query('select private.create_auth_user($1)', [
+              accountId,
+            ]);
+          } catch (err) {
+            if (err.message !== `role "${accountId}" already exists`) {
+              throw err;
+            }
+          }
+          updateActiveAccounts(req, accountId);
+          return done(null, {
+            accountId,
+          });
         } else {
           return done(null, false);
         }
@@ -80,34 +105,28 @@ export function KeplrStrategy(): CustomStrategy {
         );
         if (verified) {
           const DEFAULT_PROFILE_TYPE = 'user';
+          await client.query(
+            'select * from private.create_new_account_with_wallet($1, $2)',
+            [address, DEFAULT_PROFILE_TYPE],
+          );
+          const account = await client.query(
+            'select id, nonce from account where addr = $1',
+            [address],
+          );
+          const [{ id: accountId }] = account.rows;
           try {
-            try {
-              await client.query('select private.create_auth_user($1)', [
-                address,
-              ]);
-            } catch (err) {
-              if (err.message !== `role "${address}" already exists`) {
-                throw err;
-              }
-            }
-            await client.query(
-              'select * from private.create_new_account($1, $2)',
-              [address, DEFAULT_PROFILE_TYPE],
-            );
+            await client.query('select private.create_auth_user($1)', [
+              accountId,
+            ]);
           } catch (err) {
-            if (
-              err.toString() !==
-              'error: this addr belongs to a different account'
-            ) {
+            if (err.message !== `role "${accountId}" already exists`) {
               throw err;
             }
           }
-          const newAccount = await client.query(
-            'select a.id, a.nonce from private.get_account_by_addr($1) q join account a on a.id = q.id',
-            [address],
-          );
-          const [{ id, nonce }] = newAccount.rows;
-          return done(null, { id: id, address: address, nonce: nonce });
+          updateActiveAccounts(req, accountId);
+          return done(null, {
+            accountId,
+          });
         } else {
           return done(null, false);
         }

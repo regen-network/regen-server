@@ -41,7 +41,7 @@ import files from './routes/files';
 import metadataGraph from './routes/metadata-graph';
 import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
-import { web3auth } from './routes/web3auth';
+import { walletAuth } from './routes/wallet-auth';
 import { csrfRouter } from './routes/csrf';
 import { graphiqlRouter, indexerGraphiqlRouter } from './routes/graphiql';
 
@@ -212,10 +212,9 @@ app.use(
         const { sub } = req.user;
         const settings = { role: sub };
         return settings;
-      } else if (req.user && req.user.address && req.user.id) {
+      } else if (req.user && req.user.accountId) {
         return {
-          role: req.user.address,
-          'account.id': req.user.id,
+          role: req.user.accountId,
         };
       } else {
         return {
@@ -231,7 +230,7 @@ app.use('/marketplace/v1', buyersInfo);
 app.use('/marketplace/v1/auth', auth);
 app.use('/marketplace/v1', files);
 app.use('/data/v1', metadataGraph);
-app.use('/marketplace/v1/web3auth', web3auth);
+app.use('/marketplace/v1/wallet-auth', walletAuth);
 app.use('/marketplace/v1', csrfRouter);
 app.use('/marketplace/v1/graphiql', graphiqlRouter);
 

@@ -1,7 +1,8 @@
+import { Runner } from 'graphile-worker';
 import { main as workerMain } from './worker/worker';
 import { pgPool } from 'common/pool';
 
-const runnerPromise = new Promise((resolve, reject) => {
+const runnerPromise: Promise<Runner> = new Promise((resolve, reject) => {
   workerMain(pgPool)
     .then(res => {
       resolve(res);

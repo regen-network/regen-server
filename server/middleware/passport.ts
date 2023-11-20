@@ -3,7 +3,8 @@ import { PassportStatic } from 'passport';
 import { User } from '../types';
 import { KeplrStrategy } from './keplrStrategy';
 import { UnauthorizedError } from '../errors';
-import { magicLogin } from './magicLoginStrategy';
+import { googleStrategy } from './googleStrategy';
+import { PasscodeStrategy } from './passcodeStrategy';
 
 export function initializePassport(
   app: Application,
@@ -22,7 +23,7 @@ export function initializePassport(
     // cookie in terms of user data. very important to not include
     // private information here.
     console.log(`serializeUser user: ${JSON.stringify(user)}`);
-    done(null, { id: user.id, address: user.address });
+    done(null, { accountId: user.accountId });
   });
 
   passport.deserializeUser(function (user: User, done) {
@@ -31,13 +32,14 @@ export function initializePassport(
     // here, as it could potentially expose that info if this is being
     // used in a response.
     console.log(`deserializeUser user: ${JSON.stringify(user)}`);
-    const { id, address } = user;
+    const { accountId } = user;
     // todo: add more fields here probably based on a lookup in db...
-    done(null, { id, address });
+    done(null, { accountId });
   });
 
-  passport.use(magicLogin);
+  passport.use(googleStrategy);
   passport.use('keplr', KeplrStrategy());
+  passport.use('passcode', PasscodeStrategy());
 }
 
 export function ensureLoggedIn() {

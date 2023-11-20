@@ -40,7 +40,7 @@ router.post(
       const projectsMatch = key.match(projectsRe);
 
       // block any unauthenticated requests are made to filePath that includes profiles
-      // otherwise, check if the filePath belongs to the current user based on their party id
+      // otherwise, check if the filePath belongs to the current user based on their account id
       // if not, block the request...
       // otherwise, allow the request to update the file to proceed
       if (
@@ -51,29 +51,18 @@ router.post(
       } else if (profilesMatch) {
         client = await pgPool.connect();
 
-        const accountQuery = await client.query(
-          'SELECT id FROM private.get_account_by_addr($1)',
-          [request.user?.address],
-        );
-        const [{ id: accountId }] = accountQuery.rows;
-
-        const partiesQuery = await client.query(
-          'SELECT id FROM private.get_parties_by_account_id($1)',
-          [accountId],
-        );
-        const partyId = profilesMatch[1];
-        const partyIds = partiesQuery.rows.map(x => {
-          return x.id;
-        });
-        if (!partyIds.includes(partyId)) {
+        const accountId = profilesMatch[1];
+        if (request.user?.accountId !== accountId) {
           return response.status(401).send({ error: 'unauthorized' });
         }
       } else if (projectsMatch) {
         const projectId = projectsMatch[1];
         client = await pgPool.connect();
+        // select the projects that the given account is an admin for
+        // AND then, make sure the project in question belongs to the account
         const queryRes = await client.query(
-          'SELECT project.id FROM project JOIN wallet ON wallet.id = project.admin_wallet_id WHERE wallet.addr = $1 AND project.id = $2',
-          [request.user?.address, projectId],
+          'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
+          [request.user?.accountId, projectId],
         );
         if (queryRes.rowCount !== 1) {
           return response.status(401).send({ error: 'unauthorized' });
@@ -91,6 +80,7 @@ router.post(
         Key: `${key}/${image.name}`,
       });
       const cmdResp = await s3.send(cmd);
+      console.dir({ cmdResp }, { depth: null });
       const status = cmdResp['$metadata'].httpStatusCode;
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });
