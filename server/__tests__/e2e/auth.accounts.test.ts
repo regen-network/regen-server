@@ -28,7 +28,7 @@ describe('auth accounts endpoint', () => {
     const { activeAccountId, authenticatedAccounts } = await resp.json();
     expect(activeAccountId).toBe(accountId);
     expect(authenticatedAccounts).toStrictEqual([
-      { id: accountId, email: null, google: null },
+      { id: accountId, email: null, google: null, google_email: null },
     ]);
   });
   it('POST /accounts is CSRF protected...', async () => {
@@ -135,8 +135,8 @@ describe('auth accounts endpoint', () => {
     // we expect the same result from the API response as we saw in the session cookie...
     expect(getResult).toHaveProperty('activeAccountId', user2AccountId);
     expect(getResult).toHaveProperty('authenticatedAccounts', [
-      { id: user1AccountId, email: null, google: null },
-      { id: user2AccountId, email: null, google: null },
+      { id: user1AccountId, email: null, google: null, google_email: null },
+      { id: user2AccountId, email: null, google: null, google_email: null },
     ]);
 
     // check that the new active user can use an authenticated graphql query
