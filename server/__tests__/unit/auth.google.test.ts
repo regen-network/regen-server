@@ -4,6 +4,7 @@ import { verifyGoogleAccount } from '../../middleware/googleStrategy';
 
 const email = 'john@doe.com';
 const googleId = '12345';
+const googleEmail = 'google@email.com';
 
 describe('auth google strategy', () => {
   test('when a user signs in for the first time, a new account and role should be created', async () => {
@@ -89,7 +90,6 @@ describe('auth google strategy', () => {
   });
   test('when a logged-in user connects to google, it should update the account google id and google email', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const googleEmail = 'google@email.com';
       const insertQuery = await client.query(
         'select * from private.create_new_web2_account($1, $2)',
         ['user', email],
@@ -113,6 +113,39 @@ describe('auth google strategy', () => {
       expect(privateAccountQuery.rows[0].email).toEqual(email);
       expect(privateAccountQuery.rows[0].google_email).toEqual(googleEmail);
       expect(privateAccountQuery.rows[0].google).toEqual(googleId);
+    });
+  });
+
+  test('when a logged-in user connects to google, it should throw an error if google_email is already used', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      // Create account with googleEmail
+      await verifyGoogleAccount({
+        email: googleEmail,
+        verified: 'true',
+        googleId,
+        client,
+      });
+
+      // Create another account
+      const insertQuery = await client.query(
+        'select * from private.create_new_web2_account($1, $2)',
+        ['user', email],
+      );
+      const [{ create_new_web2_account: newId }] = insertQuery.rows;
+      await client.query('select private.create_auth_user($1)', [newId]);
+
+      // Try to connect it to google using googleEmail
+      expect(
+        verifyGoogleAccount({
+          email: googleEmail,
+          verified: 'true',
+          googleId,
+          currentAccountId: newId,
+          client,
+        }),
+      ).rejects.toThrow(
+        'duplicate key value violates unique constraint "account_google_key"',
+      );
     });
   });
 });
