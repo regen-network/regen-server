@@ -7,7 +7,7 @@ const googleId = '12345';
 const googleEmail = 'google@email.com';
 
 describe('auth google strategy', () => {
-  test('when a user signs in for the first time, a new account and role should be created', async () => {
+  test('when a user signs in for the first time, a new account and role should be created with email and google_email set to the same email', async () => {
     await withRootDb(async (client: PoolClient) => {
       const accountId = await verifyGoogleAccount({
         email,

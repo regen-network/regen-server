@@ -100,6 +100,21 @@ describe('auth verify passcode', () => {
       expect(passcodeQuery.rows[0].consumed).toEqual(true);
     });
   });
+  test('when an existing user, that signed up with google, signs in with a valid code, it should return the user account id', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const insertQuery = await client.query(
+        'select * from private.create_new_web2_account($1, $2, $3)',
+        ['user', email, '12345'],
+      );
+      const [{ create_new_web2_account: newId }] = insertQuery.rows;
+      await client.query('select private.create_auth_user($1)', [newId]);
+
+      const passcode = await createPasscode({ email, client });
+      const accountId = await verifyPasscode({ email, passcode, client });
+
+      expect(newId).toEqual(accountId);
+    });
+  });
   it('should throw an error if email is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
       expect(verifyPasscode({ passcode: '123456', client })).rejects.toThrow(
