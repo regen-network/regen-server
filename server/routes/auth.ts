@@ -167,6 +167,7 @@ router.post(
   doubleCsrfProtection,
   passport.authenticate('passcode'),
   (req, res) => {
+    updateActiveAccounts(req);
     return res.send({
       user: req.user,
       message: 'You have been signed in via email!',
