@@ -40,7 +40,7 @@ describe('auth connect google strategy', () => {
       const accountId = await createWeb2Account(client, email);
 
       // Try to connect it to google using googleEmail
-      await expect(
+      expect(
         connectGoogleAccount({
           email: googleEmail,
           verified: 'true',
