@@ -4,6 +4,7 @@ import { connectGoogleAccount } from '../../middleware/connectGoogleStrategy';
 import { withRootDb } from '../db/helpers';
 import { createAccountWithEmail } from '../utils';
 import { UnauthorizedError } from '../../errors';
+import { verifyGoogleAccount } from '../../middleware/googleStrategy';
 
 const email = 'john@doe.com';
 const googleId = '12345';
@@ -34,7 +35,7 @@ describe('auth connect google strategy', () => {
   test('when a logged-in user connects to google, it should throw an error if google_email is already used', async () => {
     await withRootDb(async (client: PoolClient) => {
       // Create account with googleEmail
-      await connectGoogleAccount({
+      await verifyGoogleAccount({
         email: googleEmail,
         verified: 'true',
         googleId,
@@ -45,7 +46,7 @@ describe('auth connect google strategy', () => {
       const accountId = await createAccountWithEmail(client, email);
 
       // Try to connect it to google using googleEmail
-      expect(
+      await expect(
         connectGoogleAccount({
           email: googleEmail,
           verified: 'true',
@@ -78,7 +79,7 @@ describe('auth connect google strategy', () => {
       expect(
         connectGoogleAccount({
           email,
-          verified: 'false',
+          verified: 'true',
           googleId,
           client,
         }),
