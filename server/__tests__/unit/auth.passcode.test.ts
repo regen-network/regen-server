@@ -13,6 +13,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from '../../errors';
+import { createWeb2Account } from '../utils';
 
 const email = 'john@doe.com';
 
@@ -80,17 +81,12 @@ describe('auth verify passcode', () => {
   });
   it('when an existing user signs in with a valid code, it should return the user account id', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const insertQuery = await client.query(
-        'select * from private.create_new_web2_account($1, $2)',
-        ['user', email],
-      );
-      const [{ create_new_web2_account: newAccountId }] = insertQuery.rows;
-      await client.query('select private.create_auth_user($1)', [newAccountId]);
+      const newId = await createWeb2Account(client, email);
 
       const passcode = await createPasscode({ email, client });
       const accountId = await verifyPasscode({ email, passcode, client });
 
-      expect(newAccountId).toEqual(accountId);
+      expect(newId).toEqual(accountId);
 
       const passcodeQuery = await client.query(
         'SELECT * FROM private.passcode WHERE code = $1',
@@ -102,12 +98,7 @@ describe('auth verify passcode', () => {
   });
   test('when an existing user, that signed up with google, signs in with a valid code, it should return the user account id', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const insertQuery = await client.query(
-        'select * from private.create_new_web2_account($1, $2, $3)',
-        ['user', email, '12345'],
-      );
-      const [{ create_new_web2_account: newId }] = insertQuery.rows;
-      await client.query('select private.create_auth_user($1)', [newId]);
+      const newId = await createWeb2Account(client, email, '12345');
 
       const passcode = await createPasscode({ email, client });
       const accountId = await verifyPasscode({ email, passcode, client });

@@ -1,7 +1,7 @@
 import { PoolClient } from 'pg';
 import { withRootDb } from '../db/helpers';
 import { verifyGoogleAccount } from '../../middleware/googleStrategy';
-import { createAccountWithEmail } from '../utils';
+import { createWeb2Account } from '../utils';
 
 const email = 'john@doe.com';
 const googleId = '12345';
@@ -39,7 +39,7 @@ describe('auth google strategy', () => {
   });
   test('when an existing user signs in with google for the first time, it should update the account with the same email', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const newId = await createAccountWithEmail(client, email);
+      const newId = await createWeb2Account(client, email);
 
       const accountId = await verifyGoogleAccount({
         email,
