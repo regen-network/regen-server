@@ -81,7 +81,7 @@ describe('auth verify passcode', () => {
   });
   it('when an existing user signs in with a valid code, it should return the user account id', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const newId = await createWeb2Account(client, email);
+      const newId = await createWeb2Account({ client, email });
 
       const passcode = await createPasscode({ email, client });
       const accountId = await verifyPasscode({ email, passcode, client });
@@ -98,7 +98,7 @@ describe('auth verify passcode', () => {
   });
   test('when an existing user, that signed up with google, signs in with a valid code, it should return the user account id', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const newId = await createWeb2Account(client, email, '12345');
+      const newId = await createWeb2Account({ client, email, google: '12345' });
 
       const passcode = await createPasscode({ email, client });
       const accountId = await verifyPasscode({ email, passcode, client });

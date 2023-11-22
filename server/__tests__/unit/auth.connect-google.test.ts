@@ -12,7 +12,7 @@ const googleEmail = 'google@email.com';
 describe('auth connect google strategy', () => {
   test('when a logged-in user connects to google, it should update the account google id and google email', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const accountId = await createWeb2Account(client, email);
+      const accountId = await createWeb2Account({ client, email });
 
       await connectGoogleAccount({
         email: googleEmail,
@@ -34,10 +34,10 @@ describe('auth connect google strategy', () => {
   test('when a logged-in user connects to google, it should throw an error if google_email is already used', async () => {
     await withRootDb(async (client: PoolClient) => {
       // Create account with googleEmail
-      await createWeb2Account(client, googleEmail, googleId);
+      await createWeb2Account({ client, email: googleEmail, google: googleId });
 
       // Create another account
-      const accountId = await createWeb2Account(client, email);
+      const accountId = await createWeb2Account({ client, email });
 
       // Try to connect it to google using googleEmail
       expect(
@@ -55,7 +55,7 @@ describe('auth connect google strategy', () => {
   });
   test('when a logged-in user connects to google, it should throw an error if the email from google is not verified', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const accountId = await createWeb2Account(client, email);
+      const accountId = await createWeb2Account({ client, email });
 
       expect(
         connectGoogleAccount({

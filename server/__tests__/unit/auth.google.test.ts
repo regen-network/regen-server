@@ -39,7 +39,7 @@ describe('auth google strategy', () => {
   });
   test('when an existing user signs in with google for the first time, it should update the account with the same email', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const newId = await createWeb2Account(client, email);
+      const newId = await createWeb2Account({ client, email });
 
       const accountId = await verifyGoogleAccount({
         email,

@@ -283,11 +283,16 @@ export function getMarketplaceURL() {
   return `${getServerBaseURL()}/marketplace/v1`;
 }
 
-export async function createWeb2Account(
-  client: PoolClient,
-  email: string,
-  google?: string,
-) {
+type CreateWeb2AccountParams = {
+  client: PoolClient;
+  email: string;
+  google?: string;
+};
+export async function createWeb2Account({
+  client,
+  email,
+  google,
+}: CreateWeb2AccountParams) {
   const insertQuery = await client.query(
     'select * from private.create_new_web2_account($1, $2, $3)',
     ['user', email, google],
