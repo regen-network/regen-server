@@ -14,6 +14,7 @@ import {
   createPasscode,
 } from '../middleware/passcodeStrategy';
 import { UserRequest } from '../types';
+import { CONNECT_GOOGLE_CALLBACK_URL } from '../middleware/connectGoogleStrategy';
 
 let runner: Runner | undefined;
 runnerPromise.then(res => {
@@ -29,15 +30,26 @@ router.get(
   passport.authenticate('google', {
     failureRedirect: process.env.MARKETPLACE_APP_URL,
   }),
-  function (req: UserRequest, res) {
-    // There's already a currently logged in account,
-    // so we redirect to the settings page from where the connect google request has been initiated
-    if (req.user?.accountId) {
-      res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile/edit/settings`);
-    } else {
-      updateActiveAccounts(req);
-      res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
-    }
+  function (req, res) {
+    updateActiveAccounts(req);
+    res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
+  },
+);
+
+router.get(
+  '/google/connect',
+  passport.authenticate('connect-google', { scope: ['email'] }),
+);
+
+router.get(
+  CONNECT_GOOGLE_CALLBACK_URL,
+  ensureLoggedIn(),
+  passport.authenticate('connect-google', {
+    failureRedirect: process.env.MARKETPLACE_APP_URL,
+  }),
+  function (req, res) {
+    // we redirect to the settings page from where the connect google request has been initiated
+    res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile/edit/settings`);
   },
 );
 

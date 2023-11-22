@@ -18,6 +18,7 @@ import {
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
 import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+import { PoolClient } from 'pg';
 
 export const longerTestTimeout = 30000;
 
@@ -280,4 +281,17 @@ export function getServerBaseURL() {
 
 export function getMarketplaceURL() {
   return `${getServerBaseURL()}/marketplace/v1`;
+}
+
+export async function createAccountWithEmail(
+  client: PoolClient,
+  email: string,
+) {
+  const insertQuery = await client.query(
+    'select * from private.create_new_web2_account($1, $2)',
+    ['user', email],
+  );
+  const [{ create_new_web2_account: accountId }] = insertQuery.rows;
+  await client.query('select private.create_auth_user($1)', [accountId]);
+  return accountId;
 }
