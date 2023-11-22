@@ -57,16 +57,14 @@ type ConnectParams = {
 };
 
 /**
- * Verifies that a google account has a verified email,
- * if so, it creates or updates an account in the database if needed
- * and returns the account id
+ * Connects a google account to an existing account
  * @param connectParams Params for connectGoogleAccount function
  * @param connectParams.email The email of the google account
  * @param connectParams.verified The verified state of the google account email
  * @param connectParams.googleId The id of the google account
  * @param connectParams.accountId The id of the currently logged in account if any
  * @param connectParams.client The pg PoolClient
- * @returns Promise<accountId>
+ * @returns Promise<void>
  */
 export async function connectGoogleAccount({
   email,
