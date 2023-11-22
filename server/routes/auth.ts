@@ -38,6 +38,7 @@ router.get(
 
 router.get(
   '/google/connect',
+  ensureLoggedIn(),
   passport.authenticate('connect-google', { scope: ['email'] }),
 );
 
