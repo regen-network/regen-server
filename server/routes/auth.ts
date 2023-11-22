@@ -13,6 +13,8 @@ import {
   PASSCODE_EXPIRES_IN_DEFAULT,
   createPasscode,
 } from '../middleware/passcodeStrategy';
+import { UserRequest } from '../types';
+import { CONNECT_GOOGLE_CALLBACK_URL } from '../middleware/connectGoogleStrategy';
 
 let runner: Runner | undefined;
 runnerPromise.then(res => {
@@ -31,6 +33,48 @@ router.get(
   function (req, res) {
     updateActiveAccounts(req);
     res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile`);
+  },
+);
+
+router.get(
+  '/google/connect',
+  ensureLoggedIn(),
+  passport.authenticate('connect-google', { scope: ['email'] }),
+);
+
+router.get(
+  CONNECT_GOOGLE_CALLBACK_URL,
+  ensureLoggedIn(),
+  passport.authenticate('connect-google', {
+    failureRedirect: process.env.MARKETPLACE_APP_URL,
+  }),
+  function (req, res) {
+    // we redirect to the settings page from where the connect google request has been initiated
+    res.redirect(`${process.env.MARKETPLACE_APP_URL}/profile/edit/settings`);
+  },
+);
+
+router.post(
+  '/google/disconnect',
+  doubleCsrfProtection,
+  ensureLoggedIn(),
+  async (req: UserRequest, res, next) => {
+    let client: PoolClient | null = null;
+    try {
+      client = await pgPool.connect();
+      const accountId = req.user?.accountId;
+      await client.query(
+        'update private.account set google = null, google_email = null where id = $1',
+        [accountId],
+      );
+      res.send({ message: 'Account disconnected from google' });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
   },
 );
 

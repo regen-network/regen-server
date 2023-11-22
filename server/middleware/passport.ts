@@ -5,6 +5,7 @@ import { KeplrStrategy } from './keplrStrategy';
 import { UnauthorizedError } from '../errors';
 import { googleStrategy } from './googleStrategy';
 import { PasscodeStrategy } from './passcodeStrategy';
+import { connectGoogleStrategy } from './connectGoogleStrategy';
 
 export function initializePassport(
   app: Application,
@@ -37,6 +38,7 @@ export function initializePassport(
     done(null, { accountId });
   });
 
+  passport.use(connectGoogleStrategy);
   passport.use(googleStrategy);
   passport.use('keplr', KeplrStrategy());
   passport.use('passcode', PasscodeStrategy());

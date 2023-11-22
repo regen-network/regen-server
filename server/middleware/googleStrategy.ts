@@ -80,10 +80,10 @@ export async function verifyGoogleAccount({
   const existingUserWithEmail = emailAccountQuery.rowCount === 1;
   if (existingUserWithEmail || googleAccountQuery.rowCount === 1) {
     if (existingUserWithEmail) {
-      // Set google id for existing user
+      // Set google id ang google email for existing user
       const [{ id: accountId }] = emailAccountQuery.rows;
       await client.query(
-        'update private.account set google = $1 where email = $2',
+        'update private.account set google = $1, google_email = $2 where email = $2',
         [googleId, email],
       );
       return accountId;

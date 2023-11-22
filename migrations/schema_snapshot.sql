@@ -287,20 +287,13 @@ BEGIN
       VALUES (v_account_type)
       RETURNING id INTO v_account_id;
     
-    INSERT INTO private.account (id, email, google)
-      VALUES (v_account_id, v_email, v_google);
+    INSERT INTO private.account (id, email, google, google_email)
+      VALUES (v_account_id, v_email, v_google, case when v_google is not null then v_email else null end);
     
     RAISE LOG 'new account_id %', v_account_id;
     RETURN v_account_id;
 END;
 $$;
-
-
---
--- Name: FUNCTION create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text); Type: COMMENT; Schema: private; Owner: -
---
-
-COMMENT ON FUNCTION private.create_new_web2_account(v_account_type public.account_type, v_email public.citext, v_google text) IS 'Insert a new account with email or google id in both private.account and public.account tables';
 
 
 --
@@ -428,7 +421,8 @@ CREATE TABLE graphile_migrate.migrations (
 CREATE TABLE private.account (
     id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
     email public.citext,
-    google text
+    google text,
+    google_email text
 );
 
 
@@ -437,6 +431,13 @@ CREATE TABLE private.account (
 --
 
 COMMENT ON TABLE private.account IS 'Table to store private account fields like email or google id';
+
+
+--
+-- Name: COLUMN account.google_email; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON COLUMN private.account.google_email IS 'Email corresponding to the google account used for logging in, which can be different from the main account email';
 
 
 --
@@ -598,6 +599,14 @@ ALTER TABLE ONLY graphile_migrate.migrations
 
 ALTER TABLE ONLY private.account
     ADD CONSTRAINT account_email_key UNIQUE (email);
+
+
+--
+-- Name: account account_google_email_key; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.account
+    ADD CONSTRAINT account_google_email_key UNIQUE (google_email);
 
 
 --
