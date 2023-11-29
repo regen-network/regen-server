@@ -179,12 +179,34 @@ HTTP/1.1 302 Found
 Set-Cookie: session=eyJwYXNzcG9ydCI6e319; path=/; expires=Wed, 15 Feb 2023 20:53:22 GMT; samesite=lax; httponly; session.sig=WpB-0vaD29iX-zcdgNrc9EfJUXI; path=/; expires=Wed, 15 Feb 2023 20:53:22 GMT; samesite=lax; httponly
 ```
 
+## Disconnect from Google
+
+Send a credentialed POST request to the google disconnect endpoint:
+
+```http
+POST /marketplace/v1/auth/google/disconnect HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+
+HTTP/1.1 200 OK
+Set-Cookie: session=eyJwYXNzcG9ydCI6e319; path=/; expires=Wed, 15 Feb 2023 20:53:22 GMT; samesite=lax; httponly; session.sig=WpB-0vaD29iX-zcdgNrc9EfJUXI; path=/; expires=Wed, 15 Feb 2023 20:53:22 GMT; samesite=lax; httponly
+{"message":"Account disconnected from google"}
+```
+
+At this point the user is no longer able to log in with Google.
+
+## Email Login with One-Time Password
+
+### Step 1: Request a One-Time Password
+
+Send a 
+
 ## Logout
 
 Send a credentialed POST request to the logout endpoint:
 
 ```http
-POST marketplace/v1/wallet-auth/logout HTTP/1.1
+POST /marketplace/v1/wallet-auth/logout HTTP/1.1
 X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
 Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f; session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
 
