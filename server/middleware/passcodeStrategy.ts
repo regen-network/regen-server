@@ -8,17 +8,24 @@ import {
   UnauthorizedError,
   NotFoundError,
 } from '../errors';
+import { UserRequest } from '../types';
 
 export const PASSCODE_EXPIRES_IN_DEFAULT = '5 minutes';
 export const PASSCODE_MAX_TRY_COUNT_DEFAULT = 3;
 
 export function PasscodeStrategy(): CustomStrategy {
-  return new CustomStrategy(async function (req, done) {
+  return new CustomStrategy(async function (req: UserRequest, done) {
     let client: PoolClient | null = null;
     try {
       client = await pgPool.connect();
       const { email, passcode } = req.body;
-      const accountId = await verifyPasscode({ email, passcode, client });
+      const currentAccountId = req.user?.accountId;
+      const accountId = await verifyPasscode({
+        email,
+        passcode,
+        currentAccountId,
+        client,
+      });
       if (accountId) {
         return done(null, { accountId });
       }
@@ -68,22 +75,26 @@ export async function createPasscode({ email, client }: CreatePasscodeParams) {
 type VerifyPasscodeParams = {
   email?: string;
   passcode?: string;
+  currentAccountId?: string;
   client: PoolClient;
 };
 
 /**
  * Verifies that the provided passcode matches with the given email,
- * if so, it creates an account in the database if it doesn't exist
+ * if so, either it updates the currently logged in account email or
+ * it creates an account in the database if it doesn't exist
  * and returns the account id
  * @param verifyPasscodeParams Params for createPasscode function
  * @param verifyPasscodeParams.email The email of the user providing a passcode to sign in
  * @param verifyPasscodeParams.passcode The passcode to verify
+ * @param verifyPasscodeParams.currentAccountId The id of the currently logged in account if any
  * @param verifyPasscodeParams.client The pg PoolClient
  * @returns Promise<passcode>
  */
 export async function verifyPasscode({
   email,
   passcode,
+  currentAccountId,
   client,
 }: VerifyPasscodeParams) {
   if (!email || !passcode) {
@@ -126,23 +137,49 @@ export async function verifyPasscode({
       [id],
     );
 
-    const accountQuery = await client.query(
-      'select id from private.account where email = $1',
-      [email],
-    );
-    if (accountQuery.rowCount === 1) {
-      const [{ id: accountId }] = accountQuery.rows;
-      return accountId;
-    } else {
-      const createAccountQuery = await client.query(
-        'select * from private.create_new_web2_account($1, $2)',
-        ['user', email],
+    // There's an account currently logged in,
+    // This is a request to add the email to it
+    if (currentAccountId) {
+      const currentAccountQuery = await client.query(
+        'select email from private.account where id = $1',
+        [currentAccountId],
       );
-      if (createAccountQuery.rowCount === 1) {
-        const [{ create_new_web2_account: accountId }] =
-          createAccountQuery.rows;
-        await client.query('select private.create_auth_user($1)', [accountId]);
+      if (currentAccountQuery.rowCount === 1) {
+        const [{ email: currentAccountEmail }] = currentAccountQuery.rows;
+        // For now, only account without any email can update it
+        if (!currentAccountEmail) {
+          await client.query(
+            'update private.account set email = $1 where id = $2',
+            [email, currentAccountId],
+          );
+          return currentAccountId;
+        } else {
+          throw new Error('This account already has an email');
+        }
+      } else {
+        throw new NotFoundError('Account not found');
+      }
+    } else {
+      const accountQuery = await client.query(
+        'select id from private.account where email = $1',
+        [email],
+      );
+      if (accountQuery.rowCount === 1) {
+        const [{ id: accountId }] = accountQuery.rows;
         return accountId;
+      } else {
+        const createAccountQuery = await client.query(
+          'select * from private.create_new_web2_account($1, $2)',
+          ['user', email],
+        );
+        if (createAccountQuery.rowCount === 1) {
+          const [{ create_new_web2_account: accountId }] =
+            createAccountQuery.rows;
+          await client.query('select private.create_auth_user($1)', [
+            accountId,
+          ]);
+          return accountId;
+        }
       }
     }
   } else {
