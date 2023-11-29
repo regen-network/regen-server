@@ -195,9 +195,9 @@ Set-Cookie: session=eyJwYXNzcG9ydCI6e319; path=/; expires=Wed, 15 Feb 2023 20:53
 
 At this point the user is no longer able to log in with Google.
 
-## Email Login with One-Time Password
+## Email Login with one-time password
 
-### Step 1: Request a One-Time Password
+### Step 1: Request a one-time password
 
 Send a credentialed POST request to the passcode endpoint with the user email:
 
@@ -214,7 +214,7 @@ HTTP/1.1 200 OK
 
 A temporary password will be sent to the user email.
 
-### Step 2: Verify the Password
+### Step 2: Verify the password
 
 Send a credentialed POST request to the passcode verify endpoint with the user email and temporary password from step 1:
 
