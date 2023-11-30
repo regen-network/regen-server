@@ -7,6 +7,7 @@ import {
   InvalidLoginParameter,
   UnauthorizedError,
   NotFoundError,
+  Conflict,
 } from '../errors';
 import { UserRequest } from '../types';
 
@@ -41,6 +42,7 @@ export function PasscodeStrategy(): CustomStrategy {
 
 type CreatePasscodeParams = {
   email?: string;
+  currentAccountId?: string;
   client: PoolClient;
 };
 
@@ -48,12 +50,30 @@ type CreatePasscodeParams = {
  * Deletes unconsumed passcodes and create a new passcode for the given email
  * @param createPasscodeParams Params for createPasscode function
  * @param createPasscodeParams.email The email of the user requesting a passcode to sign in
+ * @param createPasscodeParams.currentAccountId The id of the currently logged in account if any
  * @param createPasscodeParams.client The pg PoolClient
- * @returns Promise<passcode>
+ * @returns Promise<passcode | undefined>
  */
-export async function createPasscode({ email, client }: CreatePasscodeParams) {
+export async function createPasscode({
+  email,
+  currentAccountId,
+  client,
+}: CreatePasscodeParams) {
   if (!email) {
     throw new InvalidLoginParameter('Invalid email parameter');
+  }
+
+  // An existing user is trying to add the email in his account
+  if (currentAccountId) {
+    const currentAccountQuery = await client.query(
+      'select 1 from private.account where email = $1',
+      [email],
+    );
+    if (currentAccountQuery.rowCount === 1) {
+      throw new Conflict(
+        'Sorry, this email is already connected to another account',
+      );
+    }
   }
 
   // Delete unconsumed passcodes for the given email

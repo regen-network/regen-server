@@ -9,6 +9,7 @@ import {
 import { createAccountWithAuthUser, withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
 import {
+  Conflict,
   InvalidLoginParameter,
   NotFoundError,
   UnauthorizedError,
@@ -42,6 +43,25 @@ describe('auth create passcode', () => {
     await withRootDb(async (client: PoolClient) => {
       expect(createPasscode({ client })).rejects.toThrow(
         new InvalidLoginParameter('Invalid email parameter'),
+      );
+    });
+  });
+  it('should throw an error if the currently logged in user tries to request a passcode for an email that is already used by another account', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      await createWeb2Account({ client, email });
+
+      const walletAddr = genRandomRegenAddress();
+      const { accountId: currentAccountId } = await createAccountWithAuthUser(
+        client,
+        walletAddr,
+      );
+
+      await expect(
+        createPasscode({ currentAccountId, email, client }),
+      ).rejects.toThrow(
+        new Conflict(
+          'Sorry, this email is already connected to another account',
+        ),
       );
     });
   });

@@ -169,42 +169,51 @@ export async function getPrivateAccountInfo(
   }
 }
 
-router.post('/passcode', doubleCsrfProtection, async (req, res, next) => {
-  let client: PoolClient | null = null;
-  try {
-    client = await pgPool.connect();
-    const { email } = req.body;
+router.post(
+  '/passcode',
+  doubleCsrfProtection,
+  async (req: UserRequest, res, next) => {
+    let client: PoolClient | null = null;
+    try {
+      client = await pgPool.connect();
+      const { email } = req.body;
+      const currentAccountId = req.user?.accountId;
 
-    const passcode = await createPasscode({ email, client });
-
-    // Send email with this passcode
-    if (runner && passcode) {
-      await runner.addJob('send_email', {
-        options: {
-          to: email,
-          subject: 'Sign in to Regen Marketplace',
-        },
-        template: 'login_with_passcode.mjml',
-        variables: {
-          passcode,
-          expiresIn: env
-            .get('PASSCODE_EXPIRES_IN')
-            .default(PASSCODE_EXPIRES_IN_DEFAULT)
-            .asString(),
-        },
+      const passcode = await createPasscode({
+        email,
+        currentAccountId,
+        client,
       });
-      res.send({ message: 'Email sent with passcode' });
-    } else {
-      res.sendStatus(500);
+
+      // Send email with this passcode
+      if (runner && passcode) {
+        await runner.addJob('send_email', {
+          options: {
+            to: email,
+            subject: 'Sign in to Regen Marketplace',
+          },
+          template: 'login_with_passcode.mjml',
+          variables: {
+            passcode,
+            expiresIn: env
+              .get('PASSCODE_EXPIRES_IN')
+              .default(PASSCODE_EXPIRES_IN_DEFAULT)
+              .asString(),
+          },
+        });
+        res.send({ message: 'Email sent with passcode' });
+      } else {
+        res.sendStatus(500);
+      }
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
-  } catch (err) {
-    return next(err);
-  } finally {
-    if (client) {
-      client.release();
-    }
-  }
-});
+  },
+);
 
 router.post(
   '/passcode/verify',
