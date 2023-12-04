@@ -6,14 +6,15 @@ import {
   createPasscode,
   verifyPasscode,
 } from '../../middleware/passcodeStrategy';
-import { withRootDb } from '../db/helpers';
+import { createAccountWithAuthUser, withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
 import {
+  Conflict,
   InvalidLoginParameter,
   NotFoundError,
   UnauthorizedError,
 } from '../../errors';
-import { createWeb2Account } from '../utils';
+import { createWeb2Account, genRandomRegenAddress } from '../utils';
 
 const email = 'john@doe.com';
 
@@ -42,6 +43,25 @@ describe('auth create passcode', () => {
     await withRootDb(async (client: PoolClient) => {
       expect(createPasscode({ client })).rejects.toThrow(
         new InvalidLoginParameter('Invalid email parameter'),
+      );
+    });
+  });
+  it('should throw an error if the currently logged in user tries to request a passcode for an email that is already used by another account', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      await createWeb2Account({ client, email });
+
+      const walletAddr = genRandomRegenAddress();
+      const { accountId: currentAccountId } = await createAccountWithAuthUser(
+        client,
+        walletAddr,
+      );
+
+      await expect(
+        createPasscode({ currentAccountId, email, client }),
+      ).rejects.toThrow(
+        new Conflict(
+          'Sorry, this email is already connected to another account',
+        ),
       );
     });
   });
@@ -167,6 +187,62 @@ describe('auth verify passcode', () => {
       expect(
         verifyPasscode({ email, passcode: 'WRONG', client }),
       ).rejects.toThrow(new UnauthorizedError('passcode.code_mismatch'));
+    });
+  });
+  it('should update the email of the currently logged in user', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const walletAddr = genRandomRegenAddress();
+      const { accountId: currentAccountId } = await createAccountWithAuthUser(
+        client,
+        walletAddr,
+      );
+      const passcode = await createPasscode({ email, client });
+      const accountId = await verifyPasscode({
+        currentAccountId,
+        email,
+        passcode,
+        client,
+      });
+
+      expect(accountId).toEqual(currentAccountId);
+      const privateAccountResult = await client.query(
+        'select email from private.account where id=$1',
+        [accountId],
+      );
+      expect(privateAccountResult.rowCount).toBe(1);
+      const [{ email: updatedEmail }] = privateAccountResult.rows;
+      expect(updatedEmail).toEqual(email);
+    });
+  });
+  it('should throw an error if the currently logged in user already has an email', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const currentAccountId = await createWeb2Account({
+        client,
+        email,
+      });
+      const passcode = await createPasscode({ email, client });
+
+      await expect(
+        verifyPasscode({ currentAccountId, email, passcode, client }),
+      ).rejects.toThrow(new Error('This account already has an email'));
+    });
+  });
+  it('should throw an error if the currently logged in account is not found', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const walletAddr = genRandomRegenAddress();
+      const { accountId: currentAccountId } = await createAccountWithAuthUser(
+        client,
+        walletAddr,
+      );
+      await client.query('DELETE FROM private.account where id = $1', [
+        currentAccountId,
+      ]);
+
+      const passcode = await createPasscode({ email, client });
+
+      await expect(
+        verifyPasscode({ currentAccountId, email, passcode, client }),
+      ).rejects.toThrow(new NotFoundError('Account not found'));
     });
   });
 });

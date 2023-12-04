@@ -235,6 +235,47 @@ Set-Cookie: session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVk
 {"message":"You have been signed in via email!"}
 ```
 
+## Add an email to an existing web3 account
+
+### Step 1: Request a one-time password
+
+Send a credentialed POST request to the passcode endpoint with the user email:
+
+```http
+POST /marketplace/v1/auth/passcode HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f
+session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+{"email":"john@doe.com"}
+
+HTTP/1.1 200 OK
+{"message":"Email sent with passcode"}
+```
+
+A temporary password will be sent to the user email.
+
+### Step 2: Verify the password
+
+Send a credentialed POST request to the passcode verify endpoint with the user email and temporary password from step 1:
+
+```http
+POST /marketplace/v1/auth/passcode/verify HTTP/1.1
+X-CSRF-TOKEN: f809ffe71aa2d11ac4bbbb5d556b02e83eba97661743df88b9ca72369d8750975902aa0845154b1f36ec21e2b0f6e6acf04c4fe881917b3494ec9592d18de6d1
+Cookie: regen-dev.x-csrf-token=09b4e531ea7e540cf93f73f0d03e464ae4326f4b4b28f34268b9daaa7f23d73f
+session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w
+{"email":"john@doe.com", "passcode": 123456}
+```
+
+Pending success of that request the server will respond with the following:
+
+```http
+HTTP/1.1 200 OK
+Set-Cookie: session=eyJwYXNzcG9ydCI6eyJ1c2VyIjp7ImlkIjoiMWQ5MjgzNzYtYThjMy0xMWVkLTgwNjQtMDI0MmFjMTkwMDAzIiwiYWRkcmVzcyI6InJlZ2VuMW0zajB2cjRjbHd2YTkzcmN3am5yM25qd2w2a2V1eDdxOG1qMHA0In19fQ==; path=/; expires=Wed, 15 Feb 2023 20:27:22 GMT; samesite=lax; httponly; session.sig=ibs_sNvIKpF_t5P4B99VRRSuA7w; path=/; expires=Wed, 15 Feb 2023 20:27:22 GMT; samesite=lax; httponly
+{"message":"You have been signed in via email!"}
+```
+
+The user will be able to log in via email.
+
 ## Logout
 
 Send a credentialed POST request to the logout endpoint:
