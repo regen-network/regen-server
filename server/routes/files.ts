@@ -83,18 +83,22 @@ router.post(
         console.log({ cmdResp });
         throw new Error('Error uploading file to s3');
       } else {
-        const imageUrl = `https://${bucketName}.s3.amazonaws.com/${key}/${image.name}`;
+        const url = getFileUrl({
+          bucketName,
+          key,
+          fileName: image.name,
+        });
 
         // Track file storage for projects
         if (projectId && client) {
           client.query(
             `insert into upload (url, size, account_id, project_id) values ($1, $2, $3, $4)`,
-            [imageUrl, image.size, currentAccountId, projectId],
+            [url, image.size, currentAccountId, projectId],
           );
         }
 
         response.send({
-          imageUrl,
+          imageUrl: url,
         });
       }
     } catch (err) {
@@ -108,16 +112,17 @@ router.post(
 );
 
 router.delete(
-  '/files/:projectId/:key',
+  '/files/:projectId/:fileName',
   bodyParser.json(),
   async (request, response: express.Response, next) => {
+    let client: undefined | PoolClient;
     try {
       const projectId = request.params.projectId;
-      const key = request.params.key;
+      const fileName = request.params.fileName;
 
       const input: DeleteObjectCommandInput = {
         Bucket: bucketName,
-        Key: `projects/${projectId}/${key}`,
+        Key: `projects/${projectId}/${fileName}`,
       };
       const cmd = new DeleteObjectCommand(input);
       const cmdResp = await s3.send(cmd);
@@ -126,12 +131,31 @@ router.delete(
         console.log({ cmdResp });
         throw new Error('Unable to delete file');
       } else {
+        const url = getFileUrl({
+          bucketName,
+          key: `projects/${projectId}`,
+          fileName,
+        });
+        client = await pgPool.connect();
+        await client.query(`delete from upload where url = $1`, [url]);
         response.send('File successfully deleted');
       }
     } catch (err) {
       next(err);
+    } finally {
+      if (client) client.release();
     }
   },
 );
+
+type GetFileUrlParams = {
+  bucketName?: string;
+  key: string;
+  fileName: string;
+};
+
+function getFileUrl({ bucketName, key, fileName }: GetFileUrlParams) {
+  return `https://${bucketName}.s3.amazonaws.com/${key}/${fileName}`;
+}
 
 export default router;
