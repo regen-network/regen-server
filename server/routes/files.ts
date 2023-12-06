@@ -78,7 +78,7 @@ router.post(
       const cmdResp = await s3.send(cmd);
       console.dir({ cmdResp }, { depth: null });
       const status = cmdResp['$metadata'].httpStatusCode;
-      // const status = 200;
+
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });
         throw new Error('Error uploading file to s3');
