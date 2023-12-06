@@ -10,28 +10,24 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { UploadedFile } from 'express-fileupload';
 const router = express.Router();
 
 const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
 
-const s3 = new S3Client({ region });
-
-interface FilesRequest extends express.Request {
-  files: {
-    image: {
-      data: File;
-      name: string;
-    };
-  };
-}
+const s3 = new S3Client({
+  region,
+});
 
 router.post(
   '/files',
   async (request: UserRequest, response: express.Response, next) => {
-    let client: undefined | PoolClient = undefined;
+    let client: undefined | PoolClient = undefined,
+      projectId: undefined | string;
+    const currentAccountId = request.user?.accountId;
     try {
-      const image = (request as FilesRequest).files.image;
+      const image = request.files?.image as UploadedFile;
       const key = request.body.filePath;
 
       const profilesRe = /profiles(?:-test)*\/([a-zA-Z0-9-]*)/;
@@ -52,17 +48,17 @@ router.post(
         client = await pgPool.connect();
 
         const accountId = profilesMatch[1];
-        if (request.user?.accountId !== accountId) {
+        if (currentAccountId !== accountId) {
           return response.status(401).send({ error: 'unauthorized' });
         }
       } else if (projectsMatch) {
-        const projectId = projectsMatch[1];
+        projectId = projectsMatch[1];
         client = await pgPool.connect();
         // select the projects that the given account is an admin for
         // AND then, make sure the project in question belongs to the account
         const queryRes = await client.query(
           'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
-          [request.user?.accountId, projectId],
+          [currentAccountId, projectId],
         );
         if (queryRes.rowCount !== 1) {
           return response.status(401).send({ error: 'unauthorized' });
@@ -82,12 +78,23 @@ router.post(
       const cmdResp = await s3.send(cmd);
       console.dir({ cmdResp }, { depth: null });
       const status = cmdResp['$metadata'].httpStatusCode;
+      // const status = 200;
       if (status && (status < 200 || status >= 300)) {
         console.log({ cmdResp });
         throw new Error('Error uploading file to s3');
       } else {
+        const imageUrl = `https://${bucketName}.s3.amazonaws.com/${key}/${image.name}`;
+
+        // Track file storage for projects
+        if (projectId && client) {
+          client.query(
+            `insert into upload (url, size, account_id, project_id) values ($1, $2, $3, $4)`,
+            [imageUrl, image.size, currentAccountId, projectId],
+          );
+        }
+
         response.send({
-          imageUrl: `https://${bucketName}.s3.amazonaws.com/${key}/${image.name}`,
+          imageUrl,
         });
       }
     } catch (err) {
