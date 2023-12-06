@@ -4,6 +4,7 @@ CREATE TABLE upload (
   created_at timestamp with time zone DEFAULT now(),
   url text UNIQUE NOT NULL,
   size int NOT NULL,
+  mimetype text NOT NULL,
   account_id uuid NOT NULL,
   project_id uuid NOT NULL,
   CONSTRAINT fk_account_id

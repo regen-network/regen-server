@@ -92,8 +92,8 @@ router.post(
         // Track file storage for projects
         if (projectId && client) {
           client.query(
-            `insert into upload (url, size, account_id, project_id) values ($1, $2, $3, $4)`,
-            [url, image.size, currentAccountId, projectId],
+            `insert into upload (url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4)`,
+            [url, image.size, image.mimetype, currentAccountId, projectId],
           );
         }
 
