@@ -11,10 +11,12 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { UploadedFile } from 'express-fileupload';
+import { generateIRIFromRaw } from 'iri-gen/iri-gen';
 const router = express.Router();
 
 const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
+const PROJECTS_PATH = process.env.S3_PROJECTS_PATH || 'projects';
 
 const s3 = new S3Client({
   region,
@@ -91,16 +93,11 @@ router.post(
 
         // Track file storage for projects
         if (projectId && client) {
-          client.query(
+          const extension = image.name.split('.').pop();
+          const iri = await generateIRIFromRaw(image.data, extension);
+          await client.query(
             `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
-            [
-              'test', // TODO
-              url,
-              image.size,
-              image.mimetype,
-              currentAccountId,
-              projectId,
-            ],
+            [iri, url, image.size, image.mimetype, currentAccountId, projectId],
           );
         }
 
@@ -139,7 +136,7 @@ router.delete(
 
       const input: DeleteObjectCommandInput = {
         Bucket: bucketName,
-        Key: `projects/${projectId}/${fileName}`,
+        Key: `${PROJECTS_PATH}/${projectId}/${fileName}`,
       };
       const cmd = new DeleteObjectCommand(input);
       const cmdResp = await s3.send(cmd);
@@ -150,9 +147,10 @@ router.delete(
       } else {
         const url = getFileUrl({
           bucketName,
-          key: `projects/${projectId}`,
+          key: `${PROJECTS_PATH}/${projectId}`,
           fileName,
         });
+        console.log('server url', url);
         await client.query(`delete from upload where url = $1`, [url]);
         response.send('File successfully deleted');
       }
