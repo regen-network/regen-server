@@ -92,8 +92,15 @@ router.post(
         // Track file storage for projects
         if (projectId && client) {
           client.query(
-            `insert into upload (url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4)`,
-            [url, image.size, image.mimetype, currentAccountId, projectId],
+            `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
+            [
+              'test', // TODO
+              url,
+              image.size,
+              image.mimetype,
+              currentAccountId,
+              projectId,
+            ],
           );
         }
 
@@ -114,11 +121,21 @@ router.post(
 router.delete(
   '/files/:projectId/:fileName',
   bodyParser.json(),
-  async (request, response: express.Response, next) => {
+  async (request: UserRequest, response: express.Response, next) => {
     let client: undefined | PoolClient;
     try {
       const projectId = request.params.projectId;
       const fileName = request.params.fileName;
+
+      client = await pgPool.connect();
+      // Only the project admin is allowed to delete a project file
+      const queryRes = await client.query(
+        'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
+        [request.user?.accountId, projectId],
+      );
+      if (queryRes.rowCount !== 1) {
+        return response.status(401).send({ error: 'unauthorized' });
+      }
 
       const input: DeleteObjectCommandInput = {
         Bucket: bucketName,
@@ -136,7 +153,6 @@ router.delete(
           key: `projects/${projectId}`,
           fileName,
         });
-        client = await pgPool.connect();
         await client.query(`delete from upload where url = $1`, [url]);
         response.send('File successfully deleted');
       }

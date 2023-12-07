@@ -6,6 +6,7 @@ import {
   getMarketplaceURL,
   longerTestTimeout,
 } from '../utils';
+import { withRootDb } from '../db/helpers';
 
 describe('files endpoint, projects auth...', () => {
   it(
@@ -45,7 +46,18 @@ describe('files endpoint, projects auth...', () => {
           projectId,
           authHeaders,
         );
+        const json = await resp.json();
+
         expect(resp.status).toBe(200);
+        await withRootDb(async client => {
+          const uploadQuery = await client.query(
+            'select * from upload where url = $1',
+            [json.imageUrl],
+          );
+          expect(uploadQuery.rowCount).toEqual(1);
+          expect(uploadQuery.rows[0].account_id).toEqual(accountId);
+          expect(uploadQuery.rows[0].project_id).toEqual(projectId);
+        });
       } finally {
         await dummyFilesTeardown(key, fname);
       }

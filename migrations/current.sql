@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS upload;
 CREATE TABLE upload (
-  id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+  iri text PRIMARY KEY,
   created_at timestamp with time zone DEFAULT now(),
   url text UNIQUE NOT NULL,
   size int NOT NULL,
