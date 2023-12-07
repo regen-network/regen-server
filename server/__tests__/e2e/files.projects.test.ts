@@ -86,7 +86,6 @@ describe('files endpoint, projects auth...', () => {
             authHeaders,
           );
           const json = await uploadResp.json();
-          console.log('resp', json.imageUrl);
           const resp = await fetch(
             `${getMarketplaceURL()}/files/${projectId}/${fname}`,
             {

@@ -150,7 +150,6 @@ router.delete(
           key: `${PROJECTS_PATH}/${projectId}`,
           fileName,
         });
-        console.log('server url', url);
         await client.query(`delete from upload where url = $1`, [url]);
         response.send('File successfully deleted');
       }
