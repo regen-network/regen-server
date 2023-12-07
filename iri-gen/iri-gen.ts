@@ -3,13 +3,15 @@ import * as blake from 'blakejs';
 
 import { binary_to_base58 } from 'base58-js';
 import { createHash } from 'sha256-uint8array';
-
-const IriPrefixRaw = 0;
-const IriPrefixGraph = 1;
-const GraphCanonicalizationAlgorithmURDNA2015 = 1;
-const GraphMerkleTreeUnspecified = 0;
-const DigestAlgorithmBLAKE2b256 = 1;
-const iriVersion0 = 0;
+import {
+  IriPrefixRaw,
+  DigestAlgorithmBLAKE2b256,
+  iriVersion0,
+  IriPrefixGraph,
+  GraphCanonicalizationAlgorithmURDNA2015,
+  GraphMerkleTreeUnspecified,
+  ApprovedRawExtensions,
+} from './iri-gen.constants';
 
 /**
  * contentHashRawToIRI converts a hash from raw content to an IRI (internationalized URI) based on the following
@@ -29,7 +31,9 @@ function contentHashRawToIRI(hash: Uint8Array, extension: string): string {
 
   const hashStr = checkEncode(input, iriVersion0);
 
-  return `regen:${hashStr}.${extension}`;
+  return `regen:${hashStr}.${
+    ApprovedRawExtensions.includes(extension) ? extension : 'raw'
+  }`;
 }
 
 /**
