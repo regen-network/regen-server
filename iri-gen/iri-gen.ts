@@ -131,7 +131,7 @@ export async function generateIRIFromRaw(
 ): Promise<string> {
   // Generate BLAKE2b with 256 bits (32 bytes) length hash
   const hash = blake.blake2b(data, null, 32);
-  console.log('HASH', hash);
+
   // Get IRI from hash
   const iri = contentHashRawToIRI(hash, extension);
   return iri;
