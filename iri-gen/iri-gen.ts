@@ -32,7 +32,7 @@ function contentHashRawToIRI(hash: Uint8Array, extension: string): string {
   const hashStr = checkEncode(input, iriVersion0);
 
   return `regen:${hashStr}.${
-    ApprovedRawExtensions.includes(extension) ? extension : 'raw'
+    ApprovedRawExtensions.includes(extension) ? extension : 'bin'
   }`;
 }
 

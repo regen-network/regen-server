@@ -46,10 +46,10 @@ describe('generateIRIFromGraph', () => {
 describe('generateIRIFromRaw', () => {
   it('generates correct IRI for raw data', () => {
     const data = new Uint8Array([1, 2, 3, 4, 5]);
-    const extension = 'bin';
+    const extension = 'txt';
 
     expect(generateIRIFromRaw(data, extension)).resolves.toBe(
-      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.bin',
+      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.txt',
     );
   });
   it('generates correct IRI for raw data with unapproved extension', () => {
@@ -57,7 +57,7 @@ describe('generateIRIFromRaw', () => {
     const extension = 'heic';
 
     expect(generateIRIFromRaw(data, extension)).resolves.toBe(
-      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.raw',
+      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.bin',
     );
   });
 });
