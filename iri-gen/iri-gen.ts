@@ -3,15 +3,41 @@ import * as blake from 'blakejs';
 
 import { binary_to_base58 } from 'base58-js';
 import { createHash } from 'sha256-uint8array';
-
-const IriPrefixGraph = 1;
-const GraphCanonicalizationAlgorithmURDNA2015 = 1;
-const GraphMerkleTreeUnspecified = 0;
-const DigestAlgorithmBLAKE2b256 = 1;
-const iriVersion0 = 0;
+import {
+  IriPrefixRaw,
+  DigestAlgorithmBLAKE2b256,
+  iriVersion0,
+  IriPrefixGraph,
+  GraphCanonicalizationAlgorithmURDNA2015,
+  GraphMerkleTreeUnspecified,
+  ApprovedRawExtensions,
+} from './iri-gen.constants';
 
 /**
- * toIRI converts a hash to an IRI (internationalized URI) based on the following
+ * contentHashRawToIRI converts a hash from raw content to an IRI (internationalized URI) based on the following
+ * pattern: regen:{base58check(concat(byte(0x0), byte(digest_algorithm), hash))}.{media_type extension}
+ * where digest_algorithm is BLAKE2b-256
+ * This is more or less copied from regen-ledger data module:
+ * https://github.com/regen-network/regen-ledger/blob/87d2035d0e1815a65abc7ce6f68c535dd845a23e/x/data/iri.go#L37
+ * @param  {Uint8Array} hash represents the hash of some raw data based on BLAKE2b-256
+ * @param  {string} extension represents the file extension of the raw data
+ * @returns string
+ */
+function contentHashRawToIRI(hash: Uint8Array, extension: string): string {
+  const bz = new Uint8Array(2);
+  bz[0] = IriPrefixRaw;
+  bz[1] = DigestAlgorithmBLAKE2b256;
+  const input = Uint8Array.from([...bz, ...hash]);
+
+  const hashStr = checkEncode(input, iriVersion0);
+
+  return `regen:${hashStr}.${
+    ApprovedRawExtensions.includes(extension) ? extension : 'bin'
+  }`;
+}
+
+/**
+ * contentHashGraphToIRI converts a hash from graph content to an IRI (internationalized URI) based on the following
  * pattern: regen:{base58check(concat(byte(0x1), byte(canonicalization_algorithm),
  * byte(merkle_tree), byte(digest_algorithm), hash))}.rdf
  * where canonicalization_algorithm is URDNA2015,
@@ -19,10 +45,10 @@ const iriVersion0 = 0;
  * and no merkle_tree
  * This is more or less copied from regen-ledger data module:
  * https://github.com/regen-network/regen-ledger/blob/87d2035d0e1815a65abc7ce6f68c535dd845a23e/x/data/iri.go#L60
- * @param  {string} hash represents the hash of some JSON-LD data based on BLAKE2b-256
+ * @param  {Uint8Array} hash represents the hash of some JSON-LD data based on BLAKE2b-256
  * @returns string
  */
-function toIRI(hash: Uint8Array): string {
+function contentHashGraphToIRI(hash: Uint8Array): string {
   const bz = new Uint8Array(4);
   bz[0] = IriPrefixGraph;
   bz[1] = GraphCanonicalizationAlgorithmURDNA2015;
@@ -72,12 +98,14 @@ export class InvalidJSONLD extends Error {
 }
 
 /**
- * generateIRI canonizes a JSON-LD doc and generates a hash for it using BLAKE2b (256 bits)
- * then converts this hash into an IRI based on the pattern described in toIRI function
- * @param  {jsonld.JsonLdDocument} doc
+ * generateIRIFromGraph canonizes a JSON-LD doc and generates a hash for it using BLAKE2b (256 bits)
+ * then converts this hash into an IRI based on the pattern described in contentHashGraphToIRI function
+ * @param  {jsonld.JsonLdDocument} doc JSON-LD document
  * @returns Promise
  */
-export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
+export async function generateIRIFromGraph(
+  doc: jsonld.JsonLdDocument,
+): Promise<string> {
   // Canonize JSON-LD to n-quads
   const canonized = await jsonld.canonize(doc, {
     algorithm: 'URDNA2015',
@@ -90,6 +118,25 @@ export async function generateIRI(doc: jsonld.JsonLdDocument): Promise<string> {
   const hash = blake.blake2b(canonized, null, 32);
 
   // Get IRI from hash
-  const iri = toIRI(hash);
+  const iri = contentHashGraphToIRI(hash);
+  return iri;
+}
+
+/**
+ * generateIRIFromRaw generates a hash for some raw data using BLAKE2b (256 bits)
+ * then converts this hash into an IRI based on the pattern described in contentHashRawToIRI function
+ * @param  {Uint8Array} data raw data
+ * @param  {string} extension represents the file extension of the raw data
+ * @returns Promise
+ */
+export async function generateIRIFromRaw(
+  data: Uint8Array,
+  extension: string,
+): Promise<string> {
+  // Generate BLAKE2b with 256 bits (32 bytes) length hash
+  const hash = blake.blake2b(data, null, 32);
+
+  // Get IRI from hash
+  const iri = contentHashRawToIRI(hash, extension);
   return iri;
 }

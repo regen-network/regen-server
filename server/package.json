@@ -69,6 +69,7 @@
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
+    "@types/express-fileupload": "^1.4.4",
     "@types/passport-google-oauth20": "^2.0.12",
     "@types/swagger-jsdoc": "^6.0.1",
     "@types/swagger-ui-express": "^4.1.3",

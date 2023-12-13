@@ -1,6 +1,6 @@
 import { JsonLdDocument } from 'jsonld';
 import { PoolClient, Client } from 'pg';
-import { generateIRI } from 'iri-gen/iri-gen';
+import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 
 export class MetadataNotFound extends Error {
   constructor(message: string) {
@@ -39,7 +39,7 @@ export class MetadataGraph {
   }
 
   async insertDoc(metadata: JsonLdDocument): Promise<MetadataGraphRow> {
-    const iri = await generateIRI(metadata);
+    const iri = await generateIRIFromGraph(metadata);
     return await this.insert(iri, metadata);
   }
 

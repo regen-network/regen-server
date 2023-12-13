@@ -219,7 +219,7 @@ export function genRandomRegenAddress(): string {
 export async function dummyFilesSetup(
   key: string,
   fname: string,
-  identifier: any,
+  identifier: string,
   authHeaders: Headers,
 ): Promise<{ resp: Response }> {
   let dir: undefined | string = undefined;
@@ -273,6 +273,51 @@ export async function dummyFilesTeardown(key: string, fname: string) {
       { depth: null },
     );
   }
+}
+
+export async function createProject({
+  initAuthHeaders,
+}: {
+  initAuthHeaders?: Headers;
+}) {
+  let authHeaders: Headers;
+  if (initAuthHeaders) {
+    authHeaders = initAuthHeaders;
+  } else {
+    const newUser = await createNewUserAndLogin();
+    authHeaders = newUser.authHeaders;
+  }
+
+  const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query: `{ getCurrentAccount { id } }`,
+    }),
+  });
+  const accountIdResult = await accountIdQuery.json();
+  const accountId = accountIdResult.data.getCurrentAccount.id;
+
+  const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
+      variables: `{"input":{"project":{"adminAccountId":"${accountId}"}}}`,
+    }),
+  });
+  const createProjectResult = await createProjectQuery.json();
+  const projectId = createProjectResult.data.createProject.project.id;
+
+  const key = `${process.env.S3_PROJECTS_PATH}/${projectId}`;
+  const fname = `test-${projectId}.txt`;
+  return {
+    key,
+    fname,
+    accountId,
+    projectId,
+  };
 }
 
 export function getServerBaseURL() {

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { generateIRI } from './iri-gen';
+import { generateIRIFromGraph } from './iri-gen';
 import 'dotenv/config';
 import { pgPool } from 'common/pool';
 import minimist from 'minimist';
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
   let client: PoolClient;
   try {
     const doc = await readDocument(path);
-    const iri = await generateIRI(doc);
+    const iri = await generateIRIFromGraph(doc);
     if (iri) {
       console.log(`The IRI for ${path} is: ${iri}`);
       if (insertFlag) {

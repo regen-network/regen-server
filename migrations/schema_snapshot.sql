@@ -578,6 +578,28 @@ CREATE TABLE public.shacl_graph (
 
 
 --
+-- Name: upload; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.upload (
+    iri text NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    url text NOT NULL,
+    size integer NOT NULL,
+    mimetype text NOT NULL,
+    account_id uuid NOT NULL,
+    project_id uuid NOT NULL
+);
+
+
+--
+-- Name: TABLE upload; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.upload IS 'Storage tracking for project media uploads';
+
+
+--
 -- Name: current current_pkey; Type: CONSTRAINT; Schema: graphile_migrate; Owner: -
 --
 
@@ -762,6 +784,22 @@ ALTER TABLE ONLY public.shacl_graph
 
 
 --
+-- Name: upload upload_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT upload_pkey PRIMARY KEY (iri);
+
+
+--
+-- Name: upload upload_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT upload_url_key UNIQUE (url);
+
+
+--
 -- Name: account_creator_id_key; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -839,6 +877,20 @@ CREATE INDEX project_verifier_id_key ON public.project USING btree (verifier_id)
 
 
 --
+-- Name: upload_account_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX upload_account_id_idx ON public.upload USING btree (account_id);
+
+
+--
+-- Name: upload_project_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX upload_project_id_idx ON public.upload USING btree (project_id);
+
+
+--
 -- Name: migrations migrations_previous_hash_fkey; Type: FK CONSTRAINT; Schema: graphile_migrate; Owner: -
 --
 
@@ -900,6 +952,22 @@ ALTER TABLE ONLY public.credit_class_version
 
 ALTER TABLE ONLY public.document
     ADD CONSTRAINT document_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id);
+
+
+--
+-- Name: upload fk_account_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT fk_account_id FOREIGN KEY (account_id) REFERENCES public.account(id);
+
+
+--
+-- Name: upload fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.project(id);
 
 
 --

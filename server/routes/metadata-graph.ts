@@ -3,7 +3,7 @@ import { PoolClient } from 'pg';
 
 import { pgPool } from 'common/pool';
 import { MetadataGraph } from 'common/metadata_graph';
-import { generateIRI } from 'iri-gen/iri-gen';
+import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 
 const router = express.Router();
 
@@ -117,7 +117,7 @@ router.get('/metadata-graph/:iri', async (req, res, next) => {
  */
 router.get('/iri-gen', async (req, res, next) => {
   try {
-    const iri = await generateIRI(req.body);
+    const iri = await generateIRIFromGraph(req.body);
     return res.json({ iri });
   } catch (err) {
     next(err);
