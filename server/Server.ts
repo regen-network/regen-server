@@ -234,7 +234,7 @@ app.use('/data/v1', metadataGraph);
 app.use('/marketplace/v1/wallet-auth', walletAuth);
 app.use('/marketplace/v1', csrfRouter);
 app.use('/marketplace/v1/graphiql', graphiqlRouter);
-app.use('/marketplace/v1/graphiql', posts);
+app.use('/marketplace/v1/posts', posts);
 
 if (!process.env.CI) {
   console.log('setting up the indexer db graphql connection...');
