@@ -13,7 +13,7 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
   try {
     client = await pgPool.connect();
     const iri = req.params.iri;
-    const postRes = await client.query('SELECT * FROM post WHERE id = $1', [
+    const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
       iri,
     ]);
     if (postRes.rowCount !== 1) {
