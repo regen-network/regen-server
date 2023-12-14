@@ -42,7 +42,7 @@ import metadataGraph from './routes/metadata-graph';
 import { MetadataNotFound } from 'common/metadata_graph';
 import { InvalidJSONLD } from 'iri-gen/iri-gen';
 import { walletAuth } from './routes/wallet-auth';
-import { posts } from './routes/posts';
+import posts from './routes/posts';
 import { csrfRouter } from './routes/csrf';
 import { graphiqlRouter, indexerGraphiqlRouter } from './routes/graphiql';
 
