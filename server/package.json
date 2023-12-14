@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.306.0",
+    "@aws-sdk/client-s3": "^3.473.0",
+    "@aws-sdk/s3-request-presigner": "^3.473.0",
     "@cosmjs/amino": "^0.28.11",
     "@cosmjs/crypto": "^0.28.11",
     "@graphile-contrib/pg-many-to-many": "^1.0.1",
@@ -31,6 +32,7 @@
     "cors": "^2.8.5",
     "csrf-csrf": "^2.2.2",
     "env-var": "^7.1.1",
+    "exif": "^0.6.0",
     "express": "4.18.2",
     "express-fileupload": "^1.1.10",
     "express-jwt": "7.7.5",

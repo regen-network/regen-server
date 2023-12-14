@@ -7,14 +7,16 @@ import { pgPool } from 'common/pool';
 import {
   DeleteObjectCommand,
   DeleteObjectCommandInput,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { UploadedFile } from 'express-fileupload';
 import { generateIRIFromRaw } from 'iri-gen/iri-gen';
 const router = express.Router();
 
-const bucketName = process.env.AWS_S3_BUCKET;
+export const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
 const PROJECTS_PATH = process.env.S3_PROJECTS_PATH || 'projects';
 
@@ -29,20 +31,23 @@ router.post(
       projectId: undefined | string;
     const currentAccountId = request.user?.accountId;
     try {
-      const image = request.files?.image as UploadedFile;
-      const key = request.body.filePath;
+      const file = (request.files?.image ||
+        request.files?.file) as UploadedFile;
+      const path = request.body.filePath;
 
       const profilesRe = /profiles(?:-test)*\/([a-zA-Z0-9-]*)/;
-      const profilesMatch = key.match(profilesRe);
+      const profilesMatch = path.match(profilesRe);
       const projectsRe = /projects(?:-test)*\/([a-zA-Z0-9-]*)/;
-      const projectsMatch = key.match(projectsRe);
+      const projectsMatch = path.match(projectsRe);
+      const projectsPostsRe = /projects(?:-test)*\/([a-zA-Z0-9-]*\/posts)/;
+      const projectsPostsMatch = path.match(projectsPostsRe);
 
       // block any unauthenticated requests are made to filePath that includes profiles
       // otherwise, check if the filePath belongs to the current user based on their account id
       // if not, block the request...
       // otherwise, allow the request to update the file to proceed
       if (
-        (key.includes('profiles') || key.includes('projects')) &&
+        (path.includes('profiles') || path.includes('projects')) &&
         request.isUnauthenticated()
       ) {
         return response.status(401).send({ error: 'unauthorized' });
@@ -53,7 +58,7 @@ router.post(
         if (currentAccountId !== accountId) {
           return response.status(401).send({ error: 'unauthorized' });
         }
-      } else if (projectsMatch) {
+      } else if (projectsPostsMatch || projectsMatch) {
         projectId = projectsMatch[1];
         client = await pgPool.connect();
         // select the projects that the given account is an admin for
@@ -67,15 +72,20 @@ router.post(
         }
       }
 
-      const fileStream = Readable.from([image.data]);
+      const fileStream = Readable.from([file.data]);
       fileStream.on('error', function (err) {
         console.log('File Error: ', err);
       });
 
+      // Make all project posts files private on S3.
+      // TODO we should also try to drop the location from the files metadata
+      // before uploading so that we don't have to re-upload the files if the
+      // user updates the post privacy settings.
       const cmd = new PutObjectCommand({
         Bucket: bucketName,
-        Body: image.data,
-        Key: `${key}/${image.name}`,
+        Body: file.data,
+        Key: `${path}/${file.name}`,
+        ACL: projectsPostsMatch ? 'private' : 'public-read',
       });
       const cmdResp = await s3.send(cmd);
       console.dir({ cmdResp }, { depth: null });
@@ -87,17 +97,17 @@ router.post(
       } else {
         const url = getFileUrl({
           bucketName,
-          key,
-          fileName: image.name,
+          path,
+          fileName: file.name,
         });
 
         // Track file storage for projects
         if (projectId && client) {
-          const extension = image.name.split('.').pop();
-          const iri = await generateIRIFromRaw(image.data, extension);
+          const extension = file.name.split('.').pop();
+          const iri = await generateIRIFromRaw(file.data, extension);
           await client.query(
             `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
-            [iri, url, image.size, image.mimetype, currentAccountId, projectId],
+            [iri, url, file.size, file.mimetype, currentAccountId, projectId],
           );
         }
 
@@ -147,7 +157,7 @@ router.delete(
       } else {
         const url = getFileUrl({
           bucketName,
-          key: `${PROJECTS_PATH}/${projectId}`,
+          path: `${PROJECTS_PATH}/${projectId}`,
           fileName,
         });
         await client.query(`delete from upload where url = $1`, [url]);
@@ -163,12 +173,34 @@ router.delete(
 
 type GetFileUrlParams = {
   bucketName?: string;
-  key: string;
+  path: string;
   fileName: string;
 };
 
-function getFileUrl({ bucketName, key, fileName }: GetFileUrlParams) {
-  return `https://${bucketName}.s3.amazonaws.com/${key}/${fileName}`;
+function getFileUrl({ bucketName, path, fileName }: GetFileUrlParams) {
+  return `https://${bucketName}.s3.amazonaws.com/${path}/${fileName}`;
+}
+
+type GetObjectSignedUrlParams = {
+  bucketName?: string;
+  fileUrl: string;
+};
+
+export async function getObjectSignedUrl({
+  bucketName,
+  fileUrl,
+}: GetObjectSignedUrlParams) {
+  const key = fileUrl.split(`https://${bucketName}.s3.amazonaws.com/`).pop();
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+
+  try {
+    return await getSignedUrl(s3, command, { expiresIn: 3600 });
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 export default router;
