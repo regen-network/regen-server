@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
+import Exif, { ExifImage } from 'exif';
 import { Readable } from 'stream';
 import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
@@ -77,9 +78,8 @@ router.post(
         console.log('File Error: ', err);
       });
 
-      // Make all project posts files private on S3.
-      // TODO we should also try to drop the location from the files metadata
-      // before uploading so that we don't have to re-upload the files if the
+      // Make all project posts files private on S3
+      // so that we don't have to update the files ACL if the
       // user updates the post privacy settings.
       const cmd = new PutObjectCommand({
         Bucket: bucketName,
@@ -111,8 +111,19 @@ router.post(
           );
         }
 
+        // Get location from file metadata for projects posts
+        let location;
+        if (projectsPostsMatch) {
+          try {
+            location = await getExifLocationData(file.data);
+          } catch (_) {
+            // just ignore error if no location metadata found
+          }
+        }
+
         response.send({
           imageUrl: url,
+          location,
         });
       }
     } catch (err) {
@@ -201,6 +212,19 @@ export async function getObjectSignedUrl({
   } catch (err) {
     console.error(err);
   }
+}
+
+function getExifLocationData(path: string | Buffer): Promise<Exif.ExifData> {
+  return new Promise(function (resolve, reject) {
+    try {
+      new ExifImage({ image: path }, function (error, exifData) {
+        if (error) reject(error);
+        else resolve(exifData?.gps);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 export default router;
