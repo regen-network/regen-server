@@ -1,9 +1,11 @@
 import * as express from 'express';
+import { mapKeys, camelCase } from 'lodash';
 import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError } from '../errors';
 import { bucketName, getObjectSignedUrl } from './files';
+import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 
 const router = express.Router();
 
@@ -39,7 +41,7 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
   }
 });
 
-// GET posts by project id
+// GET posts by project id based on limit, offset, and optional year
 router.get('/project/:projectId', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
@@ -57,25 +59,25 @@ router.get('/project/:projectId', async (req: UserRequest, res, next) => {
       if (yearsQuery.rowCount > 0) {
         const mostRecentYear = yearsQuery.rows[0];
 
-        const postsData = await getPostsData({
+        const posts = await getPostsData({
           req,
           projectId,
           year: mostRecentYear,
           client,
         });
-        res.json(postsData);
+        res.json({ posts, years: yearsQuery.rows });
       } else {
         throw new NotFoundError(`no posts for project ${projectId}`);
       }
     } else {
       // We return the posts (based on limit and offset) for the given year
-      const postsData = await getPostsData({
+      const posts = await getPostsData({
         req,
         projectId,
         year,
         client,
       });
-      res.json(postsData);
+      res.json({ posts });
     }
   } catch (e) {
     next(e);
@@ -117,7 +119,19 @@ router.post('/project/:projectId', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    // TODO
+    const accountId = req.user?.accountId;
+    const post = req.body.post;
+
+    // Generate post IRI
+    const iri = await generateIRIFromGraph(post.metadata);
+
+    // TODO Should we double check that the accountId is the current project admin?
+    // This could be done through a pg RLS policy.
+    await client.query(
+      'INSERT INTO POST (iri, account_id, project_id, privacy, metadata) VALUES ($1, $2, $3, $4)',
+      [iri, accountId, post.projectId, post.privacy, post.metadata],
+    );
+    res.json({ iri });
   } catch (e) {
     next(e);
   } finally {
@@ -177,7 +191,7 @@ async function getPostData({ req, post, client }: GetPostDataParams) {
         ({ ['x:location']: _, ...keepAttrs }) => keepAttrs,
       );
     }
-    return post;
+    return mapKeys(post, (_, key) => camelCase(key));
   } else {
     switch (post.privacy) {
       case 'private':
@@ -187,7 +201,7 @@ async function getPostData({ req, post, client }: GetPostDataParams) {
         post.metadata['x:files'] = files?.map(file => ({
           '@id': file['@id'],
         }));
-        return post;
+        return mapKeys(post, (_, key) => camelCase(key));
       default:
         throw new Error('unsupported post privacy');
     }
