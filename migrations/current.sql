@@ -5,8 +5,14 @@ CREATE TYPE post_privacy AS ENUM (
     'public',
     'private',
     'private_files',
-    'private_files_locations'
+    'private_locations'
 );
+COMMENT ON TYPE post_privacy IS 
+  'public: post data including files are public,
+   private: post data including files are private,
+   private_files: files including location data are private,
+   private_locations: location data is private';
+
 CREATE TABLE post (
   iri text PRIMARY KEY,
   created_at timestamp with time zone DEFAULT now(),

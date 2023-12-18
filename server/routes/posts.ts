@@ -28,13 +28,13 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
     if (
       post.account_id === currentAccountId ||
       post.privacy === 'public' ||
-      post.privacy === 'private_files_locations'
+      post.privacy === 'private_locations'
     ) {
       post.metadata['x:files'] = await getFilesWithSignedUrls({
         client,
         files,
       });
-      if (post.privacy === 'private_files_locations') {
+      if (post.privacy === 'private_locations') {
         // Filter post file locations
         post.metadata['x:files'] = files?.map(
           ({ ['x:location']: _, ...keepAttrs }) => keepAttrs,
