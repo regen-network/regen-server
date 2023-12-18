@@ -109,6 +109,7 @@ router.post(
             `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
             [iri, url, file.size, file.mimetype, currentAccountId, projectId],
           );
+          // TODO Anchor files from project posts on chain (#422)
         }
 
         // Get location from file metadata for projects posts

@@ -1,4 +1,5 @@
 import * as express from 'express';
+import * as jsonld from 'jsonld';
 import { mapKeys, camelCase } from 'lodash';
 import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
@@ -15,7 +16,7 @@ type Post = {
   account_id: string;
   project_id: string;
   privacy: 'private' | 'private_files' | 'private_locations' | 'public';
-  metadata: object;
+  metadata: jsonld.JsonLdDocument;
 };
 
 // GET post by IRI
@@ -114,23 +115,31 @@ async function getPostsData({
   );
 }
 
+type PostInput = {
+  privacy: string;
+  metadata: jsonld.JsonLdDocument;
+};
+
 // POST create post for a project
 router.post('/project/:projectId', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
+    const projectId = req.params.projectId;
     const accountId = req.user?.accountId;
-    const post = req.body.post;
+    const post: PostInput = req.body.post;
 
     // Generate post IRI
     const iri = await generateIRIFromGraph(post.metadata);
 
-    // TODO Should we double check that the accountId is the current project admin?
+    // TODO Should we double check that the accountId corresponds to the current project admin?
     // This could be done through a pg RLS policy.
     await client.query(
       'INSERT INTO POST (iri, account_id, project_id, privacy, metadata) VALUES ($1, $2, $3, $4)',
-      [iri, accountId, post.projectId, post.privacy, post.metadata],
+      [iri, accountId, projectId, post.privacy, post.metadata],
     );
+
+    // TODO Anchor post graph data on chain (#422)
     res.json({ iri });
   } catch (e) {
     next(e);
@@ -139,12 +148,29 @@ router.post('/project/:projectId', async (req: UserRequest, res, next) => {
   }
 });
 
-// PUT update post by IRI
+// PUT update post privacy and metadata by IRI
 router.put('/:iri', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    // TODO
+    const iri = req.params.iri;
+    const post: PostInput = req.body.post;
+
+    // Generate post new IRI
+    const newIri = await generateIRIFromGraph(post.metadata);
+
+    // TODO Should we double check that the accountId corresponds to the post creator account or current project admin?
+    // This could be done through a pg RLS policy.
+    await client.query(
+      'UPDATE POST set iri = $1, privacy = $2, metadata = $3 WHERE iri = $4',
+      [newIri, post.privacy, post.metadata, iri],
+    );
+
+    if (iri !== newIri) {
+      // anchor updated post graph data (#422)
+    }
+
+    res.status(200);
   } catch (e) {
     next(e);
   } finally {
