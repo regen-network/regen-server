@@ -5,7 +5,7 @@ import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError } from '../errors';
-import { bucketName, getObjectSignedUrl } from './files';
+import { bucketName, deleteFile, getObjectSignedUrl } from './files';
 import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 
 const router = express.Router();
@@ -183,7 +183,32 @@ router.delete('/:iri', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    // TODO delete from tables post and upload, delete files from S3
+    const iri = req.params.iri;
+
+    const postQuery = await client.query('SELECT * FROM post WHERE iri = $1', [
+      iri,
+    ]);
+    if (postQuery.rowCount !== 1) {
+      throw new NotFoundError('post not found');
+    }
+    const post = postQuery.rows[0];
+
+    // Delete files from S3 and tracking of those in the upload table
+    // TODO update x:files, x:name once post schema defined
+    await Promise.all(
+      post.metadata['x:files'].map(async file => {
+        await deleteFile({
+          client,
+          accountId: req.user?.accountId,
+          fileName: file['x:name'],
+          projectId: post.project_id,
+          bucketName,
+        });
+      }),
+    );
+
+    // Delete post
+    await client.query('DELETE FROM post WHERE iri = $1', [iri]);
   } catch (e) {
     next(e);
   } finally {

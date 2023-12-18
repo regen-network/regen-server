@@ -3,7 +3,7 @@ import * as bodyParser from 'body-parser';
 import Exif, { ExifImage } from 'exif';
 import { Readable } from 'stream';
 import { UserRequest } from '../types';
-import { PoolClient } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import {
   DeleteObjectCommand,
@@ -15,6 +15,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { UploadedFile } from 'express-fileupload';
 import { generateIRIFromRaw } from 'iri-gen/iri-gen';
+import { UnauthorizedError } from '../errors';
 const router = express.Router();
 
 export const bucketName = process.env.AWS_S3_BUCKET;
@@ -146,35 +147,14 @@ router.delete(
       const projectId = request.params.projectId;
       const fileName = request.params.fileName;
 
-      client = await pgPool.connect();
-      // Only the project admin is allowed to delete a project file
-      const queryRes = await client.query(
-        'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
-        [request.user?.accountId, projectId],
-      );
-      if (queryRes.rowCount !== 1) {
-        return response.status(401).send({ error: 'unauthorized' });
-      }
-
-      const input: DeleteObjectCommandInput = {
-        Bucket: bucketName,
-        Key: `${PROJECTS_PATH}/${projectId}/${fileName}`,
-      };
-      const cmd = new DeleteObjectCommand(input);
-      const cmdResp = await s3.send(cmd);
-      const status = cmdResp['$metadata'].httpStatusCode;
-      if (status && (status < 200 || status >= 300)) {
-        console.log({ cmdResp });
-        throw new Error('Unable to delete file');
-      } else {
-        const url = getFileUrl({
-          bucketName,
-          path: `${PROJECTS_PATH}/${projectId}`,
-          fileName,
-        });
-        await client.query(`delete from upload where url = $1`, [url]);
-        response.send('File successfully deleted');
-      }
+      await deleteFile({
+        client,
+        accountId: request.user?.accountId,
+        fileName,
+        projectId,
+        bucketName,
+      });
+      response.send('File successfully deleted');
     } catch (err) {
       next(err);
     } finally {
@@ -226,6 +206,50 @@ function getExifLocationData(path: string | Buffer): Promise<Exif.ExifData> {
       reject(error);
     }
   });
+}
+
+type DeleteFileParams = {
+  bucketName?: string;
+  client: PoolClient;
+  accountId?: string;
+  projectId: string;
+  fileName: string;
+};
+
+export async function deleteFile({
+  bucketName,
+  client,
+  accountId,
+  fileName,
+  projectId,
+}: DeleteFileParams) {
+  // Only the project admin is allowed to delete a project file
+  const queryRes = await client.query(
+    'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
+    [accountId, projectId],
+  );
+  if (queryRes.rowCount !== 1) {
+    throw new UnauthorizedError('unauthorized');
+  }
+
+  const input: DeleteObjectCommandInput = {
+    Bucket: bucketName,
+    Key: `${PROJECTS_PATH}/${projectId}/${fileName}`,
+  };
+  const cmd = new DeleteObjectCommand(input);
+  const cmdResp = await s3.send(cmd);
+  const status = cmdResp['$metadata'].httpStatusCode;
+  if (status && (status < 200 || status >= 300)) {
+    console.log({ cmdResp });
+    throw new Error('Unable to delete file');
+  } else {
+    const url = getFileUrl({
+      bucketName,
+      path: `${PROJECTS_PATH}/${projectId}`,
+      fileName,
+    });
+    await client.query(`delete from upload where url = $1`, [url]);
+  }
 }
 
 export default router;
