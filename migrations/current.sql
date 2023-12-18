@@ -2,16 +2,16 @@ DROP TABLE IF EXISTS post;
 DROP TYPE IF EXISTS post_privacy;
 
 CREATE TYPE post_privacy AS ENUM (
-    'public',
     'private',
     'private_files',
-    'private_locations'
+    'private_locations',
+    'public'
 );
 COMMENT ON TYPE post_privacy IS 
-  'public: post data including files are public,
-   private: post data including files are private,
+  'private: post data including files are private,
    private_files: files including location data are private,
-   private_locations: location data is private';
+   private_locations: location data is private,
+   public: post data including files are public';
 
 CREATE TABLE post (
   iri text PRIMARY KEY,
