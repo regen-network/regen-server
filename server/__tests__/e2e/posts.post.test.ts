@@ -9,6 +9,7 @@ import {
 } from '../utils';
 import { withRootDb } from '../db/helpers';
 
+const commit = true;
 describe('/posts POST endpoint', () => {
   it('allows the project admin to insert a post for this project', async () => {
     const { authHeaders } = await createNewUserAndLogin();
@@ -39,8 +40,8 @@ describe('/posts POST endpoint', () => {
       expect(postQuery.rows[0].metadata).toEqual(metadata);
 
       // Cleaning up
-      await client.query('delete from post where iri = $1', [expIri]);
-    }, false);
+      await client.query('delete from post where iri = $1', [iri]);
+    }, commit);
   });
   it("does NOT allow a user to insert a post for a project he's not an admin of", async () => {
     const { authHeaders } = await createNewUserAndLogin();

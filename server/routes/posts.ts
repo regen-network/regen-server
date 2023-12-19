@@ -57,7 +57,7 @@ router.get('/project/:projectId', async (req: UserRequest, res, next) => {
 
     // If year is not provided, we return the list of years containing posts
     // and the posts (based on limit and offset) from the most recent year
-    if (year) {
+    if (!year) {
       const yearsQuery = await client.query(
         "SELECT DATE_TRUNC('year', created_at) AS year FROM post WHERE project_id = $1 GROUP BY year ORDER BY year DESC",
         [projectId],
@@ -120,14 +120,15 @@ async function getPostsData({
   });
 
   return await Promise.all(
-    postsQuery.rows?.map(
-      async post =>
-        await getPostData({
-          isProjectAdmin,
-          post,
-          client,
-        }),
-    ),
+    postsQuery.rows?.map(async post => {
+      const p = await getPostData({
+        isProjectAdmin,
+        post,
+        client,
+      });
+      console.log(p);
+      return p;
+    }) || [],
   );
 }
 
@@ -199,7 +200,7 @@ router.put('/', async (req: UserRequest, res, next) => {
       accountId,
     });
     if (!isProjectAdmin) {
-      throw new UnauthorizedError('only the project admin can update post');
+      throw new UnauthorizedError('only the project admin can update posts');
     }
 
     // Generate post new IRI
@@ -225,11 +226,12 @@ router.put('/', async (req: UserRequest, res, next) => {
 });
 
 // DELETE delete post by IRI
-router.delete('/:iri', async (req: UserRequest, res, next) => {
+router.delete('/', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    const iri = req.params.iri;
+    const iri = req.body.iri;
+    const accountId = req.user?.accountId;
 
     const postQuery = await client.query('SELECT * FROM post WHERE iri = $1', [
       iri,
@@ -238,11 +240,20 @@ router.delete('/:iri', async (req: UserRequest, res, next) => {
       throw new NotFoundError('post not found');
     }
     const post = postQuery.rows[0];
+    const projectId = post.project_id;
+    const isProjectAdmin = await getIsProjectAdmin({
+      client,
+      projectId,
+      accountId,
+    });
+    if (!isProjectAdmin) {
+      throw new UnauthorizedError('only the project admin can delete posts');
+    }
 
     // Delete files from S3 and tracking of those in the upload table
     // TODO update x:files, x:name once post schema defined
     await Promise.all(
-      post.metadata['x:files'].map(async file => {
+      post.metadata['x:files']?.map(async file => {
         await deleteFile({
           client,
           accountId: req.user?.accountId,
@@ -250,7 +261,7 @@ router.delete('/:iri', async (req: UserRequest, res, next) => {
           projectId: post.project_id,
           bucketName,
         });
-      }),
+      }) || [],
     );
 
     // Delete post
@@ -336,7 +347,7 @@ async function getFilesWithSignedUrls({
         fileUrl: url,
       });
       return { ...file, signedUrl };
-    }),
+    }) || [],
   );
 }
 

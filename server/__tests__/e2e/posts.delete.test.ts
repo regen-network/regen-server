@@ -2,36 +2,26 @@ import fetch from 'node-fetch';
 import {
   createNewUserAndLogin,
   createProjectAndPost,
-  expIri,
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
 
-const updatedPrivacy = 'private_files';
-const updatedMetadata = {
-  '@context': { x: 'http://some.schema' },
-  'x:someField': 'some other value',
-};
-const updatedExpIri =
-  'regen:13toVh6DipJCaUZp7Ve33MEJ8fEtYVd6f8Xmswk8E3ocqVqJA3QVN3X.rdf';
 const commit = true;
 
-describe('/posts PUT endpoint', () => {
-  it('allows the project admin to update a post privacy and metadata', async () => {
+describe('/posts DELETE endpoint', () => {
+  it('allows the project admin to delete a post', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and post administered by this account
-    const { iri, accountId, projectId } = await createProjectAndPost({
+    const { iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
     });
 
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
-      method: 'PUT',
+      method: 'DELETE',
       headers: authHeaders,
       body: JSON.stringify({
         iri,
-        privacy: updatedPrivacy,
-        metadata: updatedMetadata,
       }),
     });
 
@@ -39,31 +29,22 @@ describe('/posts PUT endpoint', () => {
     await withRootDb(async client => {
       const postQuery = await client.query(
         'select * from post where iri = $1',
-        [updatedExpIri],
+        [iri],
       );
-      expect(postQuery.rowCount).toEqual(1);
-      expect(postQuery.rows[0].project_id).toEqual(projectId);
-      expect(postQuery.rows[0].creator_account_id).toEqual(accountId);
-      expect(postQuery.rows[0].privacy).toEqual(updatedPrivacy);
-      expect(postQuery.rows[0].metadata).toEqual(updatedMetadata);
-
-      // Cleaning up
-      await client.query('delete from post where iri = $1', [updatedExpIri]);
-    }, commit);
+      expect(postQuery.rowCount).toEqual(0);
+    });
   });
-  it("does NOT allow a user to update a post for a project he's not an admin of", async () => {
+  it("does NOT allow a user to delete a post for a project he's not an admin of", async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and post administered by this account
     const { iri } = await createProjectAndPost({});
 
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
-      method: 'PUT',
+      method: 'DELETE',
       headers: authHeaders,
       body: JSON.stringify({
         iri,
-        privacy: updatedPrivacy,
-        metadata: updatedMetadata,
       }),
     });
 
@@ -73,16 +54,14 @@ describe('/posts PUT endpoint', () => {
       await client.query('delete from post where iri = $1', [iri]);
     }, commit);
   });
-  it('returns a 404 error if the post to update does not exist', async () => {
+  it('returns a 404 error if the post to delete does not exist', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
-      method: 'PUT',
+      method: 'DELETE',
       headers: authHeaders,
       body: JSON.stringify({
         iri: '123',
-        privacy: updatedPrivacy,
-        metadata: updatedMetadata,
       }),
     });
 

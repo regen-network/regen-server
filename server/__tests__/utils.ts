@@ -314,6 +314,27 @@ export async function createProjectAndPost({
   return { accountId, projectId, iri };
 }
 
+export async function createProjectAndPosts({
+  initAuthHeaders,
+}: OptionalAuthHeaders) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
+
+  const { projectId, accountId } = await createProject({
+    initAuthHeaders: authHeaders,
+  });
+  for (let i = 0; i < 4; i++)
+    await fetch(`${getMarketplaceURL()}/posts`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        projectId,
+        privacy,
+        metadata: { ...metadata, 'x:someField': i },
+      }),
+    });
+  return { accountId, projectId };
+}
+
 export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
   const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {

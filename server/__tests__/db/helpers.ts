@@ -42,7 +42,7 @@ type ClientCallback<T = any> = (client: PoolClient) => Promise<T>;
 const withDbFromUrl = async <T>(
   url: string,
   fn: ClientCallback<T>,
-  rollback = true,
+  commit = false,
 ): Promise<void> => {
   const pool = poolFromUrl(url);
   const client = await pool.connect();
@@ -64,7 +64,7 @@ const withDbFromUrl = async <T>(
     }
     throw e;
   } finally {
-    if (rollback) await client.query('ROLLBACK');
+    if (!commit) await client.query('ROLLBACK');
     else await client.query('COMMIT');
     await client.query('RESET ALL'); // Shouldn't be necessary, but just in case...
     client.release();
@@ -73,8 +73,8 @@ const withDbFromUrl = async <T>(
 
 export const withRootDb = <T>(
   fn: ClientCallback<T>,
-  rollback = true,
-): Promise<void> => withDbFromUrl(TEST_DATABASE_URL, fn, rollback);
+  commit = false,
+): Promise<void> => withDbFromUrl(TEST_DATABASE_URL, fn, commit);
 
 export const becomeRoot = (client: PoolClient): Promise<QueryResult<any>> =>
   client.query(`set role "${process.env.TEST_DATABASE_USER}"`);
