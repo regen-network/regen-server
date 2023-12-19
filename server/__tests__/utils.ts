@@ -21,6 +21,13 @@ import { genArbitraryLoginData } from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
 
 export const longerTestTimeout = 30000;
+export const privacy = 'public';
+export const metadata = {
+  '@context': { x: 'http://some.schema' },
+  'x:someField': 'some value',
+};
+export const expIri =
+  'regen:13toVhB7bM4zUgwzH5N5UkTjfx1ZEHK1qXkhEWysLqCoP8iaACRxJJK.rdf';
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
@@ -275,11 +282,11 @@ export async function dummyFilesTeardown(key: string, fname: string) {
   }
 }
 
-export async function createProject({
-  initAuthHeaders,
-}: {
+type OptionalAuthHeaders = {
   initAuthHeaders?: Headers;
-}) {
+};
+
+async function getAuthHeaders({ initAuthHeaders }: OptionalAuthHeaders) {
   let authHeaders: Headers;
   if (initAuthHeaders) {
     authHeaders = initAuthHeaders;
@@ -287,7 +294,28 @@ export async function createProject({
     const newUser = await createNewUserAndLogin();
     authHeaders = newUser.authHeaders;
   }
+  return authHeaders;
+}
 
+export async function createProjectAndPost({
+  initAuthHeaders,
+}: OptionalAuthHeaders) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
+
+  const { projectId, accountId } = await createProject({
+    initAuthHeaders: authHeaders,
+  });
+  const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({ projectId, privacy, metadata }),
+  });
+  const { iri } = await resp.json();
+  return { accountId, projectId, iri };
+}
+
+export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
   const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
     method: 'POST',
     headers: authHeaders,

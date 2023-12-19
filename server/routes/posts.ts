@@ -13,7 +13,7 @@ const router = express.Router();
 type Post = {
   iri: string;
   created_at: Date;
-  account_id: string;
+  creator_account_id: string;
   project_id: string;
   privacy: 'private' | 'private_files' | 'private_locations' | 'public';
   metadata: jsonld.JsonLdDocument;
@@ -33,7 +33,12 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
     }
 
     const post = postRes.rows[0];
-    const postData = await getPostData({ req, post, client });
+    const isProjectAdmin = await getIsProjectAdmin({
+      client,
+      projectId: post.project_id,
+      accountId: req.user?.accountId,
+    });
+    const postData = await getPostData({ isProjectAdmin, post, client });
     return res.json(postData);
   } catch (e) {
     next(e);
@@ -108,35 +113,53 @@ async function getPostsData({
     [year, projectId, limit, offset],
   );
 
+  const isProjectAdmin = await getIsProjectAdmin({
+    client,
+    projectId,
+    accountId: req.user?.accountId,
+  });
+
   return await Promise.all(
     postsQuery.rows?.map(
-      async post => await getPostData({ req, post, client }),
+      async post =>
+        await getPostData({
+          isProjectAdmin,
+          post,
+          client,
+        }),
     ),
   );
 }
 
-type PostInput = {
+type PostInsertInput = {
+  projectId: string;
   privacy: string;
   metadata: jsonld.JsonLdDocument;
 };
 
 // POST create post for a project
-router.post('/project/:projectId', async (req: UserRequest, res, next) => {
+router.post('/', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    const projectId = req.params.projectId;
     const accountId = req.user?.accountId;
-    const post: PostInput = req.body.post;
+    const { projectId, privacy, metadata }: PostInsertInput = req.body;
+
+    const isProjectAdmin = await getIsProjectAdmin({
+      client,
+      projectId,
+      accountId,
+    });
+    if (!isProjectAdmin) {
+      throw new UnauthorizedError('only the project admin can create post');
+    }
 
     // Generate post IRI
-    const iri = await generateIRIFromGraph(post.metadata);
+    const iri = await generateIRIFromGraph(metadata);
 
-    // TODO Should we double check that the accountId corresponds to the current project admin?
-    // This could be done through a pg RLS policy.
     await client.query(
-      'INSERT INTO POST (iri, account_id, project_id, privacy, metadata) VALUES ($1, $2, $3, $4)',
-      [iri, accountId, projectId, post.privacy, post.metadata],
+      'INSERT INTO POST (iri, creator_account_id, project_id, privacy, metadata) VALUES ($1, $2, $3, $4, $5)',
+      [iri, accountId, projectId, privacy, metadata],
     );
 
     // TODO Anchor post graph data on chain (#422)
@@ -148,33 +171,56 @@ router.post('/project/:projectId', async (req: UserRequest, res, next) => {
   }
 });
 
+type PostUpdateInput = {
+  iri: string;
+  privacy: string;
+  metadata: jsonld.JsonLdDocument;
+};
+
 // PUT update post privacy and metadata by IRI
-router.put('/:iri', async (req: UserRequest, res, next) => {
+router.put('/', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    const iri = req.params.iri;
-    const post: PostInput = req.body.post;
+    const { iri, privacy, metadata }: PostUpdateInput = req.body;
+    const accountId = req.user?.accountId;
+
+    const postQuery = await client.query(
+      'SELECT project_id FROM post WHERE iri = $1',
+      [iri],
+    );
+    if (postQuery.rowCount !== 1) {
+      throw new NotFoundError('post not found');
+    }
+    const projectId = postQuery.rows[0].project_id;
+    const isProjectAdmin = await getIsProjectAdmin({
+      client,
+      projectId,
+      accountId,
+    });
+    if (!isProjectAdmin) {
+      throw new UnauthorizedError('only the project admin can update post');
+    }
 
     // Generate post new IRI
-    const newIri = await generateIRIFromGraph(post.metadata);
+    const newIri = await generateIRIFromGraph(metadata);
 
-    // TODO Should we double check that the accountId corresponds to the post creator account or current project admin?
-    // This could be done through a pg RLS policy.
     await client.query(
       'UPDATE POST set iri = $1, privacy = $2, metadata = $3 WHERE iri = $4',
-      [newIri, post.privacy, post.metadata, iri],
+      [newIri, privacy, metadata, iri],
     );
 
     if (iri !== newIri) {
       // anchor updated post graph data (#422)
     }
 
-    res.status(200);
+    res.sendStatus(200);
   } catch (e) {
     next(e);
   } finally {
-    if (client) client.release();
+    if (client) {
+      client.release();
+    }
   }
 });
 
@@ -209,6 +255,7 @@ router.delete('/:iri', async (req: UserRequest, res, next) => {
 
     // Delete post
     await client.query('DELETE FROM post WHERE iri = $1', [iri]);
+    res.sendStatus(200);
   } catch (e) {
     next(e);
   } finally {
@@ -217,18 +264,21 @@ router.delete('/:iri', async (req: UserRequest, res, next) => {
 });
 
 type GetPostDataParams = {
-  req: UserRequest;
+  isProjectAdmin: boolean;
   post: Post;
   client: PoolClient;
 };
 
-async function getPostData({ req, post, client }: GetPostDataParams) {
+async function getPostData({
+  isProjectAdmin,
+  post,
+  client,
+}: GetPostDataParams) {
   // TODO compact JSON-LD metadata and update field names once post schema is defined
   const files = post.metadata['x:files'];
-  const currentAccountId = req.user?.accountId;
 
   if (
-    post.account_id === currentAccountId ||
+    isProjectAdmin ||
     post.privacy === 'public' ||
     post.privacy === 'private_locations'
   ) {
@@ -288,6 +338,27 @@ async function getFilesWithSignedUrls({
       return { ...file, signedUrl };
     }),
   );
+}
+
+type GetIsProjectAdminType = {
+  client: PoolClient;
+  projectId: string;
+  accountId?: string;
+};
+
+async function getIsProjectAdmin({
+  client,
+  projectId,
+  accountId,
+}: GetIsProjectAdminType) {
+  const projectQuery = await client.query(
+    'SELECT admin_account_id FROM project WHERE id = $1',
+    [projectId],
+  );
+  if (projectQuery.rowCount !== 1) {
+    throw new NotFoundError('project not found');
+  }
+  return projectQuery.rows[0].admin_account_id === accountId;
 }
 
 export default router;

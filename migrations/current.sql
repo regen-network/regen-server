@@ -16,12 +16,12 @@ COMMENT ON TYPE post_privacy IS
 CREATE TABLE post (
   iri text PRIMARY KEY,
   created_at timestamp with time zone DEFAULT now(),
-  account_id uuid NOT NULL,
+  creator_account_id uuid NOT NULL,
   project_id uuid NOT NULL,
   privacy post_privacy NOT NULL DEFAULT 'private',
   metadata jsonb NOT NULL,
-  CONSTRAINT fk_account_id
-    FOREIGN KEY(account_id) 
+  CONSTRAINT fk_creator_account_id
+    FOREIGN KEY(creator_account_id) 
 	  REFERENCES account(id),
   CONSTRAINT fk_project_id
     FOREIGN KEY(project_id) 
@@ -29,8 +29,6 @@ CREATE TABLE post (
 );
 COMMENT ON TABLE post IS 'Project posts';
 
-CREATE INDEX IF NOT EXISTS post_account_id_idx ON post (account_id);
+CREATE INDEX IF NOT EXISTS post_creator_account_id_idx ON post (creator_account_id);
 CREATE INDEX IF NOT EXISTS post_project_id_idx ON post (project_id);
-
-
 
