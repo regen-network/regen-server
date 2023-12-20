@@ -249,7 +249,10 @@ export async function dummyFilesSetup(
       headers: authHeaders,
       body: form,
     });
+    console.log('resp', resp);
     return { resp };
+  } catch (e) {
+    console.log('e', e);
   } finally {
     if (fd) {
       await fd?.close();
@@ -271,7 +274,7 @@ export async function dummyFilesTeardown(key: string, fname: string) {
     },
   });
   const response = await s3.send(cmd);
-  if (response['$contents'].httpStatusCode !== 200) {
+  if (response['$metadata'].httpStatusCode !== 200) {
     console.dir(
       {
         response,
