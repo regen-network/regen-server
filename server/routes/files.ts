@@ -169,7 +169,7 @@ type GetFileUrlParams = {
   fileName: string;
 };
 
-function getFileUrl({ bucketName, path, fileName }: GetFileUrlParams) {
+export function getFileUrl({ bucketName, path, fileName }: GetFileUrlParams) {
   return `https://${bucketName}.s3.amazonaws.com/${path}/${fileName}`;
 }
 

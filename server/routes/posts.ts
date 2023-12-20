@@ -1,6 +1,5 @@
 import * as express from 'express';
 import * as jsonld from 'jsonld';
-import { mapKeys, camelCase } from 'lodash';
 import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
@@ -10,13 +9,14 @@ import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 
 const router = express.Router();
 
-type Post = {
+type Privacy = 'private' | 'private_files' | 'private_locations' | 'public';
+export type Post = {
   iri: string;
   created_at: Date;
   creator_account_id: string;
   project_id: string;
-  privacy: 'private' | 'private_files' | 'private_locations' | 'public';
-  metadata: jsonld.JsonLdDocument;
+  privacy: Privacy;
+  contents: jsonld.JsonLdDocument;
 };
 
 // GET post by IRI
@@ -39,6 +39,9 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
       accountId: req.user?.accountId,
     });
     const postData = await getPostData({ isProjectAdmin, post, client });
+    if (postData.privacy === 'private' && !isProjectAdmin) {
+      throw new UnauthorizedError('private post');
+    }
     return res.json(postData);
   } catch (e) {
     next(e);
@@ -59,19 +62,18 @@ router.get('/project/:projectId', async (req: UserRequest, res, next) => {
     // and the posts (based on limit and offset) from the most recent year
     if (!year) {
       const yearsQuery = await client.query(
-        "SELECT DATE_TRUNC('year', created_at) AS year FROM post WHERE project_id = $1 GROUP BY year ORDER BY year DESC",
+        "SELECT DATE_PART('year', created_at) AS year FROM post WHERE project_id = $1 GROUP BY year ORDER BY year DESC",
         [projectId],
       );
       if (yearsQuery.rowCount > 0) {
-        const mostRecentYear = yearsQuery.rows[0];
-
+        const mostRecentYear = yearsQuery.rows[0].year;
         const posts = await getPostsData({
           req,
           projectId,
           year: mostRecentYear,
           client,
         });
-        res.json({ posts, years: yearsQuery.rows });
+        res.json({ posts, years: yearsQuery.rows.map(({ year }) => year) });
       } else {
         throw new NotFoundError(`no posts for project ${projectId}`);
       }
@@ -109,7 +111,7 @@ async function getPostsData({
   const offset = req.query.offset;
 
   const postsQuery = await client.query(
-    "SELECT * FROM post WHERE DATE_TRUNC('year', created_at) = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+    "SELECT * FROM post WHERE DATE_PART('year', created_at) = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
     [year, projectId, limit, offset],
   );
 
@@ -120,22 +122,21 @@ async function getPostsData({
   });
 
   return await Promise.all(
-    postsQuery.rows?.map(async post => {
-      const p = await getPostData({
-        isProjectAdmin,
-        post,
-        client,
-      });
-      console.log(p);
-      return p;
-    }) || [],
+    postsQuery.rows?.map(
+      async post =>
+        await getPostData({
+          isProjectAdmin,
+          post,
+          client,
+        }),
+    ) || [],
   );
 }
 
 type PostInsertInput = {
   projectId: string;
   privacy: string;
-  metadata: jsonld.JsonLdDocument;
+  contents: jsonld.JsonLdDocument;
 };
 
 // POST create post for a project
@@ -144,7 +145,7 @@ router.post('/', async (req: UserRequest, res, next) => {
   try {
     client = await pgPool.connect();
     const accountId = req.user?.accountId;
-    const { projectId, privacy, metadata }: PostInsertInput = req.body;
+    const { projectId, privacy, contents }: PostInsertInput = req.body;
 
     const isProjectAdmin = await getIsProjectAdmin({
       client,
@@ -156,11 +157,11 @@ router.post('/', async (req: UserRequest, res, next) => {
     }
 
     // Generate post IRI
-    const iri = await generateIRIFromGraph(metadata);
+    const iri = await generateIRIFromGraph(contents);
 
     await client.query(
-      'INSERT INTO POST (iri, creator_account_id, project_id, privacy, metadata) VALUES ($1, $2, $3, $4, $5)',
-      [iri, accountId, projectId, privacy, metadata],
+      'INSERT INTO POST (iri, creator_account_id, project_id, privacy, contents) VALUES ($1, $2, $3, $4, $5)',
+      [iri, accountId, projectId, privacy, contents],
     );
 
     // TODO Anchor post graph data on chain (#422)
@@ -175,15 +176,15 @@ router.post('/', async (req: UserRequest, res, next) => {
 type PostUpdateInput = {
   iri: string;
   privacy: string;
-  metadata: jsonld.JsonLdDocument;
+  contents: jsonld.JsonLdDocument;
 };
 
-// PUT update post privacy and metadata by IRI
+// PUT update post privacy and contents by IRI
 router.put('/', async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
-    const { iri, privacy, metadata }: PostUpdateInput = req.body;
+    const { iri, privacy, contents }: PostUpdateInput = req.body;
     const accountId = req.user?.accountId;
 
     const postQuery = await client.query(
@@ -204,11 +205,11 @@ router.put('/', async (req: UserRequest, res, next) => {
     }
 
     // Generate post new IRI
-    const newIri = await generateIRIFromGraph(metadata);
+    const newIri = await generateIRIFromGraph(contents);
 
     await client.query(
-      'UPDATE POST set iri = $1, privacy = $2, metadata = $3 WHERE iri = $4',
-      [newIri, privacy, metadata, iri],
+      'UPDATE POST set iri = $1, privacy = $2, contents = $3 WHERE iri = $4',
+      [newIri, privacy, contents, iri],
     );
 
     if (iri !== newIri) {
@@ -253,7 +254,7 @@ router.delete('/', async (req: UserRequest, res, next) => {
     // Delete files from S3 and tracking of those in the upload table
     // TODO update x:files, x:name once post schema defined
     await Promise.all(
-      post.metadata['x:files']?.map(async file => {
+      post.contents['x:files']?.map(async file => {
         await deleteFile({
           client,
           accountId: req.user?.accountId,
@@ -280,40 +281,49 @@ type GetPostDataParams = {
   client: PoolClient;
 };
 
-async function getPostData({
+export type PostData = {
+  iri?: string;
+  createdAt?: Date;
+  creatorAccountId?: string;
+  projectId?: string;
+  privacy: Privacy;
+  contents?: jsonld.JsonLdDocument;
+};
+
+export async function getPostData({
   isProjectAdmin,
   post,
   client,
-}: GetPostDataParams) {
-  // TODO compact JSON-LD metadata and update field names once post schema is defined
-  const files = post.metadata['x:files'];
+}: GetPostDataParams): Promise<PostData> {
+  // TODO compact JSON-LD contents and update field names once post schema is defined
+  const files = post.contents['x:files'];
 
   if (
     isProjectAdmin ||
     post.privacy === 'public' ||
     post.privacy === 'private_locations'
   ) {
-    post.metadata['x:files'] = await getFilesWithSignedUrls({
+    post.contents['x:files'] = await getFilesWithSignedUrls({
       client,
       files,
     });
-    if (post.privacy === 'private_locations') {
+    if (!isProjectAdmin && post.privacy === 'private_locations') {
       // Filter post file locations
-      post.metadata['x:files'] = files?.map(
+      post.contents['x:files'] = post.contents['x:files']?.map(
         ({ ['x:location']: _, ...keepAttrs }) => keepAttrs,
       );
     }
-    return mapKeys(post, (_, key) => camelCase(key));
+    return postToCamelCase(post);
   } else {
     switch (post.privacy) {
       case 'private':
-        throw new UnauthorizedError('private post');
+        return { privacy: 'private' };
       case 'private_files':
         // Only return files IRIs if files are private
-        post.metadata['x:files'] = files?.map(file => ({
+        post.contents['x:files'] = files?.map(file => ({
           '@id': file['@id'],
         }));
-        return mapKeys(post, (_, key) => camelCase(key));
+        return postToCamelCase(post);
       default:
         throw new Error('unsupported post privacy');
     }
@@ -346,7 +356,7 @@ async function getFilesWithSignedUrls({
         bucketName,
         fileUrl: url,
       });
-      return { ...file, signedUrl };
+      return { ...file, 'x:url': signedUrl };
     }) || [],
   );
 }
@@ -370,6 +380,17 @@ async function getIsProjectAdmin({
     throw new NotFoundError('project not found');
   }
   return projectQuery.rows[0].admin_account_id === accountId;
+}
+
+export function postToCamelCase(post: Post) {
+  return {
+    iri: post.iri,
+    createdAt: post.created_at,
+    creatorAccountId: post.creator_account_id,
+    projectId: post.project_id,
+    privacy: post.privacy,
+    contents: post.contents,
+  };
 }
 
 export default router;

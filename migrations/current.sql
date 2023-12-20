@@ -19,7 +19,7 @@ CREATE TABLE post (
   creator_account_id uuid NOT NULL,
   project_id uuid NOT NULL,
   privacy post_privacy NOT NULL DEFAULT 'private',
-  metadata jsonb NOT NULL,
+  contents jsonb NOT NULL,
   CONSTRAINT fk_creator_account_id
     FOREIGN KEY(creator_account_id) 
 	  REFERENCES account(id),

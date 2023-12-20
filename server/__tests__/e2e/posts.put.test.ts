@@ -2,13 +2,12 @@ import fetch from 'node-fetch';
 import {
   createNewUserAndLogin,
   createProjectAndPost,
-  expIri,
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
 
 const updatedPrivacy = 'private_files';
-const updatedMetadata = {
+const updatedContents = {
   '@context': { x: 'http://some.schema' },
   'x:someField': 'some other value',
 };
@@ -17,7 +16,7 @@ const updatedExpIri =
 const commit = true;
 
 describe('/posts PUT endpoint', () => {
-  it('allows the project admin to update a post privacy and metadata', async () => {
+  it('allows the project admin to update a post privacy and contents', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and post administered by this account
@@ -31,7 +30,7 @@ describe('/posts PUT endpoint', () => {
       body: JSON.stringify({
         iri,
         privacy: updatedPrivacy,
-        metadata: updatedMetadata,
+        contents: updatedContents,
       }),
     });
 
@@ -45,7 +44,7 @@ describe('/posts PUT endpoint', () => {
       expect(postQuery.rows[0].project_id).toEqual(projectId);
       expect(postQuery.rows[0].creator_account_id).toEqual(accountId);
       expect(postQuery.rows[0].privacy).toEqual(updatedPrivacy);
-      expect(postQuery.rows[0].metadata).toEqual(updatedMetadata);
+      expect(postQuery.rows[0].contents).toEqual(updatedContents);
 
       // Cleaning up
       await client.query('delete from post where iri = $1', [updatedExpIri]);
@@ -63,7 +62,7 @@ describe('/posts PUT endpoint', () => {
       body: JSON.stringify({
         iri,
         privacy: updatedPrivacy,
-        metadata: updatedMetadata,
+        contents: updatedContents,
       }),
     });
 
@@ -82,7 +81,7 @@ describe('/posts PUT endpoint', () => {
       body: JSON.stringify({
         iri: '123',
         privacy: updatedPrivacy,
-        metadata: updatedMetadata,
+        contents: updatedContents,
       }),
     });
 

@@ -4,7 +4,7 @@ import {
   createProject,
   expIri,
   getMarketplaceURL,
-  metadata,
+  contents,
   privacy,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
@@ -22,7 +22,7 @@ describe('/posts POST endpoint', () => {
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
       method: 'POST',
       headers: authHeaders,
-      body: JSON.stringify({ projectId, privacy, metadata }),
+      body: JSON.stringify({ projectId, privacy, contents }),
     });
 
     expect(resp.status).toBe(200);
@@ -37,7 +37,7 @@ describe('/posts POST endpoint', () => {
       expect(postQuery.rows[0].creator_account_id).toEqual(accountId);
       expect(postQuery.rows[0].project_id).toEqual(projectId);
       expect(postQuery.rows[0].privacy).toEqual(privacy);
-      expect(postQuery.rows[0].metadata).toEqual(metadata);
+      expect(postQuery.rows[0].contents).toEqual(contents);
 
       // Cleaning up
       await client.query('delete from post where iri = $1', [iri]);
@@ -52,7 +52,7 @@ describe('/posts POST endpoint', () => {
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
       method: 'POST',
       headers: authHeaders,
-      body: JSON.stringify({ projectId, privacy, metadata }),
+      body: JSON.stringify({ projectId, privacy, contents }),
     });
 
     expect(resp.status).toBe(401);
@@ -66,7 +66,7 @@ describe('/posts POST endpoint', () => {
       body: JSON.stringify({
         projectId: '00000000-0000-0000-0000-000000000000',
         privacy,
-        metadata,
+        contents,
       }),
     });
 

@@ -22,7 +22,7 @@ import { PoolClient } from 'pg';
 
 export const longerTestTimeout = 30000;
 export const privacy = 'public';
-export const metadata = {
+export const contents = {
   '@context': { x: 'http://some.schema' },
   'x:someField': 'some value',
 };
@@ -271,7 +271,7 @@ export async function dummyFilesTeardown(key: string, fname: string) {
     },
   });
   const response = await s3.send(cmd);
-  if (response['$metadata'].httpStatusCode !== 200) {
+  if (response['$contents'].httpStatusCode !== 200) {
     console.dir(
       {
         response,
@@ -297,9 +297,14 @@ async function getAuthHeaders({ initAuthHeaders }: OptionalAuthHeaders) {
   return authHeaders;
 }
 
+type CreateProjectAndPostParams = {
+  initPrivacy?: 'private' | 'private_files' | 'private_locations' | 'public';
+} & OptionalAuthHeaders;
+
 export async function createProjectAndPost({
   initAuthHeaders,
-}: OptionalAuthHeaders) {
+  initPrivacy,
+}: CreateProjectAndPostParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
   const { projectId, accountId } = await createProject({
@@ -308,31 +313,41 @@ export async function createProjectAndPost({
   const resp = await fetch(`${getMarketplaceURL()}/posts`, {
     method: 'POST',
     headers: authHeaders,
-    body: JSON.stringify({ projectId, privacy, metadata }),
+    body: JSON.stringify({
+      projectId,
+      privacy: initPrivacy ?? privacy,
+      contents,
+    }),
   });
   const { iri } = await resp.json();
   return { accountId, projectId, iri };
 }
 
+type CreateProjectAndPostsParams = { nbPosts: number } & OptionalAuthHeaders;
 export async function createProjectAndPosts({
   initAuthHeaders,
-}: OptionalAuthHeaders) {
+  nbPosts,
+}: CreateProjectAndPostsParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
   const { projectId, accountId } = await createProject({
     initAuthHeaders: authHeaders,
   });
-  for (let i = 0; i < 4; i++)
-    await fetch(`${getMarketplaceURL()}/posts`, {
+  const iris = [];
+  for (let i = 0; i < nbPosts; i++) {
+    const resp = await fetch(`${getMarketplaceURL()}/posts`, {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
         projectId,
         privacy,
-        metadata: { ...metadata, 'x:someField': i },
+        contents: { ...contents, 'x:someField': i },
       }),
     });
-  return { accountId, projectId };
+    const { iri } = await resp.json();
+    iris.push(iri);
+  }
+  return { accountId, projectId, iris };
 }
 
 export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
