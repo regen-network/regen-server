@@ -3,7 +3,7 @@ import * as bodyParser from 'body-parser';
 import Exif, { ExifImage } from 'exif';
 import { Readable } from 'stream';
 import { UserRequest } from '../types';
-import { Pool, PoolClient } from 'pg';
+import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import {
   DeleteObjectCommand,
@@ -147,6 +147,7 @@ router.delete(
       const projectId = request.params.projectId;
       const fileName = request.params.fileName;
 
+      client = await pgPool.connect();
       await deleteFile({
         client,
         accountId: request.user?.accountId,
