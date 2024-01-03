@@ -249,7 +249,7 @@ if (!process.env.CI) {
 
 const swaggerOptions = {
   definition: {
-    openapi: '3.0.n',
+    openapi: '3.1.0',
     info: {
       title: 'regen-server',
       version: '0.1.0',
