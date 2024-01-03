@@ -11,11 +11,13 @@ runnerPromise.then(res => {
 
 const router = express.Router();
 const airtable = new Airtable({ apiKey: process.env.AIRTABLE_API_TOKEN });
-const airtableBuyersBase = airtable.base(process.env.AIRTABLE_BUYERS_BASE);
+const airtableBuyersBase = airtable.base(
+  process.env.AIRTABLE_BUYERS_BASE || '',
+);
 
 router.post('/buyers-info', bodyParser.json(), (req, res: express.Response) => {
   const { email, name, orgName, budget, projectTypes, onBehalfOf } = req.body;
-  airtableBuyersBase(process.env.AIRTABLE_BUYERS_TABLE).create(
+  airtableBuyersBase(process.env.AIRTABLE_BUYERS_TABLE || '').create(
     [
       {
         fields: {

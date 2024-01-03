@@ -11,11 +11,13 @@ runnerPromise.then(res => {
 
 const router = express.Router();
 const airtable = new Airtable({ apiKey: process.env.AIRTABLE_API_TOKEN });
-const airtableContactBase = airtable.base(process.env.AIRTABLE_CONTACT_BASE);
+const airtableContactBase = airtable.base(
+  process.env.AIRTABLE_CONTACT_BASE || '',
+);
 
 router.post('/contact', bodyParser.json(), (req, res: express.Response) => {
   const { email, name, orgName, requestType, message } = req.body;
-  airtableContactBase(process.env.AIRTABLE_CONTACT_TABLE).create(
+  airtableContactBase(process.env.AIRTABLE_CONTACT_TABLE || '').create(
     [
       {
         fields: {
