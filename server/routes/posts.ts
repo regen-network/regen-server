@@ -6,6 +6,10 @@ import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError } from '../errors';
 import { bucketName, deleteFile, getObjectSignedUrl } from './files';
 import { generateIRIFromGraph } from 'iri-gen/iri-gen';
+import {
+  SUPPORTED_IMAGE_TYPES,
+  getS3ImageCachedUrl,
+} from '../middleware/imageOptimizer';
 
 const router = express.Router();
 
@@ -38,7 +42,15 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
       projectId: post.project_id,
       accountId: req.user?.accountId,
     });
-    const postData = await getPostData({ isProjectAdmin, post, client });
+    const reqProtocol = req.protocol;
+    const reqHost = req.get('host');
+    const postData = await getPostData({
+      isProjectAdmin,
+      post,
+      client,
+      reqProtocol,
+      reqHost,
+    });
     if (postData.privacy === 'private' && !isProjectAdmin) {
       throw new UnauthorizedError('private post');
     }
@@ -102,10 +114,10 @@ type GetPostsDataParams = {
 };
 
 async function getPostsData({
-  req,
   projectId,
   year,
   client,
+  req,
 }: GetPostsDataParams) {
   const limit = req.query.limit;
   const offset = req.query.offset;
@@ -121,6 +133,8 @@ async function getPostsData({
     accountId: req.user?.accountId,
   });
 
+  const reqProtocol = req.protocol;
+  const reqHost = req.get('host');
   return await Promise.all(
     postsQuery.rows?.map(
       async post =>
@@ -128,6 +142,8 @@ async function getPostsData({
           isProjectAdmin,
           post,
           client,
+          reqProtocol,
+          reqHost,
         }),
     ) || [],
   );
@@ -279,6 +295,8 @@ type GetPostDataParams = {
   isProjectAdmin: boolean;
   post: Post;
   client: PoolClient;
+  reqProtocol: string;
+  reqHost: string;
 };
 
 export type PostData = {
@@ -295,18 +313,20 @@ export async function getPostData({
   isProjectAdmin,
   post,
   client,
+  reqProtocol,
+  reqHost,
 }: GetPostDataParams): Promise<PostData> {
   // TODO compact JSON-LD contents and update field names once post schema is defined
   const files = post.contents['x:files'];
 
-  if (
-    isProjectAdmin ||
-    post.privacy === 'public' ||
-    post.privacy === 'private_locations'
-  ) {
+  const hasPrivateLocations = post.privacy === 'private_locations';
+  if (isProjectAdmin || post.privacy === 'public' || hasPrivateLocations) {
     const filesUrls = await getFilesSignedUrls({
       client,
       files,
+      hasPrivateLocations,
+      reqProtocol,
+      reqHost,
     });
     if (!isProjectAdmin && post.privacy === 'private_locations') {
       // Filter post file locations
@@ -331,11 +351,14 @@ export async function getPostData({
   }
 }
 
-type File = { '@id': string; signedUrl?: string } & object;
+type File = { '@id': string } & object;
 
 type GetFilesWithSignedUrlsParams = {
   client: PoolClient;
   files: Array<File>;
+  hasPrivateLocations: boolean;
+  reqProtocol: string;
+  reqHost: string;
 };
 
 /**
@@ -351,6 +374,9 @@ type GetFilesWithSignedUrlsParams = {
 async function getFilesSignedUrls({
   client,
   files,
+  hasPrivateLocations,
+  reqProtocol,
+  reqHost,
 }: GetFilesWithSignedUrlsParams) {
   return await Promise.all(
     files?.map(async file => {
@@ -362,12 +388,25 @@ async function getFilesSignedUrls({
       if (fileRes.rowCount !== 1) {
         throw new NotFoundError(`file with iri ${fileIri} not found`);
       }
-      const [{ url }] = fileRes.rows;
-      const signedUrl = await getObjectSignedUrl({
-        bucketName,
-        fileUrl: url,
-      });
-      return { fileIri: signedUrl };
+      const [{ url, mimetype }] = fileRes.rows;
+      let fileUrl: string | undefined;
+
+      // If the file location is private and the file is an image,
+      // we proxy the image through sharp so the resulting image
+      // doesn't have any location metadata
+      if (hasPrivateLocations && SUPPORTED_IMAGE_TYPES.includes(mimetype)) {
+        fileUrl = getS3ImageCachedUrl({
+          url,
+          reqProtocol: reqProtocol,
+          reqHost: reqHost,
+        });
+      } else {
+        fileUrl = await getObjectSignedUrl({
+          bucketName,
+          fileUrl: url,
+        });
+      }
+      return { fileIri: fileUrl };
     }) || [],
   );
 }

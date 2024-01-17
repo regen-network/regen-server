@@ -118,3 +118,30 @@ export default function imageOptimizer(): express.Router {
     imageAdapter,
   });
 }
+
+type GetS3ImageCachedUrlParams = {
+  url: string;
+  reqProtocol: string;
+  reqHost: string;
+};
+
+export function getS3ImageCachedUrl({
+  url,
+  reqProtocol,
+  reqHost,
+}: GetS3ImageCachedUrlParams) {
+  return url.replace(
+    process.env.IMAGE_STORAGE_URL,
+    `${reqProtocol}://${reqHost}/marketplace/v1/image/`,
+  );
+}
+
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+  'image/tiff',
+  'image/svg+xml',
+];
