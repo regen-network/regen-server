@@ -41,7 +41,8 @@ router.post(
       const profilesMatch = path.match(profilesRe);
       const projectsRe = /projects(?:-test)*\/([a-zA-Z0-9-]*)/;
       const projectsMatch = path.match(projectsRe);
-      const projectsPostsRe = /projects(?:-test)*\/([a-zA-Z0-9-]*\/posts)/;
+      const projectsPostsRe =
+        /projects(?:-test)*\/([a-zA-Z0-9-]*)\/posts(?:\/([a-zA-Z0-9-]*))?/;
       const projectsPostsMatch = path.match(projectsPostsRe);
 
       // block any unauthenticated requests are made to filePath that includes profiles
