@@ -15,6 +15,8 @@ const contents = {
     },
   ],
 };
+const reqProtocol = 'http';
+const reqHost = 'test';
 
 const projectId = 'c47cfd74-9e54-11ee-a131-0242ac120002';
 const creatorAccountId = '86400484-9e54-11ee-8e9c-0242ac120002';
@@ -75,6 +77,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: true,
           post: privatePost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData });
@@ -87,6 +91,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: true,
           post: privateFilesPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData });
@@ -99,6 +105,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: true,
           post: privateLocationsPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData });
@@ -111,6 +119,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: true,
           post: publicPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData });
@@ -125,6 +135,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: false,
           post: privatePost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         expect(postData).toEqual({ privacy: privatePost.privacy });
@@ -136,6 +148,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: false,
           post: privateFilesPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         expect(postData.iri).toEqual(privateFilesPost.iri);
@@ -157,6 +171,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: false,
           post: privateLocationsPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData, privateLocations: true });
@@ -168,6 +184,8 @@ describe('posts getPostData', () => {
           isProjectAdmin: false,
           post: publicPost,
           client,
+          reqProtocol,
+          reqHost,
         });
 
         checkPostData({ postData });
