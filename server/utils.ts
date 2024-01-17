@@ -1,5 +1,4 @@
 import * as env from 'env-var';
-import { mapKeys, camelCase } from 'lodash';
 
 export const sameSiteFromEnv = (
   key: string,
