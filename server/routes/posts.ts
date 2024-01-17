@@ -288,6 +288,7 @@ export type PostData = {
   projectId?: string;
   privacy: Privacy;
   contents?: jsonld.JsonLdDocument;
+  filesUrls?: Array<{ [iri: string]: string }>;
 };
 
 export async function getPostData({
@@ -303,7 +304,7 @@ export async function getPostData({
     post.privacy === 'public' ||
     post.privacy === 'private_locations'
   ) {
-    post.contents['x:files'] = await getFilesWithSignedUrls({
+    const filesUrls = await getFilesSignedUrls({
       client,
       files,
     });
@@ -313,7 +314,7 @@ export async function getPostData({
         ({ ['x:location']: _, ...keepAttrs }) => keepAttrs,
       );
     }
-    return postToCamelCase(post);
+    return { ...postToCamelCase(post), filesUrls };
   } else {
     switch (post.privacy) {
       case 'private':
@@ -337,7 +338,17 @@ type GetFilesWithSignedUrlsParams = {
   files: Array<File>;
 };
 
-async function getFilesWithSignedUrls({
+/**
+ * getFilesSignedUrls returns a map of files IRIs to AWS S3 signed URLs for files that
+ * can be privately stored in S3. A signed URL uses security credentials
+ * to grant time-limited permission to access and download files.
+ * https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html
+ * @param getFilesSignedUrls Params for getFilesSignedUrls function
+ * @param getFilesSignedUrls.client The pg PoolClient
+ * @param getFilesSignedUrls.files The list of files to get the signed URL
+ * @returns Promise<Array<{iri: signedUrl}>>
+ */
+async function getFilesSignedUrls({
   client,
   files,
 }: GetFilesWithSignedUrlsParams) {
@@ -356,7 +367,7 @@ async function getFilesWithSignedUrls({
         bucketName,
         fileUrl: url,
       });
-      return { ...file, 'x:url': signedUrl };
+      return { fileIri: signedUrl };
     }) || [],
   );
 }

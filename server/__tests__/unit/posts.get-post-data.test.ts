@@ -202,5 +202,5 @@ function checkPostData({
   else {
     expect(postData.contents['x:files'][0]['x:location']).not.toBeTruthy();
   }
-  expect(postData.contents['x:files'][0]['x:url']).toBeTruthy();
+  expect(postData.filesUrls).toHaveLength(contents['x:files'].length);
 }

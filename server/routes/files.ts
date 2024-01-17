@@ -116,11 +116,7 @@ router.post(
         // Get location from file metadata for projects posts
         let location;
         if (projectsPostsMatch) {
-          try {
-            location = await getExifLocationData(file.data);
-          } catch (_) {
-            // just ignore error if no location metadata found
-          }
+          location = await getExifLocationData(file.data);
         }
 
         response.send({
@@ -197,14 +193,17 @@ export async function getObjectSignedUrl({
 }
 
 function getExifLocationData(path: string | Buffer): Promise<Exif.ExifData> {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve) {
     try {
       new ExifImage({ image: path }, function (error, exifData) {
-        if (error) reject(error);
-        else resolve(exifData?.gps);
+        if (error) {
+          console.error(error);
+          resolve(undefined);
+        } else resolve(exifData?.gps);
       });
     } catch (error) {
-      reject(error);
+      console.error(error);
+      resolve(undefined);
     }
   });
 }
