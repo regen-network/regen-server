@@ -321,7 +321,7 @@ export async function getPostData({
 
   const hasPrivateLocations = post.privacy === 'private_locations';
   if (isProjectAdmin || post.privacy === 'public' || hasPrivateLocations) {
-    const filesUrls = await getFilesSignedUrls({
+    const filesUrls = await getFilesUrls({
       client,
       files,
       hasPrivateLocations,
@@ -362,16 +362,17 @@ type GetFilesWithSignedUrlsParams = {
 };
 
 /**
- * getFilesSignedUrls returns a map of files IRIs to AWS S3 signed URLs for files that
- * can be privately stored in S3. A signed URL uses security credentials
+ * getFilesUrls returns a map of files IRIs to files URLs.
+ * Such an URL is either provided by our express-sharp middleware in the case of image with private location
+ * or an AWS S3 signed URL. A signed URL uses security credentials
  * to grant time-limited permission to access and download files.
  * https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html
- * @param getFilesSignedUrls Params for getFilesSignedUrls function
- * @param getFilesSignedUrls.client The pg PoolClient
- * @param getFilesSignedUrls.files The list of files to get the signed URL
+ * @param getFilesUrls Params for getFilesUrls function
+ * @param getFilesUrls.client The pg PoolClient
+ * @param getFilesUrls.files The list of files to get the signed URL
  * @returns Promise<Array<{iri: signedUrl}>>
  */
-async function getFilesSignedUrls({
+async function getFilesUrls({
   client,
   files,
   hasPrivateLocations,
