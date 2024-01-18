@@ -79,7 +79,7 @@ export async function verifyGoogleAccount({
   );
   const existingUserWithEmail = emailAccountQuery.rowCount === 1;
   const existingUserWithGoogleEmail = googleAccountQuery.rowCount === 1;
-  if (existingUserWithEmail || googleAccountQuery.rowCount === 1) {
+  if (existingUserWithEmail || existingUserWithGoogleEmail) {
     if (existingUserWithEmail && !existingUserWithGoogleEmail) {
       // Set google id and google email for existing user
       const [{ id: accountId }] = emailAccountQuery.rows;
