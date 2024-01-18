@@ -4,13 +4,15 @@ import { Post, PostData, getPostData } from '../../routes/posts';
 import { getFileUrl } from '../../routes/files';
 
 // TODO update once post schema is finalized
+const fileName = 'filename.jpg';
+
 const contents = {
   '@context': { x: 'http://some.schema' },
   'x:title': 'post title',
   'x:files': [
     {
       '@id': 'regen:123.jpg',
-      'x:name': 'filename.jpg',
+      'x:name': fileName,
       'x:location': 'POINT(12 34)',
     },
   ],
@@ -31,7 +33,6 @@ const privatePost: Post = { ...post, privacy: 'private' };
 const privateFilesPost: Post = { ...post, privacy: 'private_files' };
 const privateLocationsPost: Post = { ...post, privacy: 'private_locations' };
 const publicPost: Post = { ...post, privacy: 'public' };
-const fileName = 'filename.jpg';
 const commit = true;
 
 describe('posts getPostData', () => {
@@ -49,7 +50,7 @@ describe('posts getPostData', () => {
       await client.query(
         'insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)',
         [
-          fileName,
+          'regen:123.jpg',
           getFileUrl({
             bucketName: process.env.AWS_S3_BUCKET,
             path: `/projects/${projectId}/posts`,
