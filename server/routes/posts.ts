@@ -189,58 +189,61 @@ router.post('/', async (req: UserRequest, res, next) => {
   }
 });
 
-type PostUpdateInput = {
-  iri: string;
-  privacy: string;
-  contents: jsonld.JsonLdDocument;
-};
+// PUT is disabled for now, since it changes the primary key of the post and that is sub-optimal.
+// Ideally when editing, we keep a history but allow linking still to the original IRI somehow.
+
+// type PostUpdateInput = {
+//   iri: string;
+//   privacy: string;
+//   contents: jsonld.JsonLdDocument;
+// };
 
 // PUT update post privacy and contents by IRI
-router.put('/', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
-  try {
-    client = await pgPool.connect();
-    const { iri, privacy, contents }: PostUpdateInput = req.body;
-    const accountId = req.user?.accountId;
+// router.put('/', async (req: UserRequest, res, next) => {
+//   let client: PoolClient | null;
+//   try {
+//     client = await pgPool.connect();
+//     const { iri, privacy, contents }: PostUpdateInput = req.body;
+//     const accountId = req.user?.accountId;
 
-    const postQuery = await client.query(
-      'SELECT project_id FROM post WHERE iri = $1',
-      [iri],
-    );
-    if (postQuery.rowCount !== 1) {
-      throw new NotFoundError('post not found');
-    }
-    const projectId = postQuery.rows[0].project_id;
-    const isProjectAdmin = await getIsProjectAdmin({
-      client,
-      projectId,
-      accountId,
-    });
-    if (!isProjectAdmin) {
-      throw new UnauthorizedError('only the project admin can update posts');
-    }
+//     const postQuery = await client.query(
+//       'SELECT project_id FROM post WHERE iri = $1',
+//       [iri],
+//     );
+//     if (postQuery.rowCount !== 1) {
+//       throw new NotFoundError('post not found');
+//     }
+//     const projectId = postQuery.rows[0].project_id;
+//     const isProjectAdmin = await getIsProjectAdmin({
+//       client,
+//       projectId,
+//       accountId,
+//     });
+//     if (!isProjectAdmin) {
+//       throw new UnauthorizedError('only the project admin can update posts');
+//     }
 
-    // Generate post new IRI
-    const newIri = await generateIRIFromGraph(contents);
+//     // Generate post new IRI
+//     const newIri = await generateIRIFromGraph(contents);
 
-    await client.query(
-      'UPDATE POST set iri = $1, privacy = $2, contents = $3 WHERE iri = $4',
-      [newIri, privacy, contents, iri],
-    );
+//     await client.query(
+//       'UPDATE POST set iri = $1, privacy = $2, contents = $3 WHERE iri = $4',
+//       [newIri, privacy, contents, iri],
+//     );
 
-    if (iri !== newIri) {
-      // anchor updated post graph data (#422)
-    }
+//     if (iri !== newIri) {
+//       // anchor updated post graph data (#422)
+//     }
 
-    res.sendStatus(200);
-  } catch (e) {
-    next(e);
-  } finally {
-    if (client) {
-      client.release();
-    }
-  }
-});
+//     res.sendStatus(200);
+//   } catch (e) {
+//     next(e);
+//   } finally {
+//     if (client) {
+//       client.release();
+//     }
+//   }
+// });
 
 // DELETE delete post by IRI
 router.delete('/', async (req: UserRequest, res, next) => {

@@ -31,7 +31,7 @@ const privatePost: Post = { ...post, privacy: 'private' };
 const privateFilesPost: Post = { ...post, privacy: 'private_files' };
 const privateLocationsPost: Post = { ...post, privacy: 'private_locations' };
 const publicPost: Post = { ...post, privacy: 'public' };
-
+const fileName = 'filename.jpg';
 const commit = true;
 
 describe('posts getPostData', () => {
@@ -49,11 +49,11 @@ describe('posts getPostData', () => {
       await client.query(
         'insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)',
         [
-          'regen:123.jpg',
+          fileName,
           getFileUrl({
             bucketName: process.env.AWS_S3_BUCKET,
             path: `/projects/${projectId}/posts`,
-            fileName: 'filename.jpg',
+            fileName,
           }),
           123,
           'image/jpeg',
@@ -207,18 +207,23 @@ function checkPostData({
   expect(postData.creatorAccountId).toEqual(privatePost.creator_account_id);
   expect(postData.projectId).toEqual(privatePost.project_id);
   expect(postData.contents['x:files'].length).toEqual(1);
-  expect(postData.contents['x:files'][0]['@id']).toEqual(
-    privatePost.contents['x:files'][0]['@id'],
-  );
+
+  const fileIri = privatePost.contents['x:files'][0]['@id'];
+  expect(postData.contents['x:files'][0]['@id']).toEqual(fileIri);
   expect(postData.contents['x:files'][0]['x:name']).toEqual(
     privatePost.contents['x:files'][0]['x:name'],
   );
+  expect(postData.filesUrls).toHaveLength(contents['x:files'].length);
   if (!privateLocations)
     expect(postData.contents['x:files'][0]['x:location']).toEqual(
       privatePost.contents['x:files'][0]['x:location'],
     );
   else {
     expect(postData.contents['x:files'][0]['x:location']).not.toBeTruthy();
+    // In the case of private data locations,
+    // the file URL is a proxy URL using our express-sharp imageOptimizer middleware
+    expect(postData.filesUrls[0][fileIri]).toEqual(
+      `${reqProtocol}://${reqHost}/marketplace/v1/image/${fileName}`,
+    );
   }
-  expect(postData.filesUrls).toHaveLength(contents['x:files'].length);
 }

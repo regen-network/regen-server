@@ -15,7 +15,8 @@ const updatedExpIri =
   'regen:13toVh6DipJCaUZp7Ve33MEJ8fEtYVd6f8Xmswk8E3ocqVqJA3QVN3X.rdf';
 const commit = true;
 
-describe('/posts PUT endpoint', () => {
+// PUT disabled for now.
+xdescribe('/posts PUT endpoint', () => {
   it('allows the project admin to update a post privacy and contents', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 

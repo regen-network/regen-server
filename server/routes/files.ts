@@ -176,6 +176,16 @@ type GetObjectSignedUrlParams = {
   fileUrl: string;
 };
 
+/**
+ * getObjectSignedUrl returns an AWS S3 signed URL for a given file URL in the S3 bucket.
+ * A signed URL uses security credentials to grant time-limited permission to access and download files.
+ * https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html
+ * This is needed in order to download private files.
+ * @param getObjectSignedUrl Params for getObjectSignedUrl function
+ * @param getObjectSignedUrl.bucketName The S3 bucket name
+ * @param getObjectSignedUrl.fileUrl The file URL within the S3 bucket
+ * @returns Promise<string | undefined>
+ */
 export async function getObjectSignedUrl({
   bucketName,
   fileUrl,
