@@ -188,6 +188,28 @@ CREATE TYPE public.account_type AS ENUM (
 
 
 --
+-- Name: post_privacy; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.post_privacy AS ENUM (
+    'private',
+    'private_files',
+    'private_locations',
+    'public'
+);
+
+
+--
+-- Name: TYPE post_privacy; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.post_privacy IS 'private: post data including files are private,
+   private_files: files including location data are private,
+   private_locations: location data is private,
+   public: post data including files are public';
+
+
+--
 -- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: -
 --
 
@@ -546,6 +568,27 @@ CREATE TABLE public.organization (
 
 
 --
+-- Name: post; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.post (
+    iri text NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    creator_account_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    privacy public.post_privacy DEFAULT 'private'::public.post_privacy NOT NULL,
+    contents jsonb NOT NULL
+);
+
+
+--
+-- Name: TABLE post; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.post IS 'Project posts';
+
+
+--
 -- Name: project; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -752,6 +795,14 @@ ALTER TABLE ONLY public.organization
 
 
 --
+-- Name: post post_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post
+    ADD CONSTRAINT post_pkey PRIMARY KEY (iri);
+
+
+--
 -- Name: project project_on_chain_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -839,6 +890,20 @@ CREATE INDEX document_project_id_idx ON public.document USING btree (project_id)
 --
 
 CREATE INDEX on_chain_id_idx ON public.project USING btree (on_chain_id);
+
+
+--
+-- Name: post_creator_account_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX post_creator_account_id_idx ON public.post USING btree (creator_account_id);
+
+
+--
+-- Name: post_project_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX post_project_id_idx ON public.post USING btree (project_id);
 
 
 --
@@ -963,10 +1028,26 @@ ALTER TABLE ONLY public.upload
 
 
 --
+-- Name: post fk_creator_account_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post
+    ADD CONSTRAINT fk_creator_account_id FOREIGN KEY (creator_account_id) REFERENCES public.account(id);
+
+
+--
 -- Name: upload fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.project(id);
+
+
+--
+-- Name: post fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post
     ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.project(id);
 
 
