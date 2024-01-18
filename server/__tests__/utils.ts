@@ -249,10 +249,8 @@ export async function dummyFilesSetup(
       headers: authHeaders,
       body: form,
     });
-    console.log('resp', resp);
     return { resp };
   } catch (e) {
-    console.log('e', e);
   } finally {
     if (fd) {
       await fd?.close();

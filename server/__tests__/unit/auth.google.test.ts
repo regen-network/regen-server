@@ -1,7 +1,8 @@
 import { PoolClient } from 'pg';
-import { withRootDb } from '../db/helpers';
+import { createAccountWithAuthUser, withRootDb } from '../db/helpers';
 import { verifyGoogleAccount } from '../../middleware/googleStrategy';
-import { createWeb2Account } from '../utils';
+import { createWeb2Account, genRandomRegenAddress } from '../utils';
+import { connectGoogleAccount } from '../../middleware/connectGoogleStrategy';
 
 const email = 'john@doe.com';
 const googleId = '12345';
@@ -74,6 +75,34 @@ describe('auth google strategy', () => {
         client,
       });
       expect(newId).toEqual(accountId);
+    });
+  });
+  test('when a web3 user connected to google signs in with google using an email that is used as main email by another account, it should log the web3 account in', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      // Create a web2 account with main email
+      await createWeb2Account({ client, email });
+
+      // Create a web3 account
+      const walletAddr = genRandomRegenAddress();
+      const { accountId } = await createAccountWithAuthUser(client, walletAddr);
+
+      // Connect it to google with the same email as above
+      await connectGoogleAccount({
+        email,
+        verified: 'true',
+        googleId,
+        accountId,
+        client,
+      });
+
+      // Log in successfully to the web3 account using google
+      const verifiedAccountId = await verifyGoogleAccount({
+        email,
+        verified: 'true',
+        googleId,
+        client,
+      });
+      expect(verifiedAccountId).toEqual(accountId);
     });
   });
   test('when a user signs in, it should throw an error if the email from google is not verified', async () => {
