@@ -410,7 +410,7 @@ async function getFilesUrls({
           fileUrl: url,
         });
       }
-      return { fileIri: fileUrl };
+      return { [fileIri]: fileUrl };
     }) || [],
   );
 }

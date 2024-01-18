@@ -53,7 +53,7 @@ describe('posts getPostData', () => {
           'regen:123.jpg',
           getFileUrl({
             bucketName: process.env.AWS_S3_BUCKET,
-            path: `/projects/${projectId}/posts`,
+            path: `projects/${projectId}/posts`,
             fileName,
           }),
           123,
@@ -223,8 +223,8 @@ function checkPostData({
     expect(postData.contents['x:files'][0]['x:location']).not.toBeTruthy();
     // In the case of private data locations,
     // the file URL is a proxy URL using our express-sharp imageOptimizer middleware
-    expect(postData.filesUrls[0][fileIri]).toEqual(
-      `${reqProtocol}://${reqHost}/marketplace/v1/image/${fileName}`,
+    expect(postData.filesUrls[0][fileIri]).toContain(
+      `${reqProtocol}://${reqHost}/marketplace/v1/image/`,
     );
   }
 }

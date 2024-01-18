@@ -171,7 +171,7 @@ app.use(getJwt(false));
 
 app.use(express.json());
 
-app.use('/marketplace/v1/image', imageOptimizer());
+// app.use('/marketplace/v1/image', imageOptimizer());
 
 if (process.env.LEDGER_TENDERMINT_RPC) {
   app.use(
