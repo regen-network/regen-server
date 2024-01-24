@@ -17,9 +17,9 @@ $ docker-compose up --build postgres
 Then, you must initialize the database:
 
 ```
-$ export DATABASE_URL="postgres://postgres:postgres@localhost:5432/regen_registry"
-$ export SHADOW_DATABASE_URL="postgres://postgres:postgres@localhost:5432/regen_registry_shadow"
-$ export ROOT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres"
+$ export DATABASE_URL="postgres://postgres:password@localhost:5432/server"
+$ export SHADOW_DATABASE_URL="postgres://postgres:password@localhost:5432/server_shadow"
+$ export ROOT_DATABASE_URL="postgres://postgres:password@localhost:5432/postgres"
 $ yarn run graphile-migrate reset --erase
 ```
 

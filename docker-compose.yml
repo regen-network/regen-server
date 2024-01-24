@@ -5,15 +5,21 @@ services:
       context: .
       dockerfile: docker/db.Dockerfile
     restart: always
+    user: postgres
     environment:
-      - POSTGRES_DB=regen_registry
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_DB: server
+      POSTGRES_PASSWORD: password
+    network_mode: host
     ports:
       - '5432:5432'
-    volumes:
-      - ./server/.postgres:/var/lib/postgresql/data
-      # - ./server/scripts:/docker-entrypoint-initdb.d
+    # volumes:
+    #   - ./server/.postgres:/var/lib/postgresql/data
+    #    - ./server/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 10s
+      retries: 100
   web:
     build:
       context: .
@@ -23,6 +29,10 @@ services:
     env_file:
       - ./server/.env-test
     platform: linux/x86_64
+    network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
   redis:
     image: redis:latest
     restart: always
