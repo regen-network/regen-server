@@ -227,7 +227,7 @@ describe('auth verify passcode', () => {
       ).rejects.toThrow(new Error('This account already has an email'));
     });
   });
-  it('should throw an error if the currently logged tries to add an email that is already used by another account as google email', async () => {
+  it('should throw an error if the currently logged in account tries to add an email that is already used by another account as email or google email', async () => {
     await withRootDb(async (client: PoolClient) => {
       await createWeb2Account({
         client,
