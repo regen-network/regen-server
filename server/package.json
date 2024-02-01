@@ -6,7 +6,7 @@
     "@aws-sdk/client-s3": "^3.473.0",
     "@aws-sdk/s3-request-presigner": "^3.473.0",
     "@cosmjs/amino": "^0.28.11",
-    "@cosmjs/crypto": "^0.28.11",
+    "@cosmjs/crypto": "^0.32.2",
     "@graphile-contrib/pg-many-to-many": "^1.0.1",
     "@keplr-wallet/cosmos": "^0.11.38",
     "@keyv/compress-brotli": "^1.0.0",
