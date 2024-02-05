@@ -3,24 +3,51 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: ./Dockerfile.postgres
+      dockerfile: docker/db.Dockerfile
     restart: always
+    user: postgres
     environment:
-      - POSTGRES_DB=regen_registry
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_DB: server
+      POSTGRES_PASSWORD: password
+    network_mode: host
     ports:
       - '5432:5432'
-    volumes:
-      - ./server/.postgres:/var/lib/postgresql/data
-      # - ./server/scripts:/docker-entrypoint-initdb.d
+    # volumes:
+    #   - ./server/.postgres:/var/lib/postgresql/data
+    #    - ./server/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 10s
+      retries: 100
+  indexer:
+    build:
+      context: .
+      dockerfile: docker/indexer.Dockerfile
+    container_name: indexer_container
+    environment:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/indexer
+      ROOT_DATABASE_URL: postgres://postgres:password@localhost:5432/postgres
+      REGEN_API: http://127.0.0.1:1317
+      REGEN_RPC: http://127.0.0.1:26657
+    entrypoint: ["/bin/sh", "-c", "./scripts/indexer_start.sh"]
+    network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
     ports:
       - '5000:5000'
     env_file:
       - ./server/.env-test
     platform: linux/x86_64
+    network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
   redis:
     image: redis:latest
     restart: always

@@ -39,7 +39,7 @@ server, see the `engines` section in `package.json`. Read here for
 The database can then be accessed using:
 
 ```sh
-psql postgresql://postgres:postgres@localhost:5432/regen_registry
+psql postgresql://postgres:password@localhost:5432/server
 ```
 
 #### Redis info
