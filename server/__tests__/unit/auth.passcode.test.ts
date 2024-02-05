@@ -227,6 +227,29 @@ describe('auth verify passcode', () => {
       ).rejects.toThrow(new Error('This account already has an email'));
     });
   });
+  it('should throw an error if the currently logged in account tries to add an email that is already used by another account as email or google email', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      await createWeb2Account({
+        client,
+        email,
+        google: '123',
+      });
+
+      const walletAddr = genRandomRegenAddress();
+      const { accountId: currentAccountId } = await createAccountWithAuthUser(
+        client,
+        walletAddr,
+      );
+
+      const passcode = await createPasscode({ email, client });
+
+      await expect(
+        verifyPasscode({ currentAccountId, email, passcode, client }),
+      ).rejects.toThrow(
+        'duplicate key value violates unique constraint "account_email_key"',
+      );
+    });
+  });
   it('should throw an error if the currently logged in account is not found', async () => {
     await withRootDb(async (client: PoolClient) => {
       const walletAddr = genRandomRegenAddress();

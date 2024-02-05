@@ -81,8 +81,9 @@ export async function connectGoogleAccount({
   }
 
   if (accountId) {
+    // We also set the main account email to the google email if not already set
     await client.query(
-      'update private.account set google = $1, google_email = $2 where id = $3',
+      'update private.account set email = COALESCE(email, $2), google = $1, google_email = $2 where id = $3',
       [googleId, email, accountId],
     );
   } else {
