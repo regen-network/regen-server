@@ -36,6 +36,7 @@ walletAuth.post(
   ensureLoggedIn(),
   (req, res, next) => {
     req.logout(err => {
+      req.session = null;
       if (err) {
         next(err);
       }
