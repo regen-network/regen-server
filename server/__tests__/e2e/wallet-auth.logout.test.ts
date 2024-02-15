@@ -54,4 +54,40 @@ describe('wallet-auth logout endpoint', () => {
     const data = await resp.json();
     expect(data.data.getCurrentAccount).toBe(null);
   });
+
+  it('removes authenticatedAccounts from session', async () => {
+    // Log in with one account
+    const { authHeaders, csrfHeaders } = await createNewUserAndLogin();
+
+    // Then log out
+    const logoutResp = await fetch(
+      `${getMarketplaceURL()}/wallet-auth/logout`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+      },
+    );
+    expect(logoutResp.status).toBe(200);
+
+    // the logout request alters the auth cookies
+    // we must parse those here, and include these in subsequent requests
+    const logoutAuthHeaders = genAuthHeaders(logoutResp.headers, csrfHeaders);
+
+    // Log in with another account
+    const { authHeaders: newAuthHeaders, response } =
+      await createNewUserAndLogin(logoutAuthHeaders);
+    const {
+      user: { accountId },
+    } = await response.json();
+
+    // Only the new account is part of the authenticated accounts
+    const accountsQuery = await fetch(`${getMarketplaceURL()}/auth/accounts`, {
+      method: 'GET',
+      headers: newAuthHeaders,
+    });
+    const accounts = await accountsQuery.json();
+    expect(accounts.authenticatedAccounts.length).toEqual(1);
+    expect(accounts.authenticatedAccounts[0].id).toEqual(accountId);
+    expect(accounts.activeAccountId).toEqual(accountId);
+  });
 });

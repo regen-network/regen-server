@@ -39,10 +39,11 @@ walletAuth.post(
       req.session = null;
       if (err) {
         next(err);
+      } else {
+        return res.send({
+          message: 'You have been logged out!',
+        });
       }
-    });
-    return res.send({
-      message: 'You have been logged out!',
     });
   },
 );
