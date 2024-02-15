@@ -207,7 +207,9 @@ export async function createNewUser(): Promise<CreateNewUser> {
   return { userPrivKey, userPubKey, userAddr };
 }
 
-export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
+export async function createNewUserAndLogin(
+  headers?: Headers,
+): Promise<CreateNewUserAndLogin> {
   const { userPrivKey, userPubKey, userAddr } = await createNewUser();
   const nonce = '';
   const loginResp = await performLogin(
@@ -215,6 +217,7 @@ export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
     userPubKey,
     userAddr,
     nonce,
+    headers,
   );
   return { ...loginResp, userAddr, userPrivKey, userPubKey };
 }
