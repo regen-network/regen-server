@@ -28,12 +28,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
+      TEST_DATABASE_URL: postgres://postgres:password@localhost:5432/server
       TEST_DATABASE_USER: postgres
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_BUCKET_REGION: ${{ secrets.AWS_BUCKET_REGION }}
       AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      PASSCODE_MAX_TRY_COUNT: 3
+      S3_PROJECTS_PATH: projects-test
+      IMAGE_STORAGE_URL: ${{ secrets.IMAGE_STORAGE_URL }}
 
     strategy:
       matrix:
@@ -43,9 +48,9 @@ jobs:
       postgres:
         image: postgis/postgis:12-master
         env:
-          POSTGRES_DB: regen_registry
+          POSTGRES_DB: server
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -65,17 +70,14 @@ jobs:
       - run: yarn
       - name: 'prepare an empty test database'
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
-          ROOT_DATABASE_URL: postgres://postgres:postgres@localhost/postgres
+          DATABASE_URL: postgres://postgres:password@localhost:5432/server
+          ROOT_DATABASE_URL: postgres://postgres:password@localhost/postgres
         run: yarn run graphile-migrate reset --erase
       - name: 'start the registry-server and run tests'
         env:
           MAILERLITE_API_KEY: foobar
           AIRTABLE_API_TOKEN: foobar
-          AUTH0_DOMAIN: foobar
-          AUTH0_CLIENT_ID: foobar
-          AUTH0_CLIENT_SECRET: foobar
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/regen_registry
+          DATABASE_URL: postgres://postgres:password@localhost:5432/server
           CSRF_SECRET: foobar
           CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
         run: yarn build && yarn serve &

@@ -17,10 +17,17 @@ import {
   PrivKeySecp256k1,
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
-import {
-  genArbitraryLoginData,
-  genArbitraryAddAddressData,
-} from '../middleware/keplrStrategy';
+import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+import { PoolClient } from 'pg';
+
+export const longerTestTimeout = 30000;
+export const privacy = 'public';
+export const contents = {
+  '@context': { x: 'http://some.schema' },
+  'x:someField': 'some value',
+};
+export const expIri =
+  'regen:13toVhB7bM4zUgwzH5N5UkTjfx1ZEHK1qXkhEWysLqCoP8iaACRxJJK.rdf';
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
@@ -52,26 +59,8 @@ export function genSignature(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  data: string = genArbitraryLoginData(nonce),
 ) {
-  const data = genArbitraryLoginData(nonce);
-  const signDoc = makeADR36AminoSignDoc(signer, data);
-  const msg = serializeSignDoc(signDoc);
-  // these next lines are equivalent to the keplr.signArbitrary browser API
-  const signatureBytes = privKey.signDigest32(Hash.sha256(msg));
-  const signature = encodeSecp256k1Signature(
-    pubKey.toBytes(false),
-    signatureBytes,
-  );
-  return signature;
-}
-
-export function genAddAddressSignature(
-  privKey: PrivKeySecp256k1,
-  pubKey: PubKeySecp256k1,
-  signer: string,
-  nonce: string,
-) {
-  const data = genArbitraryAddAddressData(nonce);
   const signDoc = makeADR36AminoSignDoc(signer, data);
   const msg = serializeSignDoc(signDoc);
   // these next lines are equivalent to the keplr.signArbitrary browser API
@@ -102,37 +91,52 @@ export async function performLogin(
   pubKey: PubKeySecp256k1,
   signer: string,
   nonce: string,
+  headers?: Headers,
 ): Promise<PerformLogin> {
   // sign the data
   const signature = genSignature(privKey, pubKey, signer, nonce);
   // send the request to login API endpoint
   // this step requires retrieving CSRF tokens first
   const req = await CSRFRequest(
-    `${getMarketplaceURL()}/web3auth/login`,
+    `${getMarketplaceURL()}/wallet-auth/login`,
     'POST',
   );
   const response = await fetch(req, {
     body: JSON.stringify({ signature: signature }),
+    headers: headers ? headers : undefined,
   });
   const authHeaders = genAuthHeaders(response.headers, req.headers);
   return { authHeaders, response, csrfHeaders: req.headers };
 }
 
-export function loginResponseAssertions(resp: Response, signer: string): void {
+export function parseSessionData(resp: Response) {
+  const cookies = resp.headers.get('set-cookie');
+  if (!cookies) {
+    throw new Error('set cookie headers are missing..');
+  }
+  const sessionMatch = cookies.match(/session=(.*?);/);
+  if (!sessionMatch) {
+    throw new Error('session cookie not found..');
+  }
+  const sessionString = sessionMatch[1];
+  const sessionData = JSON.parse(atob(sessionString));
+  return { cookies, sessionData };
+}
+
+export function loginResponseAssertions(resp: Response): void {
   expect(resp.status).toBe(200);
   // these assertions on the cookies check for important fields that should be set
   // we expect that a session cookie is created here
   // this session cookie is where the user session is stored
-  const cookies = resp.headers.get('set-cookie');
+  const { cookies, sessionData } = parseSessionData(resp);
   expect(cookies).toMatch(/session=(.*?);/);
   expect(cookies).toMatch(/session.sig=(.*?);/);
   expect(cookies).toMatch(/expires=(.*?);/);
 
   // assertions on the base64 encoded user session..
-  const sessionString = cookies.match(/session=(.*?);/)[1];
-  const sessionData = JSON.parse(atob(sessionString));
-  expect(sessionData).toHaveProperty('passport.user.id');
-  expect(sessionData).toHaveProperty('passport.user.address', signer);
+  expect(sessionData).toHaveProperty('passport.user.accountId');
+  expect(sessionData).toHaveProperty('activeAccountId');
+  expect(sessionData).toHaveProperty('authenticatedAccountIds');
 }
 
 export function parseSessionCookies(resp: Response): string {
@@ -180,7 +184,7 @@ export async function setUpTestAccount(mnemonic: string): Promise<void> {
   const signer = new Bech32Address(pubKey.getAddress()).toBech32('regen');
 
   const resp = await fetch(
-    `${getMarketplaceURL()}/web3auth/nonce?userAddress=${signer}`,
+    `${getMarketplaceURL()}/wallet-auth/nonce?userAddress=${signer}`,
   );
   // if the nonce was not found then the account does not yet exist
   if (resp.status === 404) {
@@ -203,7 +207,9 @@ export async function createNewUser(): Promise<CreateNewUser> {
   return { userPrivKey, userPubKey, userAddr };
 }
 
-export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
+export async function createNewUserAndLogin(
+  headers?: Headers,
+): Promise<CreateNewUserAndLogin> {
   const { userPrivKey, userPubKey, userAddr } = await createNewUser();
   const nonce = '';
   const loginResp = await performLogin(
@@ -211,6 +217,7 @@ export async function createNewUserAndLogin(): Promise<CreateNewUserAndLogin> {
     userPubKey,
     userAddr,
     nonce,
+    headers,
   );
   return { ...loginResp, userAddr, userPrivKey, userPubKey };
 }
@@ -222,7 +229,7 @@ export function genRandomRegenAddress(): string {
 export async function dummyFilesSetup(
   key: string,
   fname: string,
-  identifier: any,
+  identifier: string,
   authHeaders: Headers,
 ): Promise<{ resp: Response }> {
   let dir: undefined | string = undefined;
@@ -245,7 +252,10 @@ export async function dummyFilesSetup(
       headers: authHeaders,
       body: form,
     });
+    console.log('resp', resp);
     return { resp };
+  } catch (e) {
+    console.log('e', e);
   } finally {
     if (fd) {
       await fd?.close();
@@ -278,10 +288,131 @@ export async function dummyFilesTeardown(key: string, fname: string) {
   }
 }
 
+type OptionalAuthHeaders = {
+  initAuthHeaders?: Headers;
+};
+
+async function getAuthHeaders({ initAuthHeaders }: OptionalAuthHeaders) {
+  let authHeaders: Headers;
+  if (initAuthHeaders) {
+    authHeaders = initAuthHeaders;
+  } else {
+    const newUser = await createNewUserAndLogin();
+    authHeaders = newUser.authHeaders;
+  }
+  return authHeaders;
+}
+
+type CreateProjectAndPostParams = {
+  initPrivacy?: 'private' | 'private_files' | 'private_locations' | 'public';
+} & OptionalAuthHeaders;
+
+export async function createProjectAndPost({
+  initAuthHeaders,
+  initPrivacy,
+}: CreateProjectAndPostParams) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
+
+  const { projectId, accountId } = await createProject({
+    initAuthHeaders: authHeaders,
+  });
+  const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      projectId,
+      privacy: initPrivacy ?? privacy,
+      contents,
+    }),
+  });
+  const { iri } = await resp.json();
+  return { accountId, projectId, iri };
+}
+
+type CreateProjectAndPostsParams = { nbPosts: number } & OptionalAuthHeaders;
+export async function createProjectAndPosts({
+  initAuthHeaders,
+  nbPosts,
+}: CreateProjectAndPostsParams) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
+
+  const { projectId, accountId } = await createProject({
+    initAuthHeaders: authHeaders,
+  });
+  const iris = [];
+  for (let i = 0; i < nbPosts; i++) {
+    const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        projectId,
+        privacy,
+        contents: { ...contents, 'x:someField': i },
+      }),
+    });
+    const { iri } = await resp.json();
+    iris.push(iri);
+  }
+  return { accountId, projectId, iris };
+}
+
+export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
+  const authHeaders = await getAuthHeaders({ initAuthHeaders });
+  const accountIdQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query: `{ getCurrentAccount { id } }`,
+    }),
+  });
+  const accountIdResult = await accountIdQuery.json();
+  const accountId = accountIdResult.data.getCurrentAccount.id;
+
+  const createProjectQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation CreateProject($input: CreateProjectInput!) { createProject(input: $input) { project { id } } }',
+      variables: `{"input":{"project":{"adminAccountId":"${accountId}"}}}`,
+    }),
+  });
+  const createProjectResult = await createProjectQuery.json();
+  const projectId = createProjectResult.data.createProject.project.id;
+
+  const key = `${process.env.S3_PROJECTS_PATH}/${projectId}`;
+  const fname = `test-${projectId}.txt`;
+  return {
+    key,
+    fname,
+    accountId,
+    projectId,
+  };
+}
+
 export function getServerBaseURL() {
   return 'http://localhost:5000';
 }
 
 export function getMarketplaceURL() {
   return `${getServerBaseURL()}/marketplace/v1`;
+}
+
+type CreateWeb2AccountParams = {
+  client: PoolClient;
+  email: string;
+  google?: string;
+};
+export async function createWeb2Account({
+  client,
+  email,
+  google,
+}: CreateWeb2AccountParams) {
+  const insertQuery = await client.query(
+    'select * from private.create_new_web2_account($1, $2, $3)',
+    ['user', email, google],
+  );
+  const [{ create_new_web2_account: accountId }] = insertQuery.rows;
+  await client.query('select private.create_auth_user($1)', [accountId]);
+  return accountId;
 }

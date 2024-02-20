@@ -3,7 +3,7 @@ import * as nodemailer from 'nodemailer';
 import mjml2html = require('mjml');
 import { template as lodashTemplate } from 'lodash';
 import { promises as fsp } from 'fs';
-import * as html2text from 'html-to-text';
+import { convert } from 'html-to-text';
 import { Task } from 'graphile-worker';
 const { readFile } = fsp;
 
@@ -42,11 +42,9 @@ const task: Task = async inPayload => {
     html = html.replace(/&lt;i&gt;/g, '<i>').replace(/&lt;\/i&gt;/g, '</i>');
 
     const html2textableHtml = html.replace(/(<\/?)div/g, '$1p');
-    const text = html2text
-      .fromString(html2textableHtml, {
-        wordwrap: 120,
-      })
-      .replace(/\n\s+\n/g, '\n\n');
+    const text = convert(html2textableHtml, {
+      wordwrap: 120,
+    }).replace(/\n\s+\n/g, '\n\n');
     Object.assign(options, { html, text });
   }
   try {

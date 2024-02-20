@@ -1,6 +1,6 @@
-import { generateIRI } from '../iri-gen';
+import { generateIRIFromGraph, generateIRIFromRaw } from '../iri-gen';
 
-describe('generateIRI', () => {
+describe('generateIRIFromGraph', () => {
   it('generates correct IRI for JSON-LD data', () => {
     const doc = {
       'http://schema.org/name': [{ '@value': 'Manu Sporny' }],
@@ -10,7 +10,7 @@ describe('generateIRI', () => {
       ],
     };
 
-    expect(generateIRI(doc)).resolves.toBe(
+    expect(generateIRIFromGraph(doc)).resolves.toBe(
       'regen:13toVgutDdVPL4Q3s8hqgSSm7ZwfhiCtmXFpNn9vevxyLFFUT6HN1QD.rdf',
     );
   });
@@ -29,7 +29,7 @@ describe('generateIRI', () => {
       },
     };
 
-    expect(generateIRI(doc)).resolves.toBe(
+    expect(generateIRIFromGraph(doc)).resolves.toBe(
       'regen:13toVgutDdVPL4Q3s8hqgSSm7ZwfhiCtmXFpNn9vevxyLFFUT6HN1QD.rdf',
     );
   });
@@ -37,6 +37,27 @@ describe('generateIRI', () => {
     const doc = {
       foo: 'bar',
     };
-    await expect(generateIRI(doc)).rejects.toThrow('Invalid JSON-LD document');
+    await expect(generateIRIFromGraph(doc)).rejects.toThrow(
+      'Invalid JSON-LD document',
+    );
+  });
+});
+
+describe('generateIRIFromRaw', () => {
+  it('generates correct IRI for raw data', () => {
+    const data = new Uint8Array([1, 2, 3, 4, 5]);
+    const extension = 'txt';
+
+    expect(generateIRIFromRaw(data, extension)).resolves.toBe(
+      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.txt',
+    );
+  });
+  it('generates correct IRI for raw data with unapproved extension', () => {
+    const data = new Uint8Array([1, 2, 3, 4, 5]);
+    const extension = 'heic';
+
+    expect(generateIRIFromRaw(data, extension)).resolves.toBe(
+      'regen:112xweSfenTPX2GkbhescHosnL2KfTx1xW7zL9fjrY7apDeZkA3h.bin',
+    );
   });
 });

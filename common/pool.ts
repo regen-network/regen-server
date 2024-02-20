@@ -5,7 +5,7 @@ function setupPgPool(): Pool {
   const poolConfig: PoolConfig = {
     connectionString:
       process.env.DATABASE_URL ||
-      'postgres://postgres:postgres@localhost:5432/regen_registry',
+      'postgres://postgres:password@localhost:5432/server',
   };
 
   if (process.env.NODE_ENV === 'production') {
@@ -22,7 +22,7 @@ function setupPgPoolIndexer(): Pool {
   const poolConfig: PoolConfig = {
     connectionString:
       process.env.INDEXER_DATABASE_URL ||
-      'postgres://postgres:postgres@localhost:5432/indexer',
+      'postgres://postgres:password@localhost:5432/indexer',
   };
 
   if (
