@@ -1353,6 +1353,13 @@ GRANT UPDATE(admin_account_id) ON TABLE public.project TO auth_user;
 
 
 --
+-- Name: TABLE project_partner; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.project_partner TO app_user;
+
+
+--
 -- Name: TABLE shacl_graph; Type: ACL; Schema: public; Owner: -
 --
 
