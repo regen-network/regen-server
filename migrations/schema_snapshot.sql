@@ -609,6 +609,16 @@ CREATE TABLE public.project (
 
 
 --
+-- Name: project_partner; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.project_partner (
+    project_id uuid NOT NULL,
+    account_id uuid NOT NULL
+);
+
+
+--
 -- Name: shacl_graph; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -808,6 +818,14 @@ ALTER TABLE ONLY public.post
 
 ALTER TABLE ONLY public.project
     ADD CONSTRAINT project_on_chain_id_key UNIQUE (on_chain_id);
+
+
+--
+-- Name: project_partner project_partner_pk; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_partner
+    ADD CONSTRAINT project_partner_pk PRIMARY KEY (project_id, account_id);
 
 
 --
@@ -1084,6 +1102,22 @@ ALTER TABLE ONLY public.project
 
 
 --
+-- Name: project_partner project_partner_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_partner
+    ADD CONSTRAINT project_partner_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
+
+
+--
+-- Name: project_partner project_partner_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_partner
+    ADD CONSTRAINT project_partner_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id);
+
+
+--
 -- Name: project project_verifier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1316,6 +1350,13 @@ GRANT UPDATE(published) ON TABLE public.project TO auth_user;
 --
 
 GRANT UPDATE(admin_account_id) ON TABLE public.project TO auth_user;
+
+
+--
+-- Name: TABLE project_partner; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.project_partner TO app_user;
 
 
 --
