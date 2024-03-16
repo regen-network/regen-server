@@ -15,11 +15,13 @@ After installing `nvm`, this sequence of commands will provide you with an LTS
 version of nodejs and access to `yarn`:
 
 ```
-$ nvm install --lts
-$ nvm use --lts
+$ nvm install
+$ nvm use
 $ corepack enable
 $ yarn --help
 ```
+
+Note: the `.nvmrc` file in this repo determines which node version is used locally.
 
 At present the application is known to be compatible with
 nodejs versions 10.x, 14.x and 16.x. For information about
