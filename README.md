@@ -130,8 +130,23 @@ And you're ready to go again!
 
 [Jest](https://jestjs.io/) is used for testing:
 
+In order for all tests to pass you'll need to have set up values correctly in:
+
+```
+server/.env-test
+server/.env-test-secrets
+```
+
+Tests can be run with:
+
 ```sh
 yarn test
+```
+
+You can skip e2e tests that depend on AWS, this is helpful when you don't have S3 credentials:
+
+```sh
+SKIP_AWS_TESTS=1 yarn test
 ```
 
 Right now, it's using the development database.
