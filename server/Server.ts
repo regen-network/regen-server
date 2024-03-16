@@ -334,4 +334,68 @@ const port = process.env.PORT || 5000;
 app.listen(port);
 
 console.log('Started server on port ' + port);
-console.log('Graphiql UI at http://localhost:' + port + '/graphiql');
+
+interface RouteInfo {
+  method: string;
+  uri: string;
+}
+const routeInfo: RouteInfo[] = [];
+
+function routeInfoParser(path, layer) {
+  if (layer.route) {
+    layer.route.stack.forEach(
+      routeInfoParser.bind(null, path.concat(split(layer.route.path))),
+    );
+  } else if (layer.name === 'router' && layer.handle.stack) {
+    layer.handle.stack.forEach(
+      routeInfoParser.bind(null, path.concat(split(layer.regexp))),
+    );
+  } else if (layer.method) {
+    const method = layer.method.toUpperCase();
+    const uri =
+      '/' + path.concat(split(layer.regexp)).filter(Boolean).join('/');
+    if (!routeInfo.find(x => x.method === method && x.uri === uri)) {
+      routeInfo.push({
+        method,
+        uri,
+      });
+    }
+  }
+}
+
+function split(thing) {
+  if (typeof thing === 'string') {
+    return thing.split('/');
+  } else if (thing.fast_slash) {
+    return '';
+  } else {
+    var match = thing
+      .toString()
+      .replace('\\/?', '')
+      .replace('(?=\\/|$)', '$')
+      .match(/^\/\^((?:\\[.*+?^${}()|[\]\\\/]|[^.*+?^${}()|[\]\\\/])*)\$\//);
+    return match
+      ? match[1].replace(/\\(.)/g, '$1').split('/')
+      : '<complex:' + thing.toString() + '>';
+  }
+}
+
+app._router.stack.forEach(routeInfoParser.bind(null, []));
+console.log('Route Info:');
+console.log(
+  routeInfo.sort((a: RouteInfo, b: RouteInfo) => {
+    if (a.uri < b.uri) {
+      return -1; // a before b
+    }
+    if (a.uri > b.uri) {
+      return 1; // a after b
+    }
+    if (a.method < b.method) {
+      return -1; // a before b
+    }
+    if (a.method > b.method) {
+      return 1; // a after b
+    }
+    return 0; // a equal b
+  }),
+);
