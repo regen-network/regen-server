@@ -32,7 +32,7 @@ server, see the `engines` section in `package.json`. Read here for
 ### Starting PostgreSQL and Redis Locally
 
 1. Install [docker-compose](https://docs.docker.com/compose/install/)
-2. Run `cd server && docker-compose up`
+2. Run `docker-compose up --build postgres redis`
 
 #### Postgres info
 
@@ -48,29 +48,21 @@ psql postgresql://postgres:password@localhost:5432/server
 You can connect to redis using the `redis-cli`:
 
 ```
-cd server && docker-compose exec redis redis-cli
+docker-compose exec redis redis-cli
 ```
 
 ### Environment variables
 
 Based on `server/.env.example`, create some `server/.env` file with appropriate values.
+To get the app running you can fill in missing values with an arbitrary string value.
 
 ## Starting a development server
 
 1. Install all dependencies with `yarn`.
-2. Start a development server with `yarn dev`. This runs in parallel the node `server` and watches/builds code in the `worker` (used for sending emails at the moment).
-3. Start coding!!
-
-### Alternative method for starting server
-
-This method is useful if you don't want to run the watch process.
-The tradeoff is that you must manually restart the command after making code changes.
-The example below shows how to increase the log verbosity for certain parts of the app.
-
-```
-$ cd regen-server
-$ DEBUG='express:*,express-sharp*' yarn start
-```
+2. Run this apps migrations: https://github.com/regen-network/regen-server/blob/dev/migrations/README.md
+3. Run the indexer migrations: https://github.com/regen-network/indexer/blob/main/migrations/README.md
+4. Start a development server with `(cd server && yarn start-dev)`.
+5. Start coding!!
 
 ## Database
 
