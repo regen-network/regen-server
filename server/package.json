@@ -40,7 +40,7 @@
     "got": "^11.8.2",
     "graphile-build-pg": "^4.5.0",
     "graphile-migrate": "^1.4.1",
-    "graphile-worker": "^0.13.0",
+    "graphile-worker": "^0.16",
     "html-to-text": "^9.0.4",
     "http-proxy-middleware": "^2.0.6 ",
     "ioredis": "^5.0.4",
