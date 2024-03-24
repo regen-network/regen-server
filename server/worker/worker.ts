@@ -8,7 +8,8 @@ export async function main(pgPool): Promise<Runner> {
     // Install signal handlers for graceful shutdown on SIGINT, SIGTERM, etc
     noHandleSignals: false,
     pollInterval: 1000,
-    taskDirectory: `${__dirname}/dist`,
+    // TODO use compiled ts?
+    taskDirectory: `${__dirname}/tasks`,
   });
   return runner;
 }
