@@ -1,6 +1,7 @@
 name: registry-server
 
 on:
+  pull_request:
   push:
     branches:
       - '**'
