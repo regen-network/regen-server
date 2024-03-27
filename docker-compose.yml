@@ -45,6 +45,8 @@ services:
       - ./server/.env-test
     platform: linux/x86_64
     network_mode: host
+    volumes:
+      - ./server-keys:/regen
     depends_on:
       postgres:
         condition: service_healthy

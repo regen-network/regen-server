@@ -10,7 +10,7 @@
   "dependencies": {
     "base58-js": "^1.0.0",
     "blakejs": "^1.1.1",
-    "jsonld": "^5.2.0",
+    "jsonld": "^8.3",
     "sha256-uint8array": "^0.10.3"
   },
   "scripts": {
