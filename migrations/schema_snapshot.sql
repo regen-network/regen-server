@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 15.4
+-- Dumped by pg_dump version 16.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -382,6 +382,8 @@ CREATE TABLE public.account (
     creator_id uuid,
     nonce text DEFAULT encode(sha256(public.gen_random_bytes(256)), 'hex'::text) NOT NULL,
     addr text,
+    hide_ecocredits boolean DEFAULT false,
+    hide_retirements boolean DEFAULT false,
     CONSTRAINT account_type_check CHECK ((type = ANY (ARRAY['user'::public.account_type, 'organization'::public.account_type])))
 );
 
