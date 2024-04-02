@@ -81,6 +81,8 @@ jobs:
           DATABASE_URL: postgres://postgres:password@localhost:5432/server
           CSRF_SECRET: foobar
           CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
+          AWS_BUCKET_REGION: us-east-1
+          AWS_S3_BUCKET: regen-registry
           GOOGLE_CLIENT_ID: foo
           GOOGLE_CLIENT_SECRET: foo
         run: yarn serve & yarn test
