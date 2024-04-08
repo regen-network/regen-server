@@ -1,10 +1,9 @@
 name: registry-server
 
 on:
+  pull_request:
   push:
-    branches:
-      - '**'
-      - '!master'
+    branches: [master, dev]
 
 jobs:
   lint-and-format:
