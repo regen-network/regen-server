@@ -38,7 +38,7 @@ describe('generateIRIFromGraph', () => {
       foo: 'bar',
     };
     await expect(generateIRIFromGraph(doc)).rejects.toThrow(
-      'Invalid JSON-LD document',
+      'Safe mode validation error.',
     );
   });
 });

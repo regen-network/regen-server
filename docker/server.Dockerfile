@@ -1,4 +1,4 @@
-FROM node:16-bullseye 
+FROM node:18-bullseye 
 RUN apt-get update && apt-get upgrade -y
 WORKDIR /app
 COPY yarn.lock .
