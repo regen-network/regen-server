@@ -66,7 +66,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: corepack enable
       - run: yarn
-      - run: yarn
       - name: 'prepare an empty test database'
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/server
