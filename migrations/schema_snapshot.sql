@@ -643,7 +643,8 @@ CREATE TABLE public.upload (
     size integer NOT NULL,
     mimetype text NOT NULL,
     account_id uuid NOT NULL,
-    project_id uuid NOT NULL
+    project_id uuid NOT NULL,
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL
 );
 
 
@@ -859,7 +860,7 @@ ALTER TABLE ONLY public.shacl_graph
 --
 
 ALTER TABLE ONLY public.upload
-    ADD CONSTRAINT upload_pkey PRIMARY KEY (iri);
+    ADD CONSTRAINT upload_pkey PRIMARY KEY (id);
 
 
 --
