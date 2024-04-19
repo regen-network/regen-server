@@ -3,7 +3,7 @@ import { Request } from 'express';
 export interface User {
   sub?: string;
   accountId?: string;
-  state?: { createProject?: string };
+  state?: { route?: string };
 }
 
 export interface UserRequest extends Request {

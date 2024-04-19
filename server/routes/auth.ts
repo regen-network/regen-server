@@ -34,10 +34,7 @@ router.get(
     failureRedirect: process.env.MARKETPLACE_APP_URL,
   }),
   function (req: UserRequest, res) {
-    let route = 'profile';
-    if (req.user?.state?.createProject) {
-      route = 'project-pages/draft/basic-info';
-    }
+    const route = req.user?.state?.route || 'profile';
     updateActiveAccounts(req);
     res.redirect(`${process.env.MARKETPLACE_APP_URL}/${route}`);
   },
