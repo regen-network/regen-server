@@ -9,13 +9,17 @@ export const googleStrategy = new Strategy(
     clientID: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     callbackURL: `/marketplace/v1/auth${GOOGLE_CALLBACK_URL}`,
+    passReqToCallback: true,
   },
-  async function (accessToken, refreshToken, profile, callback) {
+  async function (req, accessToken, refreshToken, profile, callback) {
     const { id: googleId, emails } = profile;
     let client: PoolClient | null = null;
-
     try {
       client = await pgPool.connect();
+      let state: object | undefined;
+      if (typeof req.query.state === 'string') {
+        state = JSON.parse(req.query.state);
+      }
       if (emails) {
         const [{ value: email, verified }] = emails;
         const accountId = await verifyGoogleAccount({
@@ -25,7 +29,7 @@ export const googleStrategy = new Strategy(
           client,
         });
         if (accountId) {
-          callback(null, { accountId });
+          callback(null, { accountId, state });
         }
       }
     } catch (err) {
