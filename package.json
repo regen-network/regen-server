@@ -42,7 +42,7 @@
     "ts-jest": "^29"
   },
   "engines": {
-    "node": "16.x"
+    "node": "18.x"
   },
   "resolutions": {
     "pg-connection-string": "2.x"

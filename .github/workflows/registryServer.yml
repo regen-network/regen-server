@@ -11,12 +11,12 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: corepack enable
@@ -41,7 +41,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     services:
       postgres:
@@ -51,7 +51,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -d server -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -59,26 +59,27 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: corepack enable
-      - run: yarn
       - run: yarn
       - name: 'prepare an empty test database'
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/server
           ROOT_DATABASE_URL: postgres://postgres:password@localhost/postgres
         run: yarn run graphile-migrate reset --erase
-      - name: 'start the registry-server and run tests'
+      - name: 'Build' 
+        run: yarn build
+      - name: 'Start server'
         env:
           MAILERLITE_API_KEY: foobar
           AIRTABLE_API_TOKEN: foobar
           DATABASE_URL: postgres://postgres:password@localhost:5432/server
           CSRF_SECRET: foobar
           CSRF_COOKIE_NAME: __Host-regen-dev.x-csrf-token
-        run: yarn build && yarn serve &
-      - name: 'run tests after waiting a bit'
+        run: yarn serve &
+      - name: 'Run tests'
         run: yarn test
