@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   const argv = minimist(process.argv.slice(2), { boolean: true });
   // Make sure we got a filename on the command line.
   if (argv._.length < 1) {
-    console.log('You should provide the path to a file');
+    console.log('File path is required');
     process.exit(1);
   }
   const insertFlag = argv.insert;
