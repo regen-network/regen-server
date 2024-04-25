@@ -16,7 +16,7 @@ async function readGraphDocument(
 }
 
 async function runGraphIRIGen(
-  filePath: string,
+  filePath: fs.PathOrFileDescriptor,
   insertFlag: boolean,
 ): Promise<void> {
   let client: PoolClient;
