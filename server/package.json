@@ -65,7 +65,7 @@
   "scripts": {
     "start": "ts-node Server.ts",
     "start-dev": "nodemon Server.ts",
-    "build": "yarn remove-dist && tsc -b",
+    "build": "yarn remove-dist && tsc -b && cp worker/tasks/*.sh worker/dist",
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "tsc --watch",
     "test": "wait-port localhost:5000 --timeout 120000 && jest --runInBand --detectOpenHandles"
