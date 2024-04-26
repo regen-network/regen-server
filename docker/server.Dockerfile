@@ -16,6 +16,7 @@ VOLUME /regen
 ENV REGEN_HOME=/regen
 
 RUN apt-get update && apt-get upgrade -y
+RUN apt-get install jq -y
 WORKDIR /app
 COPY yarn.lock .
 COPY package.json .
