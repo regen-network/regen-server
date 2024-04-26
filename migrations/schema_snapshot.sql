@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 16.2
+-- Dumped by pg_dump version 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -35,13 +35,6 @@ CREATE SCHEMA postgraphile_watch;
 --
 
 CREATE SCHEMA private;
-
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
 
 
 --
@@ -358,6 +351,27 @@ $_$;
 --
 
 COMMENT ON FUNCTION private.shuffle(text) IS 'Shuffles an incoming string and aggregates the resulting rows to a string';
+
+
+--
+-- Name: anchor_iri(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.anchor_iri() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  PERFORM graphile_worker.add_job(
+      'anchor_iri',
+      json_build_object('iri', NEW.iri),
+      'anchor_iri',
+      NOW(),
+      25,
+      NEW.iri
+  );
+  RETURN NEW;
+END;
+$$;
 
 
 SET default_tablespace = '';
@@ -977,6 +991,27 @@ CREATE INDEX upload_project_id_idx ON public.upload USING btree (project_id);
 
 
 --
+-- Name: metadata_graph anchor_metadata_graph; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER anchor_metadata_graph AFTER INSERT ON public.metadata_graph FOR EACH ROW EXECUTE FUNCTION public.anchor_iri();
+
+
+--
+-- Name: post anchor_post; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER anchor_post AFTER INSERT ON public.post FOR EACH ROW EXECUTE FUNCTION public.anchor_iri();
+
+
+--
+-- Name: upload anchor_upload; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER anchor_upload AFTER INSERT ON public.upload FOR EACH ROW EXECUTE FUNCTION public.anchor_iri();
+
+
+--
 -- Name: migrations migrations_previous_hash_fkey; Type: FK CONSTRAINT; Schema: graphile_migrate; Owner: -
 --
 
@@ -1204,14 +1239,6 @@ CREATE POLICY project_insert_policy ON public.project FOR INSERT TO auth_user WI
 --
 
 CREATE POLICY project_select_all ON public.project FOR SELECT USING (true);
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
