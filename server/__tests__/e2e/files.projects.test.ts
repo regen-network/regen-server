@@ -87,7 +87,9 @@ describe('files endpoint, projects auth...', () => {
           );
           const json = await uploadResp.json();
           const resp = await fetch(
-            `${getMarketplaceURL()}/files/${projectId}/${fname}`,
+            `${getMarketplaceURL()}/files/${
+              process.env.S3_PROJECTS_PATH
+            }/${projectId}?fileName=${fname}`,
             {
               method: 'DELETE',
               headers: authHeaders,
@@ -122,7 +124,9 @@ describe('files endpoint, projects auth...', () => {
           // Try to delete project media administered by another account
           const { authHeaders: authHeaders1 } = await createNewUserAndLogin();
           const resp = await fetch(
-            `${getMarketplaceURL()}/files/${projectId}/${fname}`,
+            `${getMarketplaceURL()}/files/${
+              process.env.S3_PROJECTS_PATH
+            }/${projectId}?fileName=${fname}`,
             {
               method: 'DELETE',
               headers: authHeaders1,

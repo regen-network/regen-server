@@ -37,6 +37,7 @@ jobs:
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       PASSCODE_MAX_TRY_COUNT: 3
       S3_PROJECTS_PATH: projects-test
+      S3_PROFILES_PATH: profiles-test
       IMAGE_STORAGE_URL: ${{ secrets.IMAGE_STORAGE_URL }}
 
     strategy:
