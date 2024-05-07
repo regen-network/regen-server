@@ -16,11 +16,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { UploadedFile } from 'express-fileupload';
 import { generateIRIFromRaw } from 'iri-gen/iri-gen';
 import { UnauthorizedError } from '../errors';
+import { ensureLoggedIn } from '../middleware/passport';
 const router = express.Router();
 
 export const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
 const PROJECTS_PATH = process.env.S3_PROJECTS_PATH || 'projects';
+const PROFILES_PATH = process.env.S3_PROFILES_PATH || 'profiles';
 
 const s3 = new S3Client({
   region,
@@ -136,20 +138,24 @@ router.post(
 );
 
 router.delete(
-  '/files/:projectId/:fileName',
+  '/files/:path/:projectOrAccountId',
+  ensureLoggedIn(),
   bodyParser.json(),
   async (request: UserRequest, response: express.Response, next) => {
     let client: undefined | PoolClient;
+
     try {
-      const projectId = request.params.projectId;
-      const fileName = request.params.fileName;
+      const path = request.params.path;
+      const projectOrAccountId = request.params.projectOrAccountId;
+      const fileName = request.query.fileName;
 
       client = await pgPool.connect();
       await deleteFile({
         client,
-        accountId: request.user?.accountId,
-        fileName,
-        projectId,
+        currentAccountId: request.user?.accountId,
+        fileName: fileName as string,
+        projectId: path === PROJECTS_PATH ? projectOrAccountId : undefined,
+        accountId: path === PROFILES_PATH ? projectOrAccountId : undefined,
         bucketName,
       });
       response.send('File successfully deleted');
@@ -222,30 +228,44 @@ function getExifLocationData(path: string | Buffer): Promise<Exif.ExifData> {
 type DeleteFileParams = {
   bucketName?: string;
   client: PoolClient;
+  currentAccountId?: string;
   accountId?: string;
-  projectId: string;
+  projectId?: string;
   fileName: string;
 };
 
 export async function deleteFile({
   bucketName,
   client,
-  accountId,
+  currentAccountId,
   fileName,
   projectId,
+  accountId,
 }: DeleteFileParams) {
-  // Only the project admin is allowed to delete a project file
-  const queryRes = await client.query(
-    'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
-    [accountId, projectId],
-  );
-  if (queryRes.rowCount !== 1) {
+  if (projectId) {
+    // Only the project admin is allowed to delete a project file
+    const queryRes = await client.query(
+      'SELECT project.id FROM project JOIN account ON account.id = project.admin_account_id WHERE account.id = $1 AND project.id = $2',
+      [currentAccountId, projectId],
+    );
+    if (queryRes.rowCount !== 1) {
+      throw new UnauthorizedError('unauthorized');
+    }
+  } else if (accountId) {
+    // Only the profile owner can delete a profile file
+    if (currentAccountId !== accountId) {
+      throw new UnauthorizedError('unauthorized');
+    }
+  } else {
     throw new UnauthorizedError('unauthorized');
   }
 
+  const path = `${projectId ? PROJECTS_PATH : PROFILES_PATH}/${
+    projectId ?? accountId
+  }`;
   const input: DeleteObjectCommandInput = {
     Bucket: bucketName,
-    Key: `${PROJECTS_PATH}/${projectId}/${fileName}`,
+    Key: `${path}/${fileName}`,
   };
   const cmd = new DeleteObjectCommand(input);
   const cmdResp = await s3.send(cmd);
@@ -256,7 +276,7 @@ export async function deleteFile({
   } else {
     const url = getFileUrl({
       bucketName,
-      path: `${PROJECTS_PATH}/${projectId}`,
+      path,
       fileName,
     });
     await client.query(`delete from upload where url = $1`, [url]);
