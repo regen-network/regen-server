@@ -151,7 +151,6 @@ router.delete(
 
       client = await pgPool.connect();
       await deleteFile({
-        path,
         client,
         currentAccountId: request.user?.accountId,
         fileName: fileName as string,
@@ -227,7 +226,6 @@ function getExifLocationData(path: string | Buffer): Promise<Exif.ExifData> {
 }
 
 type DeleteFileParams = {
-  path?: string;
   bucketName?: string;
   client: PoolClient;
   currentAccountId?: string;
@@ -237,7 +235,6 @@ type DeleteFileParams = {
 };
 
 export async function deleteFile({
-  path = PROJECTS_PATH,
   bucketName,
   client,
   currentAccountId,
@@ -263,9 +260,12 @@ export async function deleteFile({
     throw new UnauthorizedError('unauthorized');
   }
 
+  const path = `${projectId ? PROJECTS_PATH : PROFILES_PATH}/${
+    projectId ?? accountId
+  }`;
   const input: DeleteObjectCommandInput = {
     Bucket: bucketName,
-    Key: `${path}/${projectId ?? accountId}/${fileName}`,
+    Key: `${path}/${fileName}`,
   };
   const cmd = new DeleteObjectCommand(input);
   const cmdResp = await s3.send(cmd);
@@ -276,7 +276,7 @@ export async function deleteFile({
   } else {
     const url = getFileUrl({
       bucketName,
-      path: `${path}/${projectId ?? accountId}`,
+      path,
       fileName,
     });
     await client.query(`delete from upload where url = $1`, [url]);
