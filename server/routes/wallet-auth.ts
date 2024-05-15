@@ -15,6 +15,7 @@ import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
+import { updateActiveAccounts } from '../middleware/loginHelpers';
 
 export const walletAuth = express.Router();
 
@@ -171,4 +172,206 @@ export async function connectWallet({
       throw new UnauthorizedError('Account not found for the given id');
     }
   }
+}
+
+walletAuth.post(
+  '/merge-accounts',
+  doubleCsrfProtection,
+  ensureLoggedIn(),
+  async (req: UserRequest, res, next) => {
+    let client: PoolClient | null = null;
+    try {
+      client = await pgPool.connect();
+      const { signature, keepCurrentAccount } = req.body;
+      const accountId = req.user?.accountId as string; // we use ensureLoggedIn so current accountId is defined
+      await mergeAccounts({
+        req,
+        signature,
+        accountId,
+        keepCurrentAccount,
+        client,
+      });
+
+      res.send({ message: 'Account successfully merged' });
+    } catch (err) {
+      return next(err);
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
+  },
+);
+
+type MergeAccountsParams = {
+  req: UserRequest;
+  signature?: StdSignature;
+  accountId: string;
+  keepCurrentAccount: boolean;
+  client: PoolClient;
+};
+
+/**
+ * Merges 2 accounts, the current account and an existing web3 account, and all data associated to them
+ * @param mergeAccountsParams Params for mergeAccounts function
+ * @param mergeAccountsParams.signature The signature that will be verified, corresponds to the account address to be merged
+ * @param mergeAccountsParams.accountId The current account id
+ * @param mergeAccountsParams.keepCurrentAccount Boolean to indicate whether to merge account data into the current account or the web3 account
+ * @param mergeAccountsParams.client The pg PoolClient
+ * @returns Promise<void>
+ */
+export async function mergeAccounts({
+  req,
+  signature,
+  accountId,
+  keepCurrentAccount,
+  client,
+}: MergeAccountsParams) {
+  if (!signature) {
+    throw new InvalidLoginParameter('Invalid signature parameter');
+  }
+  const address = pubkeyToAddress(signature.pub_key, 'regen');
+  const accountByAddr = await client.query(
+    'select id, nonce from account where addr = $1',
+    [address],
+  );
+
+  if (accountByAddr.rowCount !== 1) {
+    throw new Conflict('No account with the given wallet address');
+  } else {
+    const accountById = await client.query(
+      'select nonce from account where id = $1',
+      [accountId],
+    );
+    if (accountById.rowCount === 1) {
+      const nonce = accountById.rows[0].nonce;
+      const { pubkey: decodedPubKey, signature: decodedSignature } =
+        decodeSignature(signature);
+      const data = genArbitraryConnectWalletData(nonce);
+      // generate a new nonce for the user to invalidate the current
+      // signature...
+      await client.query(
+        `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
+        [accountId],
+      );
+      const verified = verifyADR36Amino(
+        'regen',
+        address,
+        data,
+        decodedPubKey,
+        decodedSignature,
+      );
+      if (verified) {
+        const walletAccountId = accountByAddr.rows[0].id;
+        try {
+          await client.query('BEGIN');
+          if (keepCurrentAccount) {
+            // Migrate web3 account data to current account
+            await migrateAccountData({
+              keepCurrentAccount,
+              toAccountId: accountId,
+              fromAccountId: walletAccountId,
+              client,
+            });
+            await client.query('update account set addr = $1 where id = $2', [
+              address,
+              accountId,
+            ]);
+          } else {
+            // Migrate current account data to web3 account
+            await migrateAccountData({
+              keepCurrentAccount,
+              toAccountId: walletAccountId,
+              fromAccountId: accountId,
+              client,
+            });
+            if (req.session) {
+              req.session.activeAccountId = walletAccountId;
+              req.session.authenticatedAccountIds = [walletAccountId];
+            }
+            await new Promise<void>((resolve, reject) => {
+              req.login({ accountId: walletAccountId }, err => {
+                if (err) reject(err);
+                else resolve();
+              });
+            });
+          }
+          await client.query('COMMIT');
+        } catch (e) {
+          await client.query('ROLLBACK');
+          throw e;
+        }
+      } else {
+        throw new UnauthorizedError('Invalid signature');
+      }
+    } else {
+      throw new UnauthorizedError('Account not found for the given id');
+    }
+  }
+}
+
+type MigrateAccountDataParams = {
+  keepCurrentAccount: boolean;
+  toAccountId: string;
+  fromAccountId: string;
+  client: PoolClient;
+};
+
+async function migrateAccountData({
+  keepCurrentAccount,
+  toAccountId,
+  fromAccountId,
+  client,
+}: MigrateAccountDataParams) {
+  await client.query(
+    'update account set creator_id = $1 where creator_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update credit_class set registry_id = $1 where registry_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update upload set account_id = $1 where account_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update post set creator_account_id = $1 where creator_account_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update organization set account_id = $1 where account_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update project set admin_account_id = $1 where admin_account_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update project set developer_id = $1 where developer_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update project set verifier_id = $1 where verifier_id = $2',
+    [toAccountId, fromAccountId],
+  );
+  await client.query(
+    'update project_partner set account_id = $1 where account_id = $2',
+    [toAccountId, fromAccountId],
+  );
+
+  if (!keepCurrentAccount) {
+    await client.query('delete from private.account where id = $1', [
+      toAccountId,
+    ]);
+    await client.query('update private.account set id = $1 where id = $2', [
+      toAccountId,
+      fromAccountId,
+    ]);
+  }
+
+  await client.query('delete from private.account where id = $1', [
+    fromAccountId,
+  ]);
+  await client.query('delete from account where id = $1', [fromAccountId]);
 }
