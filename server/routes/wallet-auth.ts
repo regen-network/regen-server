@@ -15,7 +15,6 @@ import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
-import { updateActiveAccounts } from '../middleware/loginHelpers';
 
 export const walletAuth = express.Router();
 
@@ -184,14 +183,24 @@ walletAuth.post(
       client = await pgPool.connect();
       const { signature, keepCurrentAccount } = req.body;
       const accountId = req.user?.accountId as string; // we use ensureLoggedIn so current accountId is defined
-      await mergeAccounts({
-        req,
+      const walletAccountId = await mergeAccounts({
         signature,
         accountId,
         keepCurrentAccount,
         client,
       });
-
+      if (!keepCurrentAccount && walletAccountId) {
+        if (req.session) {
+          req.session.activeAccountId = walletAccountId;
+          req.session.authenticatedAccountIds = [walletAccountId];
+        }
+        await new Promise<void>((resolve, reject) => {
+          req.login({ accountId: walletAccountId }, err => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      }
       res.send({ message: 'Account successfully merged' });
     } catch (err) {
       return next(err);
@@ -204,7 +213,6 @@ walletAuth.post(
 );
 
 type MergeAccountsParams = {
-  req: UserRequest;
   signature?: StdSignature;
   accountId: string;
   keepCurrentAccount: boolean;
@@ -212,7 +220,7 @@ type MergeAccountsParams = {
 };
 
 /**
- * Merges 2 accounts, the current account and an existing web3 account, and all data associated to them
+ * Merges 2 accounts, the current web2 account and an existing web3 account, and all data associated to them
  * @param mergeAccountsParams Params for mergeAccounts function
  * @param mergeAccountsParams.signature The signature that will be verified, corresponds to the account address to be merged
  * @param mergeAccountsParams.accountId The current account id
@@ -221,7 +229,6 @@ type MergeAccountsParams = {
  * @returns Promise<void>
  */
 export async function mergeAccounts({
-  req,
   signature,
   accountId,
   keepCurrentAccount,
@@ -237,7 +244,7 @@ export async function mergeAccounts({
   );
 
   if (accountByAddr.rowCount !== 1) {
-    throw new Conflict('No account with the given wallet address');
+    throw new UnauthorizedError('No account with the given wallet address');
   } else {
     const accountById = await client.query(
       'select nonce from account where id = $1',
@@ -263,44 +270,28 @@ export async function mergeAccounts({
       );
       if (verified) {
         const walletAccountId = accountByAddr.rows[0].id;
-        try {
-          await client.query('BEGIN');
-          if (keepCurrentAccount) {
-            // Migrate web3 account data to current account
-            await migrateAccountData({
-              keepCurrentAccount,
-              toAccountId: accountId,
-              fromAccountId: walletAccountId,
-              client,
-            });
-            await client.query('update account set addr = $1 where id = $2', [
-              address,
-              accountId,
-            ]);
-          } else {
-            // Migrate current account data to web3 account
-            await migrateAccountData({
-              keepCurrentAccount,
-              toAccountId: walletAccountId,
-              fromAccountId: accountId,
-              client,
-            });
-            if (req.session) {
-              req.session.activeAccountId = walletAccountId;
-              req.session.authenticatedAccountIds = [walletAccountId];
-            }
-            await new Promise<void>((resolve, reject) => {
-              req.login({ accountId: walletAccountId }, err => {
-                if (err) reject(err);
-                else resolve();
-              });
-            });
-          }
-          await client.query('COMMIT');
-        } catch (e) {
-          await client.query('ROLLBACK');
-          throw e;
+        if (keepCurrentAccount) {
+          // Migrate web3 account data to current account
+          await migrateAccountData({
+            keepCurrentAccount,
+            toAccountId: accountId,
+            fromAccountId: walletAccountId,
+            client,
+          });
+          await client.query('update account set addr = $1 where id = $2', [
+            address,
+            accountId,
+          ]);
+        } else {
+          // Migrate current account data to web3 account
+          await migrateAccountData({
+            keepCurrentAccount,
+            toAccountId: walletAccountId,
+            fromAccountId: accountId,
+            client,
+          });
         }
+        return walletAccountId;
       } else {
         throw new UnauthorizedError('Invalid signature');
       }
@@ -368,10 +359,12 @@ async function migrateAccountData({
       toAccountId,
       fromAccountId,
     ]);
+  } else {
+    await client.query('delete from private.account where id = $1', [
+      fromAccountId,
+    ]);
   }
 
-  await client.query('delete from private.account where id = $1', [
-    fromAccountId,
-  ]);
   await client.query('delete from account where id = $1', [fromAccountId]);
+  await client.query(`drop role "${fromAccountId}"`);
 }

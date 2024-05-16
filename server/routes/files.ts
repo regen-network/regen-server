@@ -34,6 +34,7 @@ router.post(
     let client: undefined | PoolClient = undefined,
       projectId: undefined | string;
     const currentAccountId = request.user?.accountId;
+    console.log('FILE RECEIVED');
     try {
       const file = (request.files?.image ||
         request.files?.file) as UploadedFile;
@@ -123,6 +124,7 @@ router.post(
         if (projectsPostsMatch) {
           location = await getExifLocationData(file.data);
         }
+        console.log('FILE UPLOADED');
 
         response.send({
           url,
