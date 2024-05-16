@@ -1,4 +1,4 @@
-import { withRootDb } from '../db/helpers';
+import { createAccountWithAuthUser, withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
 import { connectWallet } from '../../routes/wallet-auth';
 import { createNewUser, genSignature } from '../utils';
@@ -93,6 +93,49 @@ describe('wallet-auth connect wallet', () => {
       await expect(
         connectWallet({ client, signature, accountId }),
       ).rejects.toThrow(new Conflict('Wallet address used by another account'));
+    });
+  });
+  it('should throw an error if the wallet address is already used by another account with an email address', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      // inserting some account
+      const insQuery = await client.query(
+        'INSERT INTO account (type) values ($1) returning id, nonce',
+        ['user'],
+      );
+      const [{ id: accountId, nonce }] = insQuery.rows;
+
+      // generate signature for an address already used by another account
+      const { userPrivKey, userPubKey, userAddr } = await createNewUser();
+      const { accountId: walletAccountId } = await createAccountWithAuthUser(
+        client,
+        userAddr,
+      );
+      const signature = genSignature(
+        userPrivKey,
+        userPubKey,
+        userAddr,
+        nonce,
+        genArbitraryConnectWalletData(nonce),
+      );
+
+      // set some email and google for the web3 account
+      await client.query(
+        'update private.account set email = $1, google_email = $2, google = $3 where id = $4',
+        [
+          'jane.doe@gmail.com',
+          'jane.doe@gmail.com',
+          'google123',
+          walletAccountId,
+        ],
+      );
+
+      await expect(
+        connectWallet({ client, signature, accountId }),
+      ).rejects.toThrow(
+        new Conflict(
+          'Account with the given wallet address already has email or google associated to it',
+        ),
+      );
     });
   });
   it('should throw an error if the account does not exist', async () => {
