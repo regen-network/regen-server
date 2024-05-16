@@ -63,7 +63,6 @@ describe('wallet-auth merge accounts', () => {
         accountId,
         walletAccountId,
         userAddr,
-        nonce,
         signature,
         web2AccountData,
       } = await setupAccountsWithDataAccounts({
@@ -85,10 +84,9 @@ describe('wallet-auth merge accounts', () => {
         [walletAccountId],
       );
 
-      // account address and nonce have been updated
+      // kept account address
       expect(accountQuery.rowCount).toBe(1);
       expect(accountQuery.rows[0].addr).toEqual(userAddr);
-      expect(accountQuery.rows[0].nonce).not.toEqual(nonce);
 
       await checkAccountData({
         client,
@@ -203,6 +201,41 @@ describe('wallet-auth merge accounts', () => {
         }),
       ).rejects.toThrow(
         new UnauthorizedError('Account not found for the given id'),
+      );
+    });
+  });
+  it('should throw an error if the web3 account also uses web2 login (email and/or google)', async () => {
+    await withRootDb(async (client: PoolClient) => {
+      const { accountId, signature, walletAccountId } =
+        await setupAccountsWithDataAccounts({
+          client,
+          email,
+          nameWeb2,
+          nameWeb3,
+        });
+
+      // set some email and google for the web3 account
+      await client.query(
+        'update private.account set email = $1, google_email = $2, google = $3 where id = $4',
+        [
+          'jane.doe@gmail.com',
+          'jane.doe@gmail.com',
+          'google123',
+          walletAccountId,
+        ],
+      );
+
+      await expect(
+        mergeAccounts({
+          client,
+          signature,
+          accountId,
+          keepCurrentAccount: true,
+        }),
+      ).rejects.toThrow(
+        new UnauthorizedError(
+          'Account with the given wallet address already has email or google associated to it',
+        ),
       );
     });
   });

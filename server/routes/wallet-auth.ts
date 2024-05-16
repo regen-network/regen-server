@@ -239,13 +239,26 @@ export async function mergeAccounts({
   }
   const address = pubkeyToAddress(signature.pub_key, 'regen');
   const accountByAddr = await client.query(
-    'select id, nonce from account where addr = $1',
+    'select id from account where addr = $1',
     [address],
   );
 
   if (accountByAddr.rowCount !== 1) {
     throw new UnauthorizedError('No account with the given wallet address');
   } else {
+    const walletAccountId = accountByAddr.rows[0].id;
+    const privWalletAccount = await client.query(
+      'select email, google, google_email from private.account where id = $1',
+      [walletAccountId],
+    );
+    if (privWalletAccount.rowCount === 1) {
+      const { email, google, google_email } = privWalletAccount.rows[0];
+      if (email || google || google_email)
+        throw new UnauthorizedError(
+          'Account with the given wallet address already has email or google associated to it',
+        );
+    }
+
     const accountById = await client.query(
       'select nonce from account where id = $1',
       [accountId],
@@ -269,7 +282,6 @@ export async function mergeAccounts({
         decodedSignature,
       );
       if (verified) {
-        const walletAccountId = accountByAddr.rows[0].id;
         if (keepCurrentAccount) {
           // Migrate web3 account data to current account
           await migrateAccountData({
