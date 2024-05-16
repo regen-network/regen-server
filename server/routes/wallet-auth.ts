@@ -135,6 +135,8 @@ export async function connectWallet({
   );
 
   if (accountByAddr.rowCount === 1) {
+    const walletAccountId = accountByAddr.rows[0].id;
+    await checkPrivateAccount({ client, accountId: walletAccountId });
     throw new Conflict('Wallet address used by another account');
   } else {
     const accountById = await client.query(
@@ -247,17 +249,7 @@ export async function mergeAccounts({
     throw new UnauthorizedError('No account with the given wallet address');
   } else {
     const walletAccountId = accountByAddr.rows[0].id;
-    const privWalletAccount = await client.query(
-      'select email, google, google_email from private.account where id = $1',
-      [walletAccountId],
-    );
-    if (privWalletAccount.rowCount === 1) {
-      const { email, google, google_email } = privWalletAccount.rows[0];
-      if (email || google || google_email)
-        throw new UnauthorizedError(
-          'Account with the given wallet address already has email or google associated to it',
-        );
-    }
+    await checkPrivateAccount({ client, accountId: walletAccountId });
 
     const accountById = await client.query(
       'select nonce from account where id = $1',
@@ -379,4 +371,22 @@ async function migrateAccountData({
 
   await client.query('delete from account where id = $1', [fromAccountId]);
   await client.query(`drop role "${fromAccountId}"`);
+}
+
+type CheckPrivateAccountParams = { client: PoolClient; accountId: string };
+async function checkPrivateAccount({
+  client,
+  accountId,
+}: CheckPrivateAccountParams) {
+  const privWalletAccount = await client.query(
+    'select email, google, google_email from private.account where id = $1',
+    [accountId],
+  );
+  if (privWalletAccount.rowCount === 1) {
+    const { email, google, google_email } = privWalletAccount.rows[0];
+    if (email || google || google_email)
+      throw new UnauthorizedError(
+        'Account with the given wallet address already has email or google associated to it',
+      );
+  }
 }
