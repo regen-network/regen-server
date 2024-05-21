@@ -1182,6 +1182,16 @@ ALTER TABLE ONLY public.project
 ALTER TABLE public.account ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: project account_admin_can_delete_offchain_projects; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY account_admin_can_delete_offchain_projects ON public.project FOR DELETE TO auth_user USING ((EXISTS ( SELECT 1
+   FROM (public.project project_1
+     JOIN public.account ON ((project_1.admin_account_id = account.id)))
+  WHERE ((project_1.on_chain_id IS NULL) AND (account.* = public.get_current_account())))));
+
+
+--
 -- Name: project account_admin_can_update_offchain_projects; Type: POLICY; Schema: public; Owner: -
 --
 
