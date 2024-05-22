@@ -137,7 +137,9 @@ export async function connectWallet({
   if (accountByAddr.rowCount === 1) {
     const walletAccountId = accountByAddr.rows[0].id;
     await checkPrivateAccount({ client, accountId: walletAccountId });
-    throw new Conflict('Wallet address used by another account');
+    throw new Conflict(
+      'This wallet address is already in use by another account.',
+    );
   } else {
     const accountById = await client.query(
       'select nonce from account where id = $1',
@@ -318,42 +320,37 @@ async function migrateAccountData({
   fromAccountId,
   client,
 }: MigrateAccountDataParams) {
-  await client.query(
-    'update account set creator_id = $1 where creator_id = $2',
-    [toAccountId, fromAccountId],
+  // Query where public.account.id is used as foreign key
+  const fkQuery = await client.query(
+    "SELECT DISTINCT \
+      tc.table_schema, tc.constraint_name, tc.table_name, kcu.column_name, \
+      ccu.table_schema AS foreign_table_schema, \
+      ccu.table_name AS foreign_table_name, \
+      ccu.column_name AS foreign_column_name \
+    FROM information_schema.table_constraints AS tc \
+    JOIN information_schema.key_column_usage AS kcu \
+      ON tc.constraint_name = kcu.constraint_name \
+      AND tc.table_schema = kcu.table_schema \
+    JOIN information_schema.constraint_column_usage AS ccu \
+      ON ccu.constraint_name = tc.constraint_name \
+    WHERE tc.constraint_type = 'FOREIGN KEY' \
+      AND ccu.table_schema='public' \
+      AND ccu.table_name='account' \
+      AND ccu.column_name='id'",
   );
-  await client.query(
-    'update credit_class set registry_id = $1 where registry_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update upload set account_id = $1 where account_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update post set creator_account_id = $1 where creator_account_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update organization set account_id = $1 where account_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update project set admin_account_id = $1 where admin_account_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update project set developer_id = $1 where developer_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update project set verifier_id = $1 where verifier_id = $2',
-    [toAccountId, fromAccountId],
-  );
-  await client.query(
-    'update project_partner set account_id = $1 where account_id = $2',
-    [toAccountId, fromAccountId],
-  );
+  for (const row of fkQuery.rows) {
+    // private.account.id is handled separately based on keepCurrentAccount value
+    if (
+      row.table_schema !== 'private' &&
+      row.table_name !== 'account' &&
+      row.column_name !== 'id'
+    ) {
+      await client.query(
+        `update ${row.table_schema}.${row.table_name} set ${row.column_name} = $1 where ${row.column_name} = $2`,
+        [toAccountId, fromAccountId],
+      );
+    }
+  }
 
   if (!keepCurrentAccount) {
     await client.query('delete from private.account where id = $1', [
@@ -386,7 +383,7 @@ async function checkPrivateAccount({
     const { email, google, google_email } = privWalletAccount.rows[0];
     if (email || google || google_email)
       throw new UnauthorizedError(
-        'Account with the given wallet address already has email or google associated to it',
+        'You cannot connect your account to this wallet address. This wallet address is already associated with another email address.',
       );
   }
 }

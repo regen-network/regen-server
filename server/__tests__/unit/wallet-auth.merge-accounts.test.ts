@@ -234,7 +234,7 @@ describe('wallet-auth merge accounts', () => {
         }),
       ).rejects.toThrow(
         new UnauthorizedError(
-          'Account with the given wallet address already has email or google associated to it',
+          'You cannot connect your account to this wallet address. This wallet address is already associated with another email address.',
         ),
       );
     });
