@@ -92,7 +92,11 @@ describe('wallet-auth connect wallet', () => {
 
       await expect(
         connectWallet({ client, signature, accountId }),
-      ).rejects.toThrow(new Conflict('Wallet address used by another account'));
+      ).rejects.toThrow(
+        new Conflict(
+          'This wallet address is already in use by another account.',
+        ),
+      );
     });
   });
   it('should throw an error if the wallet address is already used by another account with an email address', async () => {
@@ -133,7 +137,7 @@ describe('wallet-auth connect wallet', () => {
         connectWallet({ client, signature, accountId }),
       ).rejects.toThrow(
         new Conflict(
-          'Account with the given wallet address already has email or google associated to it',
+          'You cannot connect your account to this wallet address. This wallet address is already associated with another email address.',
         ),
       );
     });
