@@ -340,11 +340,7 @@ async function migrateAccountData({
   );
   for (const row of fkQuery.rows) {
     // private.account.id is handled separately based on keepCurrentAccount value
-    if (
-      row.table_schema !== 'private' &&
-      row.table_name !== 'account' &&
-      row.column_name !== 'id'
-    ) {
+    if (row.table_schema !== 'private' && row.table_name !== 'account') {
       await client.query(
         `update ${row.table_schema}.${row.table_name} set ${row.column_name} = $1 where ${row.column_name} = $2`,
         [toAccountId, fromAccountId],
