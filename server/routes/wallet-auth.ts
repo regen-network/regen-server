@@ -342,7 +342,8 @@ async function migrateAccountData({
     // private.account.id is handled separately based on keepCurrentAccount value
     if (row.table_schema !== 'private' && row.table_name !== 'account') {
       // For every table column where public.account.id is used as foreign key,
-      // update the source referenced public.account.id (fromAccountId) to the destination merged account (toAccountId)
+      // update the source referenced public.account.id (fromAccountId)
+      // to the destination merged account (toAccountId)
       await client.query(
         `update ${row.table_schema}.${row.table_name} set ${row.column_name} = $1 where ${row.column_name} = $2`,
         [toAccountId, fromAccountId],
@@ -350,8 +351,9 @@ async function migrateAccountData({
     }
   }
 
-  // If we don't keep the current web2 account, we need to merge its private.account info (containing the web2 login info)
-  // from the source web2 private.account (fromAccountId) into the destination web3 private.account (toAccountId)
+  // If we don't keep the current web2 account (fromAccountId),
+  // we need to merge its private.account info (containing the web2 login info)
+  // into the destination web3 private.account (toAccountId)
   if (!keepCurrentAccount) {
     await client.query('delete from private.account where id = $1', [
       toAccountId,
