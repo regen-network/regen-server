@@ -356,7 +356,7 @@ async function migrateAccountData({
   );
   for (const row of fkQuery.rows) {
     // private.account.id is handled separately based on keepCurrentAccount value
-    if (row.table_schema !== 'private' && row.table_name !== 'account') {
+    if (!(row.table_schema === 'private' && row.table_name === 'account')) {
       // For every table column where public.account.id is used as foreign key,
       // update the source referenced public.account.id (fromAccountId)
       // to the destination merged account (toAccountId)
