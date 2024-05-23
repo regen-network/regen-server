@@ -22,7 +22,7 @@ const router = express.Router();
 export const bucketName = process.env.AWS_S3_BUCKET;
 const region = process.env.AWS_BUCKET_REGION;
 const PROJECTS_PATH = process.env.S3_PROJECTS_PATH || 'projects';
-const PROFILES_PATH = process.env.S3_PROFILES_PATH || 'profiles';
+export const PROFILES_PATH = process.env.S3_PROFILES_PATH || 'profiles';
 
 const s3 = new S3Client({
   region,
