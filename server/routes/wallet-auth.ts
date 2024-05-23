@@ -15,6 +15,8 @@ import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
+import { from } from 'env-var';
+import { PROFILES_PATH, bucketName, deleteFile } from './files';
 
 export const walletAuth = express.Router();
 
@@ -256,7 +258,7 @@ export async function mergeAccounts({
   }
   const address = pubkeyToAddress(signature.pub_key, 'regen');
   const accountByAddr = await client.query(
-    'select id from account where addr = $1',
+    'select id, image, bg_image from account where addr = $1',
     [address],
   );
 
@@ -267,7 +269,7 @@ export async function mergeAccounts({
     await checkPrivateAccount({ client, accountId: walletAccountId });
 
     const accountById = await client.query(
-      'select nonce from account where id = $1',
+      'select nonce, image, bg_image from account where id = $1',
       [accountId],
     );
     if (accountById.rowCount === 1) {
@@ -298,6 +300,10 @@ export async function mergeAccounts({
             keepCurrentAccount,
             toAccountId: accountId,
             fromAccountId: walletAccountId,
+            imagesToDelete: [
+              accountByAddr.rows[0].image,
+              accountByAddr.rows[0].bg_image,
+            ],
             client,
           });
           await client.query('update account set addr = $1 where id = $2', [
@@ -310,6 +316,10 @@ export async function mergeAccounts({
             keepCurrentAccount,
             toAccountId: walletAccountId,
             fromAccountId: accountId,
+            imagesToDelete: [
+              accountById.rows[0].image,
+              accountById.rows[0].bg_image,
+            ],
             client,
           });
         }
@@ -327,6 +337,7 @@ type MigrateAccountDataParams = {
   keepCurrentAccount: boolean;
   toAccountId: string;
   fromAccountId: string;
+  imagesToDelete: Array<string | null | undefined>;
   client: PoolClient;
 };
 
@@ -334,6 +345,7 @@ async function migrateAccountData({
   keepCurrentAccount,
   toAccountId,
   fromAccountId,
+  imagesToDelete,
   client,
 }: MigrateAccountDataParams) {
   // Query tables and columns where public.account.id is used as foreign key
@@ -385,6 +397,28 @@ async function migrateAccountData({
       fromAccountId,
     ]);
   }
+
+  // Delete profile and background images from source account
+  const filteredImagesToDelete = imagesToDelete.filter(
+    image => !!image,
+  ) as Array<string>;
+  await Promise.all(
+    filteredImagesToDelete.map(async image => {
+      const baseUrl = `${process.env.IMAGE_STORAGE_URL}/${PROFILES_PATH}/${fromAccountId}/`;
+      if (image.includes(baseUrl)) {
+        const fileName = image?.split(
+          `${process.env.IMAGE_STORAGE_URL}/${PROFILES_PATH}/${fromAccountId}/`,
+        )?.[1];
+        await deleteFile({
+          client,
+          fileName,
+          bucketName,
+          currentAccountId: fromAccountId,
+          accountId: fromAccountId,
+        });
+      }
+    }),
+  );
 
   // Delete source public.account and associated user role
   await client.query('delete from account where id = $1', [fromAccountId]);
