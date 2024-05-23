@@ -355,6 +355,8 @@ async function migrateAccountData({
   // we need to merge its private.account info (containing the web2 login info)
   // into the destination web3 private.account (toAccountId)
   if (!keepCurrentAccount) {
+    // First, we need to delete the destination private.account in order to avoid duplicate pk constraint error.
+    // Before, we've verified that this private.account doesn't contain any info.
     await client.query('delete from private.account where id = $1', [
       toAccountId,
     ]);
