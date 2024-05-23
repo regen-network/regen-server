@@ -187,12 +187,25 @@ walletAuth.post(
       client = await pgPool.connect();
       const { signature, keepCurrentAccount } = req.body;
       const accountId = req.user?.accountId as string; // we use ensureLoggedIn so current accountId is defined
-      const walletAccountId = await mergeAccounts({
-        signature,
-        accountId,
-        keepCurrentAccount,
-        client,
-      });
+
+      let walletAccountId: string | undefined;
+      try {
+        // We wrap merging accounts data into a database transaction
+        // to avoid having accounts partially merged if an error happens
+        await client.query('BEGIN');
+        walletAccountId = await mergeAccounts({
+          signature,
+          accountId,
+          keepCurrentAccount,
+          client,
+        });
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK TO update_account_nonce');
+        await client.query('COMMIT');
+        throw e;
+      }
+
       if (!keepCurrentAccount && walletAccountId) {
         if (req.session) {
           req.session.activeAccountId = walletAccountId;
@@ -268,6 +281,9 @@ export async function mergeAccounts({
         `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
         [accountId],
       );
+      // The new nonce will need to be saved even if an error happens later as part of account merging,
+      // to make sure we always invalidate the current signature.
+      await client.query('SAVEPOINT update_account_nonce');
       const verified = verifyADR36Amino(
         'regen',
         address,
