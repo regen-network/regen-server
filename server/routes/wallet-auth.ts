@@ -398,6 +398,10 @@ async function migrateAccountData({
     ]);
   }
 
+  // Delete source public.account and associated user role
+  await client.query('delete from account where id = $1', [fromAccountId]);
+  await client.query(`drop role "${fromAccountId}"`);
+
   // Delete profile and background images from source account
   const filteredImagesToDelete = imagesToDelete.filter(
     image => !!image,
@@ -419,10 +423,6 @@ async function migrateAccountData({
       }
     }),
   );
-
-  // Delete source public.account and associated user role
-  await client.query('delete from account where id = $1', [fromAccountId]);
-  await client.query(`drop role "${fromAccountId}"`);
 }
 
 type CheckPrivateAccountParams = { client: PoolClient; accountId: string };
