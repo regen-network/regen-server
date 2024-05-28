@@ -276,7 +276,7 @@ router.delete('/', async (req: UserRequest, res, next) => {
       post.contents['x:files']?.map(async file => {
         await deleteFile({
           client,
-          accountId: req.user?.accountId,
+          currentAccountId: req.user?.accountId,
           fileName: file['x:name'],
           projectId: post.project_id,
           bucketName,
