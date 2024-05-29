@@ -349,24 +349,12 @@ async function migrateAccountData({
   client,
 }: MigrateAccountDataParams) {
   // Query tables and columns where public.account.id is used as foreign key
-  const fkQuery = await client.query(
-    "SELECT DISTINCT \
-      tc.table_schema, tc.constraint_name, tc.table_name, kcu.column_name, \
-      ccu.table_schema AS foreign_table_schema, \
-      ccu.table_name AS foreign_table_name, \
-      ccu.column_name AS foreign_column_name \
-    FROM information_schema.table_constraints AS tc \
-    JOIN information_schema.key_column_usage AS kcu \
-      ON tc.constraint_name = kcu.constraint_name \
-      AND tc.table_schema = kcu.table_schema \
-    JOIN information_schema.constraint_column_usage AS ccu \
-      ON ccu.constraint_name = tc.constraint_name \
-    WHERE tc.constraint_type = 'FOREIGN KEY' \
-      AND ccu.table_schema='public' \
-      AND ccu.table_name='account' \
-      AND ccu.column_name='id'",
-  );
-  for (const row of fkQuery.rows) {
+  const fkQueryRows = await getTableColumnsWithForeignKey({
+    client,
+    tableName: 'account',
+    columnName: 'id',
+  });
+  for (const row of fkQueryRows) {
     // private.account.id is handled separately based on keepCurrentAccount value
     if (!(row.table_schema === 'private' && row.table_name === 'account')) {
       // For every table column where public.account.id is used as foreign key,
@@ -441,4 +429,36 @@ async function checkPrivateAccount({
         'You cannot connect your account to this wallet address. This wallet address is already associated with another email address.',
       );
   }
+}
+
+type GetTableColumnsWithForeignKeyParams = {
+  client: PoolClient;
+  tableName: string;
+  columnName: string;
+  schemaName?: string;
+};
+export async function getTableColumnsWithForeignKey({
+  client,
+  tableName,
+  columnName,
+  schemaName = 'public',
+}: GetTableColumnsWithForeignKeyParams) {
+  const fkQuery = await client.query(
+    `SELECT DISTINCT \
+      tc.table_schema, tc.constraint_name, tc.table_name, kcu.column_name, \
+      ccu.table_schema AS foreign_table_schema, \
+      ccu.table_name AS foreign_table_name, \
+      ccu.column_name AS foreign_column_name \
+    FROM information_schema.table_constraints AS tc \
+    JOIN information_schema.key_column_usage AS kcu \
+      ON tc.constraint_name = kcu.constraint_name \
+      AND tc.table_schema = kcu.table_schema \
+    JOIN information_schema.constraint_column_usage AS ccu \
+      ON ccu.constraint_name = tc.constraint_name \
+    WHERE tc.constraint_type = 'FOREIGN KEY' \
+    AND ccu.table_schema='${schemaName}' \
+    AND ccu.table_name='${tableName}' \
+    AND ccu.column_name='${columnName}'`,
+  );
+  return fkQuery.rows;
 }

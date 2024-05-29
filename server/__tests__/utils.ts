@@ -23,6 +23,7 @@ import {
 } from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
 import { createAccountWithAuthUser } from './db/helpers';
+import { getTableColumnsWithForeignKey } from '../routes/wallet-auth';
 
 export const longerTestTimeout = 30000;
 export const privacy = 'public';
@@ -505,6 +506,14 @@ async function createProjectsAndPostForAccount({
   accountId,
   postIri,
 }: CreateProjectsAndPostForAccountParams) {
+  await generateRandomData({
+    client,
+    tableName: 'account',
+    columnName: 'id',
+    columnValue: accountId,
+  });
+
+  // This part can be removed once generateRandomData is fully implemented
   const adminProjectQuery = await client.query(
     'INSERT INTO project (admin_account_id) values ($1) returning id',
     [accountId],
@@ -535,4 +544,212 @@ async function createProjectsAndPostForAccount({
     verifierProjectId,
     creatorPostIri,
   };
+}
+
+type GenerateRandomDataParams = {
+  client: PoolClient;
+  tableName: string;
+  columnName: string;
+  columnValue: unknown;
+  schemaName?: string;
+};
+async function generateRandomData({
+  client,
+  tableName,
+  columnName,
+  columnValue,
+  schemaName = 'public',
+}: GenerateRandomDataParams) {
+  const fkQueryRows = await getTableColumnsWithForeignKey({
+    client,
+    tableName,
+    columnName,
+    schemaName,
+  });
+  for (const row of fkQueryRows) {
+    // If an entry already exists in the table then we can just continue
+    const entryQuery = await client.query(
+      `SELECT 1 FROM ${row.table_schema}.${row.table_name} WHERE ${row.column_name} = $1`,
+      [columnValue],
+    );
+    if (entryQuery.rowCount > 0) {
+      continue;
+    }
+
+    // Get columns names and types that have a not null constraint without a default to generate random data,
+    // different from the current row.column_name
+    const notNullColumnsQuery = await client.query(
+      `SELECT column_name, data_type FROM information_schema.columns \
+        WHERE table_schema = '${row.table_schema}' AND table_name = '${row.table_name}' \
+        AND is_nullable = 'NO' AND column_default IS NULL AND column_name != '${row.column_name}'`,
+    );
+    const notNullColumns = notNullColumnsQuery.rows;
+    const columnsNames = [
+      row.column_name, // column that has account.id as fk
+      ...notNullColumns.map(notNullColumn => notNullColumn.column_name), // not null columns without default
+    ].join(',');
+
+    const columnsValues = [
+      columnValue,
+      ...(await Promise.all(
+        notNullColumns.map(async notNullColumn => {
+          // If a not null column is a foreign key then we need to create a corresponding entry
+          const fkValue = await generateRowForForeignKey({
+            client,
+            tableName: row.table_name,
+            columnName: notNullColumn.column_name,
+            schemaName: row.table_schema,
+          });
+          if (fkValue) return fkValue;
+          return generateRandomValueForType({
+            client,
+            datatype: notNullColumn.data_type,
+          });
+        }),
+      )),
+    ];
+
+    console.log(
+      `${row.table_schema}.${row.table_name}`,
+      columnsNames,
+      columnsValues,
+    );
+
+    // For every table that has a column where public.account.id is used as foreign key,
+    // create a new entry in this table with the foreign key value set to accountId
+    await client.query(
+      `insert into ${row.table_schema}.${
+        row.table_name
+      } (${columnsNames}) VALUES (${columnsValues.map(
+        (_, index) => `$${index + 1}`,
+      )})`,
+      columnsValues,
+    );
+  }
+}
+
+type GenerateRowForForeignKeyParams = {
+  client: PoolClient;
+  tableName: string;
+  columnName: string;
+  schemaName?: string;
+};
+async function generateRowForForeignKey({
+  client,
+  tableName,
+  columnName,
+  schemaName,
+}: GenerateRowForForeignKeyParams) {
+  const pkQuery = await client.query(
+    `SELECT DISTINCT \
+    kcu.table_schema as foreign_table_schema, \
+    kcu.table_name as foreign_table_name, \
+    rel_kcu.table_schema as primary_table_schema, \
+    rel_kcu.table_name as primary_table_name, \
+    kcu.column_name as fk_column, \
+    rel_kcu.column_name as pk_column, \
+    kcu.constraint_name \
+  from information_schema.table_constraints tco \
+  join information_schema.key_column_usage kcu \
+    on tco.constraint_schema = kcu.constraint_schema \
+    and tco.constraint_name = kcu.constraint_name \
+  join information_schema.referential_constraints rco \
+    on tco.constraint_schema = rco.constraint_schema \
+    and tco.constraint_name = rco.constraint_name \
+  join information_schema.key_column_usage rel_kcu  \
+    on rco.unique_constraint_schema = rel_kcu.constraint_schema  \
+    and rco.unique_constraint_name = rel_kcu.constraint_name  \
+    and kcu.ordinal_position = rel_kcu.ordinal_position  \
+  where tco.constraint_type = 'FOREIGN KEY' \
+    AND kcu.table_schema='${schemaName}' \
+    AND kcu.table_name='${tableName}' \
+    AND kcu.column_name='${columnName}'`,
+  );
+
+  if (pkQuery.rowCount === 0) {
+    return;
+  }
+  for (const row of pkQuery.rows) {
+    // Get columns names and types that have a not null constraint without a default to generate random data
+    const notNullColumnsQuery = await client.query(
+      `SELECT column_name, data_type FROM information_schema.columns \
+        WHERE table_schema = '${row.primary_table_schema}' AND table_name = '${row.primary_table_name}' \
+        AND is_nullable = 'NO' AND column_default IS NULL`,
+    );
+    const notNullColumns = notNullColumnsQuery.rows;
+
+    const columnsNames = notNullColumns
+      .map(notNullColumn => notNullColumn.column_name)
+      .join(',');
+
+    const columnsValues = await Promise.all(
+      notNullColumns.map(async notNullColumn => {
+        // If a not null column is a foreign key then we need to create a corresponding entry
+        const fkValue = await generateRowForForeignKey({
+          client,
+          tableName: row.primary_table_name,
+          columnName: notNullColumn.column_name,
+          schemaName: row.primary_table_schema,
+        });
+        if (fkValue) return fkValue;
+        return generateRandomValueForType({
+          client,
+          datatype: notNullColumn.data_type,
+        });
+      }),
+    );
+
+    console.log(
+      `${row.primary_table_schema}.${row.primary_table_name}`,
+      columnsNames,
+      columnsValues,
+    );
+    const insQuery =
+      columnsNames.length > 0
+        ? await client.query(
+            `insert into ${row.primary_table_schema}.${
+              row.primary_table_name
+            } (${columnsNames}) VALUES \
+      (${columnsValues.map((_, index) => `$${index + 1}`)}) returning ${
+              row.pk_column
+            }`,
+            columnsValues,
+          )
+        : await client.query(
+            `insert into ${row.primary_table_schema}.${row.primary_table_name} DEFAULT VALUES returning ${row.pk_column}`,
+          );
+    if (insQuery.rowCount === 1) {
+      return insQuery.rows[0][row.pk_column];
+    }
+  }
+}
+
+type GenerateRandomValueForTypeParams = {
+  client: PoolClient;
+  datatype: unknown;
+};
+function generateRandomValueForType({
+  client,
+  datatype,
+}: GenerateRandomValueForTypeParams) {
+  // For simplicity, this doesn't check any constraint that might be defined on the column
+  // that has the given datatype
+  // If we start defining some, the tests might start to fail and we can update
+  // this random value generator function to account for that.
+  switch (datatype) {
+    case 'integer':
+      return Math.floor(Math.random() * 100);
+    case 'text':
+      return Math.random().toString(36).slice(2);
+    // Generate random timestamp and jsonb
+    case 'timestamp with time zone':
+      return '2023-12-07 08:27:51.772791+00';
+    case 'jsonb':
+      return '{}::jsonb';
+    case 'USER-DEFINED':
+      // TODO make this more generic
+      // for now, we know the only user defined type that is set as
+      // data type for a non null column without default is the account_type enum
+      return 'user';
+  }
 }

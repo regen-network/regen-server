@@ -68,7 +68,7 @@
     "build": "yarn remove-dist && tsc -b",
     "remove-dist": "shx rm -rf ./worker/dist/**",
     "watch": "tsc --watch",
-    "test": "wait-port localhost:5000 --timeout 120000 && jest --runInBand --detectOpenHandles"
+    "test": "wait-port localhost:5000 --timeout 120000 && jest --runInBand --detectOpenHandles --testTimeout=10000"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",

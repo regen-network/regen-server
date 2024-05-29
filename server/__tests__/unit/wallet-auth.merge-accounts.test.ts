@@ -1,6 +1,9 @@
 import { createAccountWithAuthUser, withRootDb } from '../db/helpers';
 import { PoolClient } from 'pg';
-import { mergeAccounts } from '../../routes/wallet-auth';
+import {
+  getTableColumnsWithForeignKey,
+  mergeAccounts,
+} from '../../routes/wallet-auth';
 import {
   createNewUser,
   createWeb2Account,
@@ -256,6 +259,17 @@ async function ensureAccountDataMigrated({
   toAccountId: string;
   fromAccountId: string;
 }) {
+  // const fkQueryRows = await getTableColumnsWithForeignKey({
+  //   client,
+  //   tableName: 'account',
+  //   columnName: 'id',
+  // });
+  // for (const row of fkQueryRows) {
+  //   const adminProjectQuery = await client.query(
+  //     `SELECT  FROM ${row.table_schema}.${row.table_name} WHERE id = $1`,
+  //     [fromAccountData.adminProjectId],
+  //   );
+  // }
   // fromAccountData transfered to toAccountId
   const adminProjectQuery = await client.query(
     'SELECT admin_account_id FROM project WHERE id = $1',
