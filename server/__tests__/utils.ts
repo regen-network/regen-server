@@ -429,7 +429,7 @@ type SetupAccountsWithDataParams = {
   nameWeb2: string;
   nameWeb3: string;
 };
-export async function setupAccountsWithDataAccounts({
+export async function setupTestAccountsWithData({
   client,
   email,
   google,
