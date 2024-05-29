@@ -5,7 +5,7 @@ import {
   createNewUser,
   createWeb2Account,
   genSignature,
-  setupAccountsWithDataAccounts,
+  setupTestAccountsWithData,
 } from '../utils';
 import { InvalidLoginParameter, UnauthorizedError } from '../../errors';
 import { genArbitraryConnectWalletData } from '../../middleware/keplrStrategy';
@@ -24,7 +24,7 @@ describe('wallet-auth merge accounts', () => {
         nonce,
         signature,
         web3AccountData,
-      } = await setupAccountsWithDataAccounts({
+      } = await setupTestAccountsWithData({
         client,
         email,
         nameWeb2,
@@ -48,7 +48,7 @@ describe('wallet-auth merge accounts', () => {
       expect(accountQuery.rows[0].addr).toEqual(userAddr);
       expect(accountQuery.rows[0].nonce).not.toEqual(nonce);
 
-      await checkAccountData({
+      await ensureAccountDataMigrated({
         client,
         fromAccountData: web3AccountData,
         toAccountName: nameWeb2,
@@ -65,7 +65,7 @@ describe('wallet-auth merge accounts', () => {
         userAddr,
         signature,
         web2AccountData,
-      } = await setupAccountsWithDataAccounts({
+      } = await setupTestAccountsWithData({
         client,
         email,
         nameWeb2,
@@ -88,7 +88,7 @@ describe('wallet-auth merge accounts', () => {
       expect(accountQuery.rowCount).toBe(1);
       expect(accountQuery.rows[0].addr).toEqual(userAddr);
 
-      await checkAccountData({
+      await ensureAccountDataMigrated({
         client,
         fromAccountData: web2AccountData,
         toAccountName: nameWeb3,
@@ -100,7 +100,7 @@ describe('wallet-auth merge accounts', () => {
   it('should throw an error if signature is not verified', async () => {
     await withRootDb(async (client: PoolClient) => {
       // generate signature with invalid nonce '123'
-      const { accountId, signature } = await setupAccountsWithDataAccounts({
+      const { accountId, signature } = await setupTestAccountsWithData({
         client,
         email,
         nonceOverride: '123',
@@ -120,7 +120,7 @@ describe('wallet-auth merge accounts', () => {
   });
   it('should throw an error if signature is not provided', async () => {
     await withRootDb(async (client: PoolClient) => {
-      const { accountId } = await setupAccountsWithDataAccounts({
+      const { accountId } = await setupTestAccountsWithData({
         client,
         email,
         nameWeb2,
@@ -207,7 +207,7 @@ describe('wallet-auth merge accounts', () => {
   it('should throw an error if the web3 account also uses web2 login (email and/or google)', async () => {
     await withRootDb(async (client: PoolClient) => {
       const { accountId, signature, walletAccountId } =
-        await setupAccountsWithDataAccounts({
+        await setupTestAccountsWithData({
           client,
           email,
           nameWeb2,
@@ -241,7 +241,7 @@ describe('wallet-auth merge accounts', () => {
   });
 });
 
-async function checkAccountData({
+async function ensureAccountDataMigrated({
   client,
   fromAccountData,
   toAccountName,
@@ -250,7 +250,7 @@ async function checkAccountData({
 }: {
   client: PoolClient;
   fromAccountData: Awaited<
-    ReturnType<typeof setupAccountsWithDataAccounts>
+    ReturnType<typeof setupTestAccountsWithData>
   >['web2AccountData'];
   toAccountName: string;
   toAccountId: string;
