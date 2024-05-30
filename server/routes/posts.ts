@@ -14,18 +14,33 @@ import {
 const router = express.Router();
 
 type Privacy = 'private' | 'private_files' | 'private_locations' | 'public';
+
+export type PostFile = {
+  iri: string;
+  name: string;
+  description?: string;
+  location?: { wkt: string };
+  credit?: string;
+};
+
+export type PostContents = jsonld.JsonLdDocument & {
+  title: string;
+  comment: string;
+  files?: Array<PostFile> | Array<Pick<PostFile, 'iri'>>;
+};
+
 export type Post = {
   iri: string;
   created_at: Date;
   creator_account_id: string;
   project_id: string;
   privacy: Privacy;
-  contents: jsonld.JsonLdDocument;
+  contents: PostContents;
 };
 
 // GET post by IRI
 router.get('/:iri', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const iri = req.params.iri;
@@ -64,7 +79,7 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
 
 // GET posts by project id based on limit, offset, and optional year
 router.get('/project/:projectId', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const projectId = req.params.projectId;
@@ -157,7 +172,7 @@ type PostInsertInput = {
 
 // POST create post for a project
 router.post('/', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const accountId = req.user?.accountId;
@@ -180,7 +195,6 @@ router.post('/', async (req: UserRequest, res, next) => {
       [iri, accountId, projectId, privacy, contents],
     );
 
-    // TODO Anchor post graph data on chain (#422)
     res.json({ iri });
   } catch (e) {
     next(e);
@@ -247,7 +261,7 @@ router.post('/', async (req: UserRequest, res, next) => {
 
 // DELETE delete post by IRI
 router.delete('/', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const iri = req.body.iri;
@@ -271,13 +285,12 @@ router.delete('/', async (req: UserRequest, res, next) => {
     }
 
     // Delete files from S3 and tracking of those in the upload table
-    // TODO update x:files, x:name once post schema defined
     await Promise.all(
-      post.contents['x:files']?.map(async file => {
+      post.contents.files?.map(async file => {
         await deleteFile({
           client,
           currentAccountId: req.user?.accountId,
-          fileName: file['x:name'],
+          fileName: file.name,
           projectId: post.project_id,
           bucketName,
         });
@@ -308,7 +321,7 @@ export type PostData = {
   creatorAccountId?: string;
   projectId?: string;
   privacy: Privacy;
-  contents?: jsonld.JsonLdDocument;
+  contents?: PostContents;
   filesUrls?: Array<{ [iri: string]: string }>;
 };
 
@@ -319,8 +332,7 @@ export async function getPostData({
   reqProtocol,
   reqHost,
 }: GetPostDataParams): Promise<PostData> {
-  // TODO compact JSON-LD contents and update field names once post schema is defined
-  const files = post.contents['x:files'];
+  const files = post.contents.files as Array<PostFile>;
 
   const hasPrivateLocations = post.privacy === 'private_locations';
   if (isProjectAdmin || post.privacy === 'public' || hasPrivateLocations) {
@@ -333,8 +345,8 @@ export async function getPostData({
     });
     if (!isProjectAdmin && post.privacy === 'private_locations') {
       // Filter post file locations
-      post.contents['x:files'] = post.contents['x:files']?.map(
-        ({ ['x:location']: _, ...keepAttrs }) => keepAttrs,
+      post.contents.files = files?.map(
+        ({ location: _, ...keepAttrs }) => keepAttrs,
       );
     }
     return { ...postToCamelCase(post), filesUrls };
@@ -344,8 +356,8 @@ export async function getPostData({
         return { privacy: 'private' };
       case 'private_files':
         // Only return files IRIs if files are private
-        post.contents['x:files'] = files?.map(file => ({
-          '@id': file['@id'],
+        post.contents.files = files?.map(file => ({
+          iri: file.iri,
         }));
         return postToCamelCase(post);
       default:
@@ -354,11 +366,9 @@ export async function getPostData({
   }
 }
 
-type File = { '@id': string } & object;
-
 type GetFilesWithSignedUrlsParams = {
   client: PoolClient;
-  files: Array<File>;
+  files?: Array<PostFile>;
   hasPrivateLocations: boolean;
   reqProtocol: string;
   reqHost: string;
@@ -384,7 +394,7 @@ async function getFilesUrls({
 }: GetFilesWithSignedUrlsParams) {
   return await Promise.all(
     files?.map(async file => {
-      const { '@id': fileIri } = file;
+      const { iri: fileIri } = file;
       const fileRes = await client.query(
         'SELECT * FROM upload WHERE iri = $1',
         [fileIri],
@@ -410,7 +420,7 @@ async function getFilesUrls({
           fileUrl: url,
         });
       }
-      return { [fileIri]: fileUrl };
+      return { [fileIri]: fileUrl as string };
     }) || [],
   );
 }

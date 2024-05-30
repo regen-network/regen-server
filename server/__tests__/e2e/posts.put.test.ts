@@ -5,15 +5,12 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
-
-const updatedPrivacy = 'private_files';
-const updatedContents = {
-  '@context': { x: 'http://some.schema' },
-  'x:someField': 'some other value',
-};
-const updatedExpIri =
-  'regen:13toVh6DipJCaUZp7Ve33MEJ8fEtYVd6f8Xmswk8E3ocqVqJA3QVN3X.rdf';
-const commit = true;
+import {
+  commit,
+  updatedContents,
+  updatedExpIri,
+  updatedPrivacy,
+} from './post.mock';
 
 // PUT disabled for now.
 xdescribe('/posts PUT endpoint', () => {

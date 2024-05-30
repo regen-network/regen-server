@@ -1,22 +1,9 @@
 import { PoolClient } from 'pg';
 import { withRootDb } from '../db/helpers';
-import { Post, PostData, getPostData } from '../../routes/posts';
+import { Post, PostData, PostFile, getPostData } from '../../routes/posts';
 import { getFileUrl } from '../../routes/files';
+import { commit, contents } from '../e2e/post.mock';
 
-// TODO update once post schema is finalized
-const fileName = 'filename.jpg';
-
-const contents = {
-  '@context': { x: 'http://some.schema' },
-  'x:title': 'post title',
-  'x:files': [
-    {
-      '@id': 'regen:123.jpg',
-      'x:name': fileName,
-      'x:location': 'POINT(12 34)',
-    },
-  ],
-};
 const reqProtocol = 'http';
 const reqHost = 'test';
 
@@ -33,7 +20,6 @@ const privatePost: Post = { ...post, privacy: 'private' };
 const privateFilesPost: Post = { ...post, privacy: 'private_files' };
 const privateLocationsPost: Post = { ...post, privacy: 'private_locations' };
 const publicPost: Post = { ...post, privacy: 'public' };
-const commit = true;
 
 describe('posts getPostData', () => {
   beforeAll(async () => {
@@ -47,28 +33,33 @@ describe('posts getPostData', () => {
         [accountId],
       );
       const [{ id: projectId }] = projectQuery.rows;
-      await client.query(
-        'insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)',
-        [
-          'regen:123.jpg',
-          getFileUrl({
-            bucketName: process.env.AWS_S3_BUCKET,
-            path: `projects/${projectId}/posts`,
-            fileName,
-          }),
-          123,
-          'image/jpeg',
-          accountId,
-          projectId,
-        ],
-      );
+      for (let i = 0; i < contents.files.length; i++) {
+        const fileName = contents.files[i].name;
+        await client.query(
+          'insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)',
+          [
+            'regen:123.jpg',
+            getFileUrl({
+              bucketName: process.env.AWS_S3_BUCKET,
+              path: `projects/${projectId}/posts`,
+              fileName,
+            }),
+            123,
+            'image/jpeg',
+            accountId,
+            projectId,
+          ],
+        );
+      }
     }, commit);
   });
   afterAll(async () => {
     await withRootDb(async (client: PoolClient) => {
-      await client.query('delete from upload where iri = $1', [
-        'regen:123.jpg',
-      ]);
+      for (let i = 0; i < contents.files.length; i++) {
+        await client.query('delete from upload where iri = $1', [
+          contents.files[i].iri,
+        ]);
+      }
     }, commit);
   });
   describe('if user is project admin', () => {
@@ -160,10 +151,11 @@ describe('posts getPostData', () => {
         );
         expect(postData.projectId).toEqual(privateFilesPost.project_id);
         expect(postData.privacy).toEqual(privateFilesPost.privacy);
-        expect(postData.contents['x:files'].length).toEqual(1);
-        expect(postData.contents['x:files'][0]).toEqual({
-          '@id': privateFilesPost.contents['x:files'][0]['@id'],
-        });
+        expect(postData.contents?.files?.length).toEqual(contents.files.length);
+        for (let i = 0; i < contents.files.length; i++)
+          expect(postData.contents?.files?.[i]).toEqual({
+            iri: privateFilesPost.contents.files?.[i]?.iri,
+          });
       });
     });
     it("returns the post data without files' locations if private locations", async () => {
@@ -207,24 +199,35 @@ function checkPostData({
   expect(postData.createdAt).toEqual(privatePost.created_at);
   expect(postData.creatorAccountId).toEqual(privatePost.creator_account_id);
   expect(postData.projectId).toEqual(privatePost.project_id);
-  expect(postData.contents['x:files'].length).toEqual(1);
 
-  const fileIri = privatePost.contents['x:files'][0]['@id'];
-  expect(postData.contents['x:files'][0]['@id']).toEqual(fileIri);
-  expect(postData.contents['x:files'][0]['x:name']).toEqual(
-    privatePost.contents['x:files'][0]['x:name'],
+  expect(postData.contents?.files?.length).toEqual(
+    privatePost.contents?.files?.length,
   );
-  expect(postData.filesUrls).toHaveLength(contents['x:files'].length);
-  if (!privateLocations)
-    expect(postData.contents['x:files'][0]['x:location']).toEqual(
-      privatePost.contents['x:files'][0]['x:location'],
-    );
-  else {
-    expect(postData.contents['x:files'][0]['x:location']).not.toBeTruthy();
-    // In the case of private data locations,
-    // the file URL is a proxy URL using our express-sharp imageOptimizer middleware
-    expect(postData.filesUrls[0][fileIri]).toContain(
-      `${reqProtocol}://${reqHost}/marketplace/v1/image/`,
-    );
+  expect(postData.filesUrls).toHaveLength(
+    privatePost.contents?.files?.length as number,
+  );
+
+  for (let i = 0; i < contents.files.length; i++) {
+    const file = postData.contents?.files?.[i] as PostFile;
+    const expectedFile = privatePost.contents.files?.[i] as PostFile;
+    if (file) {
+      const fileIri = file.iri;
+
+      expect(postData.contents?.files?.[i]?.iri).toEqual(fileIri);
+      expect(file.name).toEqual(expectedFile?.name);
+      expect(file.description).toEqual(expectedFile?.description);
+      expect(file?.credit).toEqual(expectedFile?.credit);
+
+      if (!privateLocations)
+        expect(file?.location).toEqual(expectedFile?.location);
+      else {
+        expect(file?.location).not.toBeTruthy();
+        // In the case of private data locations,
+        // the file URL is a proxy URL using our express-sharp imageOptimizer middleware
+        expect(postData.filesUrls?.[i]?.[fileIri]).toContain(
+          `${reqProtocol}://${reqHost}/marketplace/v1/image/`,
+        );
+      }
+    }
   }
 }
