@@ -5,8 +5,8 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
+import { commit } from './post.mock';
 
-const commit = true;
 const nbPosts = 4;
 
 describe('/posts/project/:projectId GET endpoint', () => {
@@ -18,7 +18,7 @@ describe('/posts/project/:projectId GET endpoint', () => {
       initAuthHeaders: authHeaders,
       nbPosts,
     });
-
+    console.log('projectId', projectId);
     const resp = await fetch(
       `${getMarketplaceURL()}/posts/project/${projectId}`,
       {

@@ -246,7 +246,6 @@ export async function dummyFilesSetup(
       headers: authHeaders,
       body: form,
     });
-    console.log('resp', resp);
     return { resp };
   } catch (e) {
     console.log('e', e);
@@ -316,7 +315,7 @@ export async function createProjectAndPost({
     body: JSON.stringify({
       projectId,
       privacy: initPrivacy ?? privacy,
-      contents,
+      contents: { ...contents },
     }),
   });
   const { iri } = await resp.json();
@@ -341,7 +340,7 @@ export async function createProjectAndPosts({
       body: JSON.stringify({
         projectId,
         privacy,
-        contents: { ...contents, name: i },
+        contents: { ...contents, name: i, files: [] },
       }),
     });
     const { iri } = await resp.json();

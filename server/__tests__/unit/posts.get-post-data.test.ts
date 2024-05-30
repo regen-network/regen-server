@@ -1,25 +1,18 @@
 import { PoolClient } from 'pg';
 import { withRootDb } from '../db/helpers';
-import { Post, PostData, PostFile, getPostData } from '../../routes/posts';
+import { PostData, PostFile, getPostData } from '../../routes/posts';
 import { getFileUrl } from '../../routes/files';
-import { commit, contents } from '../e2e/post.mock';
+import {
+  commit,
+  contents,
+  privateFilesPost,
+  privateLocationsPost,
+  privatePost,
+  publicPost,
+} from '../e2e/post.mock';
 
 const reqProtocol = 'http';
 const reqHost = 'test';
-
-const projectId = 'c47cfd74-9e54-11ee-a131-0242ac120002';
-const creatorAccountId = '86400484-9e54-11ee-8e9c-0242ac120002';
-const post = {
-  iri: 'regen:123.rdf',
-  created_at: new Date(),
-  creator_account_id: creatorAccountId,
-  project_id: projectId,
-  contents,
-};
-const privatePost: Post = { ...post, privacy: 'private' };
-const privateFilesPost: Post = { ...post, privacy: 'private_files' };
-const privateLocationsPost: Post = { ...post, privacy: 'private_locations' };
-const publicPost: Post = { ...post, privacy: 'public' };
 
 describe('posts getPostData', () => {
   beforeAll(async () => {
@@ -34,11 +27,12 @@ describe('posts getPostData', () => {
       );
       const [{ id: projectId }] = projectQuery.rows;
       for (let i = 0; i < contents.files.length; i++) {
+        const iri = contents.files[i].iri;
         const fileName = contents.files[i].name;
         await client.query(
           'insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)',
           [
-            'regen:123.jpg',
+            iri,
             getFileUrl({
               bucketName: process.env.AWS_S3_BUCKET,
               path: `projects/${projectId}/posts`,

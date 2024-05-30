@@ -5,8 +5,7 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
-
-const commit = true;
+import { commit } from './post.mock';
 
 describe('/posts DELETE endpoint', () => {
   it('allows the project admin to delete a post', async () => {

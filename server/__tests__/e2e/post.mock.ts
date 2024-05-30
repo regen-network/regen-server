@@ -1,3 +1,5 @@
+import { Post } from '../../routes/posts';
+
 export const privacy = 'public';
 export const contents = {
   title: 'Post title',
@@ -66,3 +68,20 @@ export const updatedContents = { ...contents, title: 'New post title' };
 export const updatedExpIri =
   'regen:13toVhS2UPapYsD1E3PgrXzgDuARYXfrDLYB1HjpJh4kdzBRp5qhcU4.rdf';
 export const commit = true;
+
+export const projectId = 'c47cfd74-9e54-11ee-a131-0242ac120002';
+export const creatorAccountId = '86400484-9e54-11ee-8e9c-0242ac120002';
+export const post = {
+  iri: 'regen:123.rdf',
+  created_at: new Date(),
+  creator_account_id: creatorAccountId,
+  project_id: projectId,
+  contents,
+};
+export const privatePost: Post = { ...post, privacy: 'private' };
+export const privateFilesPost: Post = { ...post, privacy: 'private_files' };
+export const privateLocationsPost: Post = {
+  ...post,
+  privacy: 'private_locations',
+};
+export const publicPost: Post = { ...post, privacy: 'public' };

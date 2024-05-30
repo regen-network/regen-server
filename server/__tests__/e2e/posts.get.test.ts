@@ -5,8 +5,7 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
-
-const commit = true;
+import { commit } from './post.mock';
 
 describe('/posts GET endpoint', () => {
   it('returns the post by IRI', async () => {
