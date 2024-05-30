@@ -18,7 +18,7 @@ describe('/posts/project/:projectId GET endpoint', () => {
       initAuthHeaders: authHeaders,
       nbPosts,
     });
-    console.log('projectId', projectId);
+
     const resp = await fetch(
       `${getMarketplaceURL()}/posts/project/${projectId}`,
       {
