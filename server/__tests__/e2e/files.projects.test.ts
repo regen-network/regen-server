@@ -34,7 +34,7 @@ describe('files endpoint, projects auth...', () => {
           await withRootDb(async client => {
             const uploadQuery = await client.query(
               'select * from upload where url = $1',
-              [json.imageUrl],
+              [json.url],
             );
             expect(uploadQuery.rowCount).toEqual(1);
             expect(uploadQuery.rows[0].account_id).toEqual(accountId);
@@ -100,7 +100,7 @@ describe('files endpoint, projects auth...', () => {
           await withRootDb(async client => {
             const uploadQuery = await client.query(
               'select * from upload where url = $1',
-              [json.imageUrl],
+              [json.url],
             );
             expect(uploadQuery.rowCount).toEqual(0);
           });

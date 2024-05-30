@@ -122,7 +122,7 @@ router.post(
         }
 
         response.send({
-          imageUrl: url,
+          url,
           location,
         });
       }
