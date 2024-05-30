@@ -14,6 +14,7 @@ describe('/posts GET endpoint', () => {
     // Create project and post administered by this account
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
+      noFiles: true,
     });
 
     const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
@@ -38,6 +39,7 @@ describe('/posts GET endpoint', () => {
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
       initPrivacy: 'private',
+      noFiles: true,
     });
 
     const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {

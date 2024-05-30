@@ -20,6 +20,7 @@ import {
 import { genArbitraryLoginData } from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
 import { privacy, contents } from './e2e/post.mock';
+import { PostFile } from '../routes/posts';
 
 export const longerTestTimeout = 30000;
 
@@ -298,11 +299,13 @@ async function getAuthHeaders({ initAuthHeaders }: OptionalAuthHeaders) {
 
 type CreateProjectAndPostParams = {
   initPrivacy?: 'private' | 'private_files' | 'private_locations' | 'public';
+  noFiles?: boolean;
 } & OptionalAuthHeaders;
 
 export async function createProjectAndPost({
   initAuthHeaders,
   initPrivacy,
+  noFiles,
 }: CreateProjectAndPostParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
@@ -315,7 +318,7 @@ export async function createProjectAndPost({
     body: JSON.stringify({
       projectId,
       privacy: initPrivacy ?? privacy,
-      contents: { ...contents },
+      contents: { ...contents, files: noFiles ? [] : contents.files },
     }),
   });
   const { iri } = await resp.json();
