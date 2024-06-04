@@ -16,12 +16,9 @@ describe('/posts DELETE endpoint', () => {
       initAuthHeaders: authHeaders,
     });
 
-    const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
       method: 'DELETE',
       headers: authHeaders,
-      body: JSON.stringify({
-        iri,
-      }),
     });
 
     expect(resp.status).toBe(200);
@@ -39,12 +36,9 @@ describe('/posts DELETE endpoint', () => {
     // Create project and post administered by this account
     const { iri } = await createProjectAndPost({});
 
-    const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
       method: 'DELETE',
       headers: authHeaders,
-      body: JSON.stringify({
-        iri,
-      }),
     });
 
     expect(resp.status).toBe(401);
@@ -56,12 +50,9 @@ describe('/posts DELETE endpoint', () => {
   it('returns a 404 error if the post to delete does not exist', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
-    const resp = await fetch(`${getMarketplaceURL()}/posts`, {
+    const resp = await fetch(`${getMarketplaceURL()}/posts/123`, {
       method: 'DELETE',
       headers: authHeaders,
-      body: JSON.stringify({
-        iri: '123',
-      }),
     });
 
     expect(resp.status).toBe(404);

@@ -404,7 +404,7 @@ async function getFilesUrls({
     const fileRes = await client.query('SELECT * FROM upload WHERE iri = $1', [
       fileIri,
     ]);
-    if (fileRes.rowCount !== 1) {
+    if (fileRes.rowCount === 0) {
       throw new NotFoundError(`file with iri ${fileIri} not found`);
     }
     const [{ url, mimetype }] = fileRes.rows;
