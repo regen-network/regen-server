@@ -197,7 +197,7 @@ function checkPostData({
   expect(postData.contents?.files?.length).toEqual(
     privatePost.contents?.files?.length,
   );
-  expect(postData.filesUrls).toHaveLength(
+  expect(Object.keys(postData.filesUrls || {})).toHaveLength(
     privatePost.contents?.files?.length as number,
   );
 
@@ -218,7 +218,7 @@ function checkPostData({
         expect(file?.location).not.toBeTruthy();
         // In the case of private data locations,
         // the file URL is a proxy URL using our express-sharp imageOptimizer middleware
-        expect(postData.filesUrls?.[i]?.[fileIri]).toContain(
+        expect(postData.filesUrls?.[fileIri]).toContain(
           `${reqProtocol}://${reqHost}/marketplace/v1/image/`,
         );
       }

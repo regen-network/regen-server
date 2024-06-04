@@ -10,6 +10,7 @@ import {
   SUPPORTED_IMAGE_TYPES,
   getS3ImageCachedUrl,
 } from '../middleware/imageOptimizer';
+import { doubleCsrfProtection } from '../middleware/csrf';
 
 const router = express.Router();
 
@@ -171,13 +172,12 @@ type PostInsertInput = {
 };
 
 // POST create post for a project
-router.post('/', async (req: UserRequest, res, next) => {
+router.post('/', doubleCsrfProtection, async (req: UserRequest, res, next) => {
   let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const accountId = req.user?.accountId;
     const { projectId, privacy, contents }: PostInsertInput = req.body;
-
     const isProjectAdmin = await getIsProjectAdmin({
       client,
       projectId,
@@ -213,7 +213,7 @@ router.post('/', async (req: UserRequest, res, next) => {
 // };
 
 // PUT update post privacy and contents by IRI
-// router.put('/', async (req: UserRequest, res, next) => {
+// router.put('/', doubleCsrfProtection, async (req: UserRequest, res, next) => {
 //   let client: PoolClient | null;
 //   try {
 //     client = await pgPool.connect();
@@ -260,52 +260,57 @@ router.post('/', async (req: UserRequest, res, next) => {
 // });
 
 // DELETE delete post by IRI
-router.delete('/', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null = null;
-  try {
-    client = await pgPool.connect();
-    const iri = req.body.iri;
-    const accountId = req.user?.accountId;
+router.delete(
+  '/:iri',
+  doubleCsrfProtection,
+  async (req: UserRequest, res, next) => {
+    let client: PoolClient | null = null;
+    try {
+      client = await pgPool.connect();
+      const iri = req.params.iri;
+      const accountId = req.user?.accountId;
 
-    const postQuery = await client.query('SELECT * FROM post WHERE iri = $1', [
-      iri,
-    ]);
-    if (postQuery.rowCount !== 1) {
-      throw new NotFoundError('post not found');
+      const postQuery = await client.query(
+        'SELECT * FROM post WHERE iri = $1',
+        [iri],
+      );
+      if (postQuery.rowCount !== 1) {
+        throw new NotFoundError('post not found');
+      }
+      const post = postQuery.rows[0];
+      const projectId = post.project_id;
+      const isProjectAdmin = await getIsProjectAdmin({
+        client,
+        projectId,
+        accountId,
+      });
+      if (!isProjectAdmin) {
+        throw new UnauthorizedError('only the project admin can delete posts');
+      }
+
+      // Delete files from S3 and tracking of those in the upload table
+      await Promise.all(
+        post.contents.files?.map(async file => {
+          await deleteFile({
+            client,
+            currentAccountId: req.user?.accountId,
+            fileName: file.name,
+            projectId: post.project_id,
+            bucketName,
+          });
+        }) || [],
+      );
+
+      // Delete post
+      await client.query('DELETE FROM post WHERE iri = $1', [iri]);
+      res.sendStatus(200);
+    } catch (e) {
+      next(e);
+    } finally {
+      if (client) client.release();
     }
-    const post = postQuery.rows[0];
-    const projectId = post.project_id;
-    const isProjectAdmin = await getIsProjectAdmin({
-      client,
-      projectId,
-      accountId,
-    });
-    if (!isProjectAdmin) {
-      throw new UnauthorizedError('only the project admin can delete posts');
-    }
-
-    // Delete files from S3 and tracking of those in the upload table
-    await Promise.all(
-      post.contents.files?.map(async file => {
-        await deleteFile({
-          client,
-          currentAccountId: req.user?.accountId,
-          fileName: file.name,
-          projectId: post.project_id,
-          bucketName,
-        });
-      }) || [],
-    );
-
-    // Delete post
-    await client.query('DELETE FROM post WHERE iri = $1', [iri]);
-    res.sendStatus(200);
-  } catch (e) {
-    next(e);
-  } finally {
-    if (client) client.release();
-  }
-});
+  },
+);
 
 type GetPostDataParams = {
   isProjectAdmin: boolean;
@@ -322,7 +327,7 @@ export type PostData = {
   projectId?: string;
   privacy: Privacy;
   contents?: PostContents;
-  filesUrls?: Array<{ [iri: string]: string }>;
+  filesUrls?: { [iri: string]: string };
 };
 
 export async function getPostData({
@@ -392,37 +397,40 @@ async function getFilesUrls({
   reqProtocol,
   reqHost,
 }: GetFilesWithSignedUrlsParams) {
-  return await Promise.all(
-    files?.map(async file => {
-      const { iri: fileIri } = file;
-      const fileRes = await client.query(
-        'SELECT * FROM upload WHERE iri = $1',
-        [fileIri],
-      );
-      if (fileRes.rowCount !== 1) {
-        throw new NotFoundError(`file with iri ${fileIri} not found`);
-      }
-      const [{ url, mimetype }] = fileRes.rows;
-      let fileUrl: string | undefined;
+  const filesUrls = {};
 
-      // If the file location is private and the file is an image,
-      // we proxy the image through sharp so the resulting image
-      // doesn't have any location metadata
-      if (hasPrivateLocations && SUPPORTED_IMAGE_TYPES.includes(mimetype)) {
-        fileUrl = getS3ImageCachedUrl({
-          url,
-          reqProtocol: reqProtocol,
-          reqHost: reqHost,
-        });
-      } else {
-        fileUrl = await getObjectSignedUrl({
-          bucketName,
-          fileUrl: url,
-        });
-      }
-      return { [fileIri]: fileUrl as string };
-    }) || [],
-  );
+  for (const file of files || []) {
+    const { iri: fileIri } = file;
+    const fileRes = await client.query('SELECT * FROM upload WHERE iri = $1', [
+      fileIri,
+    ]);
+    if (fileRes.rowCount !== 1) {
+      throw new NotFoundError(`file with iri ${fileIri} not found`);
+    }
+    const [{ url, mimetype }] = fileRes.rows;
+    let fileUrl: string | undefined;
+
+    // If the file location is private and the file is an image,
+    // we proxy the image through sharp so the resulting image
+    // doesn't have any location metadata
+    if (hasPrivateLocations && SUPPORTED_IMAGE_TYPES.includes(mimetype)) {
+      fileUrl = getS3ImageCachedUrl({
+        url,
+        reqProtocol: reqProtocol,
+        reqHost: reqHost,
+      });
+    } else {
+      fileUrl = await getObjectSignedUrl({
+        bucketName,
+        fileUrl: url,
+      });
+    }
+    if (fileUrl) {
+      filesUrls[file.iri] = fileUrl;
+    }
+  }
+
+  return filesUrls;
 }
 
 type GetIsProjectAdminType = {
