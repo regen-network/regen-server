@@ -328,6 +328,7 @@ export type PostData = {
   privacy: Privacy;
   contents?: PostContents;
   filesUrls?: { [iri: string]: string };
+  filesMimeTypes?: { [iri: string]: string };
 };
 
 export async function getPostData({
@@ -341,7 +342,7 @@ export async function getPostData({
 
   const hasPrivateLocations = post.privacy === 'private_locations';
   if (isProjectAdmin || post.privacy === 'public' || hasPrivateLocations) {
-    const filesUrls = await getFilesUrls({
+    const { filesUrls, filesMimeTypes } = await getFilesUrlsMimeTypes({
       client,
       files,
       hasPrivateLocations,
@@ -354,7 +355,7 @@ export async function getPostData({
         ({ location: _, ...keepAttrs }) => keepAttrs,
       );
     }
-    return { ...postToCamelCase(post), filesUrls };
+    return { ...postToCamelCase(post), filesUrls, filesMimeTypes };
   } else {
     switch (post.privacy) {
       case 'private':
@@ -371,7 +372,7 @@ export async function getPostData({
   }
 }
 
-type GetFilesWithSignedUrlsParams = {
+type GetFilesUrlsMimeTypesParams = {
   client: PoolClient;
   files?: Array<PostFile>;
   hasPrivateLocations: boolean;
@@ -380,24 +381,25 @@ type GetFilesWithSignedUrlsParams = {
 };
 
 /**
- * getFilesUrls returns a map of files IRIs to files URLs.
+ * getFilesUrlsMimeTypes returns an object with a map of files IRIs to files URLs and one to file mime types.
  * Such an URL is either provided by our express-sharp middleware in the case of image with private location
  * or an AWS S3 signed URL. A signed URL uses security credentials
  * to grant time-limited permission to access and download files.
  * https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html
- * @param getFilesUrls Params for getFilesUrls function
- * @param getFilesUrls.client The pg PoolClient
- * @param getFilesUrls.files The list of files to get the signed URL
- * @returns Promise<Array<{iri: signedUrl}>>
+ * @param getFilesUrlsMimeTypes Params for getFilesUrlsMimeTypes function
+ * @param getFilesUrlsMimeTypes.client The pg PoolClient
+ * @param getFilesUrlsMimeTypes.files The list of files to get the signed URL
+ * @returns Promise<{filesUrls: {[iri: string]: string}, filesMimeTypes: {[iri: string]: string}}>
  */
-async function getFilesUrls({
+async function getFilesUrlsMimeTypes({
   client,
   files,
   hasPrivateLocations,
   reqProtocol,
   reqHost,
-}: GetFilesWithSignedUrlsParams) {
+}: GetFilesUrlsMimeTypesParams) {
   const filesUrls = {};
+  const filesMimeTypes = {};
 
   for (const file of files || []) {
     const { iri: fileIri } = file;
@@ -428,9 +430,10 @@ async function getFilesUrls({
     if (fileUrl) {
       filesUrls[file.iri] = fileUrl;
     }
+    filesMimeTypes[file.iri] = mimetype;
   }
 
-  return filesUrls;
+  return { filesUrls, filesMimeTypes };
 }
 
 type GetIsProjectAdminType = {
