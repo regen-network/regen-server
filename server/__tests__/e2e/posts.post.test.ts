@@ -2,12 +2,10 @@ import fetch from 'node-fetch';
 import {
   createNewUserAndLogin,
   createProject,
-  expIri,
   getMarketplaceURL,
-  contents,
-  privacy,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
+import { contents, expIri, privacy } from './post.mock';
 
 const commit = true;
 describe('/posts POST endpoint', () => {

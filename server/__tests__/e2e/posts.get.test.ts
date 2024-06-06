@@ -5,8 +5,7 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
-
-const commit = true;
+import { commit } from './post.mock';
 
 describe('/posts GET endpoint', () => {
   it('returns the post by IRI', async () => {
@@ -15,6 +14,7 @@ describe('/posts GET endpoint', () => {
     // Create project and post administered by this account
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
+      noFiles: true,
     });
 
     const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
@@ -39,6 +39,7 @@ describe('/posts GET endpoint', () => {
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
       initPrivacy: 'private',
+      noFiles: true,
     });
 
     const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {

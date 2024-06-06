@@ -19,15 +19,10 @@ import {
 } from '@keplr-wallet/crypto';
 import { genArbitraryLoginData } from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
+import { privacy, contents } from './e2e/post.mock';
+import { PostFile } from '../routes/posts';
 
 export const longerTestTimeout = 30000;
-export const privacy = 'public';
-export const contents = {
-  '@context': { x: 'http://some.schema' },
-  'x:someField': 'some value',
-};
-export const expIri =
-  'regen:13toVhB7bM4zUgwzH5N5UkTjfx1ZEHK1qXkhEWysLqCoP8iaACRxJJK.rdf';
 
 export async function fetchCsrf(): Promise<{ cookie: string; token: string }> {
   const resp = await fetch(`${getMarketplaceURL()}/csrfToken`, {
@@ -252,7 +247,6 @@ export async function dummyFilesSetup(
       headers: authHeaders,
       body: form,
     });
-    console.log('resp', resp);
     return { resp };
   } catch (e) {
     console.log('e', e);
@@ -305,11 +299,13 @@ async function getAuthHeaders({ initAuthHeaders }: OptionalAuthHeaders) {
 
 type CreateProjectAndPostParams = {
   initPrivacy?: 'private' | 'private_files' | 'private_locations' | 'public';
+  noFiles?: boolean;
 } & OptionalAuthHeaders;
 
 export async function createProjectAndPost({
   initAuthHeaders,
   initPrivacy,
+  noFiles,
 }: CreateProjectAndPostParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
@@ -322,7 +318,7 @@ export async function createProjectAndPost({
     body: JSON.stringify({
       projectId,
       privacy: initPrivacy ?? privacy,
-      contents,
+      contents: { ...contents, files: noFiles ? [] : contents.files },
     }),
   });
   const { iri } = await resp.json();
@@ -339,7 +335,7 @@ export async function createProjectAndPosts({
   const { projectId, accountId } = await createProject({
     initAuthHeaders: authHeaders,
   });
-  const iris = [];
+  const iris: Array<string> = [];
   for (let i = 0; i < nbPosts; i++) {
     const resp = await fetch(`${getMarketplaceURL()}/posts`, {
       method: 'POST',
@@ -347,7 +343,7 @@ export async function createProjectAndPosts({
       body: JSON.stringify({
         projectId,
         privacy,
-        contents: { ...contents, 'x:someField': i },
+        contents: { ...contents, name: i, files: [] },
       }),
     });
     const { iri } = await resp.json();

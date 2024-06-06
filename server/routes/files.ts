@@ -106,14 +106,16 @@ router.post(
         });
 
         // Track file storage for projects
+        let iri: string | undefined;
         if (projectId && client) {
           const extension = file.name.split('.').pop();
-          const iri = await generateIRIFromRaw(file.data, extension);
-          await client.query(
-            `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
-            [iri, url, file.size, file.mimetype, currentAccountId, projectId],
-          );
-          // TODO Anchor files from project posts on chain (#422)
+          if (extension) {
+            iri = await generateIRIFromRaw(file.data, extension);
+            await client.query(
+              `insert into upload (iri, url, size, mimetype, account_id, project_id) values ($1, $2, $3, $4, $5, $6)`,
+              [iri, url, file.size, file.mimetype, currentAccountId, projectId],
+            );
+          }
         }
 
         // Get location from file metadata for projects posts
@@ -123,8 +125,9 @@ router.post(
         }
 
         response.send({
-          imageUrl: url,
+          url,
           location,
+          iri,
         });
       }
     } catch (err) {
