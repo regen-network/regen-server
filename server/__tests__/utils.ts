@@ -23,7 +23,6 @@ import {
 } from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
 import { privacy, contents } from './e2e/post.mock';
-import { PostFile } from '../routes/posts';
 import { createAccountWithAuthUser } from './db/helpers';
 
 export const longerTestTimeout = 30000;
