@@ -15,8 +15,7 @@ import { doubleCsrfProtection } from '../middleware/csrf';
 import { ensureLoggedIn } from '../middleware/passport';
 import { genArbitraryConnectWalletData } from '../middleware/keplrStrategy';
 import { UserRequest } from '../types';
-import { from } from 'env-var';
-import { PROFILES_PATH, bucketName, deleteFile } from './files';
+import { bucketName } from './files';
 
 export const walletAuth = express.Router();
 
@@ -402,24 +401,21 @@ async function migrateAccountData({
   await client.query('delete from account where id = $1', [fromAccountId]);
   await client.query(`drop role "${fromAccountId}"`);
 
-  // Delete profile and background images from source account
+  // Add source account profile and background images to our deletion queue
   const filteredImagesToDelete = imagesToDelete.filter(
     image => !!image,
   ) as Array<string>;
   await Promise.all(
     filteredImagesToDelete.map(async image => {
-      const baseUrl = `${process.env.IMAGE_STORAGE_URL}/${PROFILES_PATH}/${fromAccountId}/`;
-      if (image.includes(baseUrl)) {
-        const fileName = image?.split(
-          `${process.env.IMAGE_STORAGE_URL}/${PROFILES_PATH}/${fromAccountId}/`,
-        )?.[1];
-        await deleteFile({
-          client,
-          fileName,
-          bucketName,
-          currentAccountId: fromAccountId,
-          accountId: fromAccountId,
-        });
+      if (
+        process.env.IMAGE_STORAGE_URL &&
+        image.includes(`${process.env.IMAGE_STORAGE_URL}/`)
+      ) {
+        const key = image?.split(`${process.env.IMAGE_STORAGE_URL}/`)?.[1];
+        await client.query(
+          'insert into s3_deletion (bucket, key) values ($1, $2)',
+          [bucketName, key],
+        );
       }
     }),
   );
