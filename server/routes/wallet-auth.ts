@@ -263,73 +263,67 @@ export async function mergeAccounts({
 
   if (accountByAddr.rowCount !== 1) {
     throw new UnauthorizedError('No account with the given wallet address');
-  } else {
-    const walletAccountId = accountByAddr.rows[0].id;
-    await checkPrivateAccount({ client, accountId: walletAccountId });
-
-    const accountById = await client.query(
-      'select nonce, image, bg_image from account where id = $1',
-      [accountId],
-    );
-    if (accountById.rowCount === 1) {
-      const nonce = accountById.rows[0].nonce;
-      const { pubkey: decodedPubKey, signature: decodedSignature } =
-        decodeSignature(signature);
-      const data = genArbitraryConnectWalletData(nonce);
-      // generate a new nonce for the user to invalidate the current
-      // signature...
-      await client.query(
-        `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
-        [accountId],
-      );
-      // The new nonce will need to be saved even if an error happens later as part of account merging,
-      // to make sure we always invalidate the current signature.
-      await client.query('SAVEPOINT update_account_nonce');
-      const verified = verifyADR36Amino(
-        'regen',
-        address,
-        data,
-        decodedPubKey,
-        decodedSignature,
-      );
-      if (verified) {
-        if (keepCurrentAccount) {
-          // Migrate web3 account data to current account
-          await migrateAccountData({
-            keepCurrentAccount,
-            toAccountId: accountId,
-            fromAccountId: walletAccountId,
-            imagesToDelete: [
-              accountByAddr.rows[0].image,
-              accountByAddr.rows[0].bg_image,
-            ],
-            client,
-          });
-          await client.query('update account set addr = $1 where id = $2', [
-            address,
-            accountId,
-          ]);
-        } else {
-          // Migrate current account data to web3 account
-          await migrateAccountData({
-            keepCurrentAccount,
-            toAccountId: walletAccountId,
-            fromAccountId: accountId,
-            imagesToDelete: [
-              accountById.rows[0].image,
-              accountById.rows[0].bg_image,
-            ],
-            client,
-          });
-        }
-        return walletAccountId;
-      } else {
-        throw new UnauthorizedError('Invalid signature');
-      }
-    } else {
-      throw new UnauthorizedError('Account not found for the given id');
-    }
   }
+  const walletAccountId = accountByAddr.rows[0].id;
+  await checkPrivateAccount({ client, accountId: walletAccountId });
+
+  const accountById = await client.query(
+    'select nonce, image, bg_image from account where id = $1',
+    [accountId],
+  );
+  if (accountById.rowCount !== 1) {
+    throw new UnauthorizedError('Account not found for the given id');
+  }
+  const nonce = accountById.rows[0].nonce;
+  const { pubkey: decodedPubKey, signature: decodedSignature } =
+    decodeSignature(signature);
+  const data = genArbitraryConnectWalletData(nonce);
+  // generate a new nonce for the user to invalidate the current
+  // signature...
+  await client.query(
+    `update account set nonce = encode(sha256(gen_random_bytes(256)), 'hex') where id = $1`,
+    [accountId],
+  );
+  // The new nonce will need to be saved even if an error happens later as part of account merging,
+  // to make sure we always invalidate the current signature.
+  await client.query('SAVEPOINT update_account_nonce');
+  const verified = verifyADR36Amino(
+    'regen',
+    address,
+    data,
+    decodedPubKey,
+    decodedSignature,
+  );
+  if (!verified) {
+    throw new UnauthorizedError('Invalid signature');
+  }
+  if (keepCurrentAccount) {
+    // Migrate web3 account data to current account
+    await migrateAccountData({
+      keepCurrentAccount,
+      toAccountId: accountId,
+      fromAccountId: walletAccountId,
+      imagesToDelete: [
+        accountByAddr.rows[0].image,
+        accountByAddr.rows[0].bg_image,
+      ],
+      client,
+    });
+    await client.query('update account set addr = $1 where id = $2', [
+      address,
+      accountId,
+    ]);
+  } else {
+    // Migrate current account data to web3 account
+    await migrateAccountData({
+      keepCurrentAccount,
+      toAccountId: walletAccountId,
+      fromAccountId: accountId,
+      imagesToDelete: [accountById.rows[0].image, accountById.rows[0].bg_image],
+      client,
+    });
+  }
+  return walletAccountId;
 }
 
 type MigrateAccountDataParams = {
@@ -403,16 +397,16 @@ async function migrateAccountData({
 
   // Add source account profile and background images to our deletion queue
   const filteredImagesToDelete = imagesToDelete.filter(
-    image => !!image,
-  ) as Array<string>;
+    (image): image is string => !!image,
+  );
   await Promise.all(
-    filteredImagesToDelete.map(async image => {
+    filteredImagesToDelete.map(image => {
       if (
         process.env.IMAGE_STORAGE_URL &&
         image.includes(`${process.env.IMAGE_STORAGE_URL}/`)
       ) {
         const key = image?.split(`${process.env.IMAGE_STORAGE_URL}/`)?.[1];
-        await client.query(
+        return client.query(
           'insert into s3_deletion (bucket, key) values ($1, $2)',
           [bucketName, key],
         );
