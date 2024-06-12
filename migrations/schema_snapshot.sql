@@ -621,6 +621,25 @@ CREATE TABLE public.project_partner (
 
 
 --
+-- Name: s3_deletion; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.s3_deletion (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    bucket text NOT NULL,
+    key text NOT NULL
+);
+
+
+--
+-- Name: TABLE s3_deletion; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.s3_deletion IS 'Table serving as a FIFO queue for files to be deleted from AWS S3.';
+
+
+--
 -- Name: shacl_graph; Type: TABLE; Schema: public; Owner: -
 --
 

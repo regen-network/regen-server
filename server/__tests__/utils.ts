@@ -17,10 +17,13 @@ import {
   PrivKeySecp256k1,
   PubKeySecp256k1,
 } from '@keplr-wallet/crypto';
-import { genArbitraryLoginData } from '../middleware/keplrStrategy';
+import {
+  genArbitraryConnectWalletData,
+  genArbitraryLoginData,
+} from '../middleware/keplrStrategy';
 import { PoolClient } from 'pg';
 import { privacy, contents } from './e2e/post.mock';
-import { PostFile } from '../routes/posts';
+import { createAccountWithAuthUser } from './db/helpers';
 
 export const longerTestTimeout = 30000;
 
@@ -411,4 +414,120 @@ export async function createWeb2Account({
   const [{ create_new_web2_account: accountId }] = insertQuery.rows;
   await client.query('select private.create_auth_user($1)', [accountId]);
   return accountId;
+}
+
+type SetupAccountsWithDataParams = {
+  client: PoolClient;
+  email: string;
+  google?: string;
+  nonceOverride?: string;
+  nameWeb2: string;
+  nameWeb3: string;
+};
+export async function setupTestAccountsWithData({
+  client,
+  email,
+  google,
+  nonceOverride,
+  nameWeb2,
+  nameWeb3,
+}: SetupAccountsWithDataParams) {
+  // inserting some web2 account
+  const accountId = await createWeb2Account({ client, email, google });
+  const query = await client.query('select nonce from account where id = $1', [
+    accountId,
+  ]);
+  const [{ nonce }] = query.rows;
+
+  // inserting some web3 account
+  const { userPrivKey, userPubKey, userAddr } = await createNewUser();
+  const { accountId: walletAccountId } = await createAccountWithAuthUser(
+    client,
+    userAddr,
+  );
+
+  // generate signature
+  const signature = genSignature(
+    userPrivKey,
+    userPubKey,
+    userAddr,
+    nonceOverride ?? nonce,
+    genArbitraryConnectWalletData(nonceOverride ?? nonce),
+  );
+
+  // set some name for the accounts
+  await client.query('update account set name = $1 where id = $2', [
+    nameWeb2,
+    accountId,
+  ]);
+  await client.query('update account set name = $1 where id = $2', [
+    nameWeb3,
+    walletAccountId,
+  ]);
+
+  // create some projects and post for the web2 account
+  const web2AccountData = await createProjectsAndPostForAccount({
+    client,
+    accountId,
+    postIri: 'regen:123.rdf',
+  });
+
+  // create some projects and post for the web3 account
+  const web3AccountData = await createProjectsAndPostForAccount({
+    client,
+    accountId: walletAccountId,
+    postIri: 'regen:456.rdf',
+  });
+
+  return {
+    accountId,
+    walletAccountId,
+    userAddr,
+    nonce,
+    signature,
+    web2AccountData,
+    web3AccountData,
+  };
+}
+
+type CreateProjectsAndPostForAccountParams = {
+  client: PoolClient;
+  accountId: string;
+  postIri: string;
+};
+async function createProjectsAndPostForAccount({
+  client,
+  accountId,
+  postIri,
+}: CreateProjectsAndPostForAccountParams) {
+  const adminProjectQuery = await client.query(
+    'INSERT INTO project (admin_account_id) values ($1) returning id',
+    [accountId],
+  );
+  const [{ id: adminProjectId }] = adminProjectQuery.rows;
+
+  const developerProjectQuery = await client.query(
+    'INSERT INTO project (developer_id) values ($1) returning id',
+    [accountId],
+  );
+  const [{ id: developerProjectId }] = developerProjectQuery.rows;
+
+  const projectVerifierQuery = await client.query(
+    'INSERT INTO project (verifier_id) values ($1) returning id',
+    [accountId],
+  );
+  const [{ id: verifierProjectId }] = projectVerifierQuery.rows;
+
+  const creatorPostQuery = await client.query(
+    'INSERT INTO post (iri, creator_account_id, project_id, contents) values ($1, $2, $3, $4) returning iri',
+    [postIri, accountId, adminProjectId, { some: 'data' }],
+  );
+  const [{ iri: creatorPostIri }] = creatorPostQuery.rows;
+
+  return {
+    adminProjectId,
+    developerProjectId,
+    verifierProjectId,
+    creatorPostIri,
+  };
 }
