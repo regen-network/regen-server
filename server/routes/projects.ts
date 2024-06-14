@@ -4,19 +4,23 @@ import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError, ForbiddenError } from '../errors';
-import { getIsProjectAdmin } from './posts';
 import { bucketName, deleteFile } from './files';
 import { ensureLoggedIn } from '../middleware/passport';
 
 const router = express.Router();
 
+function getS3KeyFromUrl(url: string) {
+  return url.split(`https://${bucketName}.s3.amazonaws.com/`).pop();
+}
+
 // DELETE project and dependent resources by id
 router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
-  let client: PoolClient | null;
+  let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const { id: projectId } = req.body;
     const accountId = req.user?.accountId;
+
     const projectQuery = await client.query(
       'SELECT * FROM project WHERE id = $1',
       [projectId],
@@ -36,110 +40,103 @@ router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
       );
     }
 
-    // Find all resources associated with a project and delete them
-
-    // Documents
-    const documentQuery = await client.query(
-      'SELECT id, url FROM document WHERE project_id = $1',
+    const creditBatchQuery = await client.query(
+      'SELECT id FROM  WHERE project_id = $1',
       [projectId],
     );
-    // Delete document S3 files
-    await Promise.all(
-      documentQuery.rows.map(async ({ url }) => {
-        await deleteFile({
-          client,
-          currentAccountId: accountId,
-          fileName: url,
-          projectId: projectId,
-          bucketName,
-        });
-      }),
-    );
+    if (creditBatchQuery.rowCount !== 0) {
+      throw new ForbiddenError(
+        'projects with credit batches cannot be deleted',
+      );
+    }
 
-    // Delete document rows in db
-    // const documentIdsToDelete = documentQuery.rows.map(({ id }) => id);
-    // if (documentIdsToDelete.length > 0) {
-    //   const documentPlaceholders = documentIdsToDelete
-    //     .map((_, i) => `$${i + 1}`)
-    //     .join(', ');
-    //   await client.query(
-    //     `DELETE FROM document WHERE id IN (${documentPlaceholders})`,
-    //     documentIdsToDelete,
-    //   );
-    // }
-    await client.query('DELETE FROM document WHERE project_id = $1', [
-      projectId,
-    ]);
-
-    // Uploads
-    const uploadQuery = await client.query(
-      'SELECT url, id FROM upload WHERE project_id = $1',
-      [projectId],
-    );
-
-    // Delete upload S3 files
-    await Promise.all(
-      uploadQuery.rows.map(async ({ url }) => {
-        await deleteFile({
-          client,
-          currentAccountId: accountId,
-          fileName: url,
-          projectId: projectId,
-          bucketName,
-        });
-      }),
-    );
-    // Delete upload rows
-    // const uploadIdsToDelete = uploadQuery.rows.map(({ id }) => id);
-    // if (uploadIdsToDelete.length > 0) {
-    //   const uploadPlaceholders = uploadIdsToDelete
-    //     .map((_, i) => `$${i + 1}`)
-    //     .join(', ');
-    //   await client.query(
-    //     `DELETE FROM upload WHERE id IN (${uploadPlaceholders})`,
-    //     [uploadIdsToDelete],
-    //   );
-    // }
-    await client.query('DELETE FROM upload WHERE project_id = $1', [projectId]);
-
-    // Posts
-    // Is there a way to confirm it hasn't been anchored?
-    // Presumably on chain posts are only allowed for on chain projects?
+    // query files
+    // Post files
     const postQuery = await client.query(
-      'SELECT iri, contents FROM post WHERE project_id = $1',
+      'SELECT contents FROM post WHERE project_id = $1',
       [projectId],
     );
     // const postIris = postQuery.rows.map(({ iri }) => iri);
-    const postFiles = postQuery.rows
-      .flatMap(post => post.contents['x:files'])
+    const postFileKeys = postQuery.rows
+      .flatMap(post => post.contents.files)
       // remove any undefineds (from posts that don't have 'x:files' field)
-      .filter(x => Boolean(x));
+      .filter(x => Boolean(x))
+      .map(file => file.name);
 
-    // Delete files from S3 and tracking of those in the upload table
-    // TODO update x:files, x:name once post schema defined
-    await Promise.all(
-      postFiles.map(async file => {
-        await deleteFile({
-          client,
-          currentAccountId: accountId,
-          fileName: file['x:name'],
-          projectId: projectId,
-          bucketName,
-        });
-      }),
+    // Document files
+    const documentQuery = await client.query(
+      'SELECT url FROM document WHERE project_id = $1',
+      [projectId],
     );
-    // Delete posts
-    await client.query('DELETE FROM post WHERE project_id = $1', [projectId]);
+    const documentFileKeys = documentQuery.rows.map(({ url }) =>
+      getS3KeyFromUrl(url),
+    );
 
-    // Project Partner
-    await client.query('DELETE FROM project_partner WHERE project_id = $1', [
-      projectId,
-    ]);
+    // Upload files
+    const uploadQuery = await client.query(
+      'SELECT url FROM upload WHERE project_id = $1',
+      [projectId],
+    );
+    const uploadFileKeys = uploadQuery.rows.map(({ url }) =>
+      getS3KeyFromUrl(url),
+    );
 
-    // Credit batches: ignore because I assume you can only create these if the project is on chain
+    // Query tables and columns where public.project.id is used as foreign key
+    const dependentResourcesQueryString = `SELECT DISTINCT 
+  tc.table_schema,
+  tc.constraint_name,
+  tc.table_name,
+  kcu.column_name,
+  ccu.table_schema AS foreign_table_schema,
+  ccu.table_name AS foreign_table_name,
+  ccu.column_name AS foreign_column_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+  AND tc.table_schema = kcu.table_schema
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND ccu.table_schema='public'
+  AND ccu.table_name='project'
+  AND ccu.column_name='id'`;
+    const dependentResourcesQuery = await client.query(
+      dependentResourcesQueryString,
+    );
+    // Initialize db transaction
+    try {
+      // DELETE FROM document WHERE project_id = $1
+      await client.query('BEGIN');
+      await client.query('SAVEPOINT delete_project_resources');
+      for (const row of dependentResourcesQuery.rows) {
+        await client.query(
+          `DELETE FROM ${row.table_schema}.${row.table_name} WHERE ${row.column_name} = $1`,
+          [projectId],
+        );
+      }
 
-    // Delete project
-    await client.query('DELETE FROM project WHERE id = $1', [projectId]);
+      // Delete project now that all dependencies have been removed
+      await client.query('DELETE FROM project WHERE id = $1', [projectId]);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK TO delete_project_resources');
+      await client.query('COMMIT');
+      throw e;
+    }
+
+    // Add rows to s3_deletion table
+    const filesToDelete = [
+      ...postFileKeys,
+      ...uploadFileKeys,
+      ...documentFileKeys,
+    ];
+    const addToS3DeletionTable = (key: string) =>
+      client?.query('insert into s3_deletion (bucket, key) values ($1, $2)', [
+        bucketName,
+        key,
+      ]);
+    await Promise.all(filesToDelete.map(addToS3DeletionTable));
+
     res.sendStatus(200);
   } catch (e) {
     next(e);
