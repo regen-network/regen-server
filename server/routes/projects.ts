@@ -6,16 +6,17 @@ import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError, ForbiddenError } from '../errors';
 import { getIsProjectAdmin } from './posts';
 import { bucketName, deleteFile } from './files';
+import { ensureLoggedIn } from '../middleware/passport';
 
 const router = express.Router();
 
 // DELETE project and dependent resources by id
-router.delete('/', async (req: UserRequest, res, next) => {
+router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
   let client: PoolClient | null;
   try {
     client = await pgPool.connect();
     const { id: projectId } = req.body;
-    const { accountId } = req.user;
+    const accountId = req.user?.accountId;
     const projectQuery = await client.query(
       'SELECT * FROM project WHERE id = $1',
       [projectId],
@@ -25,12 +26,7 @@ router.delete('/', async (req: UserRequest, res, next) => {
       throw new NotFoundError('project not found');
     }
     const project = projectQuery.rows[0];
-    const isProjectAdmin = await getIsProjectAdmin({
-      client,
-      projectId,
-      accountId,
-    });
-    if (!isProjectAdmin) {
+    if (project.admin_account_id !== accountId) {
       throw new UnauthorizedError('only the project admin can delete projects');
     }
 
@@ -59,6 +55,7 @@ router.delete('/', async (req: UserRequest, res, next) => {
         });
       }),
     );
+
     // Delete document rows in db
     // const documentIdsToDelete = documentQuery.rows.map(({ id }) => id);
     // if (documentIdsToDelete.length > 0) {

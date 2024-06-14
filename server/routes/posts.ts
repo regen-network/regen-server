@@ -457,7 +457,7 @@ type GetIsProjectAdminType = {
   accountId?: string;
 };
 
-export async function getIsProjectAdmin({
+async function getIsProjectAdmin({
   client,
   projectId,
   accountId,
