@@ -33,6 +33,7 @@ describe('/posts/project/:projectId GET endpoint', () => {
     expect(data.years[0]).toEqual(new Date().getFullYear());
     // returned posts contents based on privacy settings tested in unit test for getPostData function
     expect(data.posts.length).toEqual(nbPosts);
+    expect(data.total).toEqual(nbPosts);
 
     await withRootDb(async client => {
       // Cleaning up
