@@ -343,13 +343,13 @@ export async function getPostData({
   const files = post.contents.files as Array<PostFile>;
 
   const prevQuery = await client.query(
-    'select iri from post where created_at < $1 and project_id = $2 order by created_at DESC limit 1',
-    [post.created_at, post.project_id],
+    'select iri from post where created_at < $1 and project_id = $2 and iri != $3 order by created_at DESC limit 1',
+    [post.created_at, post.project_id, post.iri],
   );
   const prevIri = prevQuery.rows[0]?.iri;
   const nextQuery = await client.query(
-    'select iri from post where created_at > $1 and project_id = $2 order by created_at DESC limit 1',
-    [post.created_at, post.project_id],
+    'select iri from post where created_at > $1 and project_id = $2 and iri != $3 order by created_at DESC limit 1',
+    [post.created_at, post.project_id, post.iri],
   );
   const nextIri = nextQuery.rows[0]?.iri;
 
