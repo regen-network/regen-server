@@ -296,10 +296,13 @@ router.delete(
       // Add files to the S3 deletion queue table
       await Promise.all(
         post.contents.files?.map(file => {
-          return client.query(
-            'insert into s3_deletion (bucket, key) values ($1, $2)',
-            [bucketName, `${PROJECTS_PATH}/${post.project_id}/${file.name}`],
-          );
+          return deleteFile({
+            client,
+            currentAccountId: req.user?.accountId,
+            fileName: file.name,
+            projectId: post.project_id,
+            bucketName,
+          });
         }) || [],
       );
 

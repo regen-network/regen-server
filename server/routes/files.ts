@@ -266,24 +266,11 @@ export async function deleteFile({
   const path = `${projectId ? PROJECTS_PATH : PROFILES_PATH}/${
     projectId ?? accountId
   }`;
-  const input: DeleteObjectCommandInput = {
-    Bucket: bucketName,
-    Key: `${path}/${fileName}`,
-  };
-  const cmd = new DeleteObjectCommand(input);
-  const cmdResp = await s3.send(cmd);
-  const status = cmdResp['$metadata'].httpStatusCode;
-  if (status && (status < 200 || status >= 300)) {
-    console.log({ cmdResp });
-    throw new Error('Unable to delete file');
-  } else {
-    const url = getFileUrl({
-      bucketName,
-      path,
-      fileName,
-    });
-    await client.query(`delete from upload where url = $1`, [url]);
-  }
+  const key = `${path}/${fileName}`;
+  await client.query('insert into s3_deletion (bucket, key) values ($1, $2)', [
+    bucketName,
+    key,
+  ]);
 }
 
 export default router;
