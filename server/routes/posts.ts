@@ -95,25 +95,29 @@ router.get('/project/:projectId', async (req: UserRequest, res, next) => {
       );
       if (yearsQuery.rowCount > 0) {
         const mostRecentYear = yearsQuery.rows[0].year;
-        const posts = await getPostsData({
+        const { posts, total } = await getPostsData({
           req,
           projectId,
           year: mostRecentYear,
           client,
         });
-        res.json({ posts, years: yearsQuery.rows.map(({ year }) => year) });
+        res.json({
+          posts,
+          total,
+          years: yearsQuery.rows.map(({ year }) => year),
+        });
       } else {
         throw new NotFoundError(`no posts for project ${projectId}`);
       }
     } else {
       // We return the posts (based on limit and offset) for the given year
-      const posts = await getPostsData({
+      const { posts, total } = await getPostsData({
         req,
         projectId,
         year,
         client,
       });
-      res.json({ posts });
+      res.json({ posts, total });
     }
   } catch (e) {
     next(e);
@@ -138,6 +142,11 @@ async function getPostsData({
   const limit = req.query.limit;
   const offset = req.query.offset;
 
+  const countQuery = await client.query(
+    "SELECT COUNT(*) FROM post WHERE DATE_PART('year', created_at) = $1 AND project_id = $2",
+    [year, projectId],
+  );
+
   const postsQuery = await client.query(
     "SELECT * FROM post WHERE DATE_PART('year', created_at) = $1 AND project_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
     [year, projectId, limit, offset],
@@ -151,7 +160,7 @@ async function getPostsData({
 
   const reqProtocol = req.protocol;
   const reqHost = req.get('host');
-  return await Promise.all(
+  const posts = await Promise.all(
     postsQuery.rows?.map(
       async post =>
         await getPostData({
@@ -163,6 +172,7 @@ async function getPostsData({
         }),
     ) || [],
   );
+  return { posts, total: Number(countQuery.rows[0]?.count) || 0 };
 }
 
 type PostInsertInput = {
