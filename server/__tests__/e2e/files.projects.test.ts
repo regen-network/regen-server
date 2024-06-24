@@ -79,13 +79,8 @@ describe('files endpoint, projects auth...', () => {
         });
 
         try {
-          const { resp: uploadResp } = await dummyFilesSetup(
-            key,
-            fname,
-            projectId,
-            authHeaders,
-          );
-          const json = await uploadResp.json();
+          await dummyFilesSetup(key, fname, projectId, authHeaders);
+
           const resp = await fetch(
             `${getMarketplaceURL()}/files/${
               process.env.S3_PROJECTS_PATH
@@ -99,10 +94,13 @@ describe('files endpoint, projects auth...', () => {
 
           await withRootDb(async client => {
             const uploadQuery = await client.query(
-              'select * from upload where url = $1',
-              [json.url],
+              'select * from s3_deletion where key = $1 and bucket = $2',
+              [
+                `${process.env.S3_PROJECTS_PATH}/${projectId}/${fname}`,
+                process.env.AWS_S3_BUCKET,
+              ],
             );
-            expect(uploadQuery.rowCount).toEqual(0);
+            expect(uploadQuery.rowCount).toEqual(1);
           });
         } finally {
           await dummyFilesTeardown(key, fname);
