@@ -344,6 +344,8 @@ export type PostData = {
   contents?: PostContents;
   filesUrls?: { [iri: string]: string };
   filesMimeTypes?: { [iri: string]: string };
+  prevIri?: string;
+  nextIri?: string;
 };
 
 export async function getPostData({
@@ -354,6 +356,17 @@ export async function getPostData({
   reqHost,
 }: GetPostDataParams): Promise<PostData> {
   const files = post.contents.files as Array<PostFile>;
+
+  const prevQuery = await client.query(
+    'select iri from post where created_at < $1 and project_id = $2 and iri != $3 order by created_at DESC limit 1',
+    [post.created_at, post.project_id, post.iri],
+  );
+  const prevIri = prevQuery.rows[0]?.iri;
+  const nextQuery = await client.query(
+    'select iri from post where created_at > $1 and project_id = $2 and iri != $3 order by created_at DESC limit 1',
+    [post.created_at, post.project_id, post.iri],
+  );
+  const nextIri = nextQuery.rows[0]?.iri;
 
   const hasPrivateLocations = post.privacy === 'private_locations';
   if (isProjectAdmin || post.privacy === 'public' || hasPrivateLocations) {
@@ -370,7 +383,13 @@ export async function getPostData({
         ({ location: _, ...keepAttrs }) => keepAttrs,
       );
     }
-    return { ...postToCamelCase(post), filesUrls, filesMimeTypes };
+    return {
+      ...postToCamelCase(post),
+      filesUrls,
+      filesMimeTypes,
+      prevIri,
+      nextIri,
+    };
   } else {
     switch (post.privacy) {
       case 'private':
@@ -380,7 +399,7 @@ export async function getPostData({
         post.contents.files = files?.map(file => ({
           iri: file.iri,
         }));
-        return postToCamelCase(post);
+        return { ...postToCamelCase(post), prevIri, nextIri };
       default:
         throw new Error('unsupported post privacy');
     }

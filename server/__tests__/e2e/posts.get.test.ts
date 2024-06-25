@@ -5,17 +5,39 @@ import {
   getMarketplaceURL,
 } from '../utils';
 import { withRootDb } from '../db/helpers';
-import { commit } from './post.mock';
+import { commit, contents } from './post.mock';
 
 describe('/posts GET endpoint', () => {
   it('returns the post by IRI', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
-    // Create project and post administered by this account
-    const { projectId, iri } = await createProjectAndPost({
+    // Create project and posts administered by this account
+    const { projectId, iri: prevIri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
       noFiles: true,
     });
+
+    const currentResp = await fetch(`${getMarketplaceURL()}/posts`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        projectId,
+        privacy: 'public',
+        contents: { ...contents, name: 'current', files: [] },
+      }),
+    });
+    const { iri } = await currentResp.json();
+
+    const nextResp = await fetch(`${getMarketplaceURL()}/posts`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        projectId,
+        privacy: 'public',
+        contents: { ...contents, name: 'next', files: [] },
+      }),
+    });
+    const { iri: nextIri } = await nextResp.json();
 
     const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
       method: 'GET',
@@ -26,6 +48,8 @@ describe('/posts GET endpoint', () => {
     const data = await resp.json();
     // returned post contents based on privacy settings tested in unit test for getPostData function
     expect(data.iri).toEqual(iri);
+    expect(data.prevIri).toEqual(prevIri);
+    expect(data.nextIri).toEqual(nextIri);
 
     await withRootDb(async client => {
       // Cleaning up
