@@ -360,6 +360,27 @@ $_$;
 COMMENT ON FUNCTION private.shuffle(text) IS 'Shuffles an incoming string and aggregates the resulting rows to a string';
 
 
+--
+-- Name: delete_s3_file(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_s3_file() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  PERFORM graphile_worker.add_job(
+      'delete_s3_file',
+      json_build_object(
+        'id', NEW.id,
+        'bucket', NEW.bucket,
+        'key', NEW.key
+      )
+  );
+  RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -993,6 +1014,13 @@ CREATE INDEX upload_account_id_idx ON public.upload USING btree (account_id);
 --
 
 CREATE INDEX upload_project_id_idx ON public.upload USING btree (project_id);
+
+
+--
+-- Name: s3_deletion delete_s3_file; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER delete_s3_file AFTER INSERT ON public.s3_deletion FOR EACH ROW EXECUTE FUNCTION public.delete_s3_file();
 
 
 --

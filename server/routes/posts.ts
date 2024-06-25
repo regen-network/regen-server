@@ -4,7 +4,12 @@ import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError } from '../errors';
-import { bucketName, deleteFile, getObjectSignedUrl } from './files';
+import {
+  PROJECTS_PATH,
+  bucketName,
+  deleteFile,
+  getObjectSignedUrl,
+} from './files';
 import { generateIRIFromGraph } from 'iri-gen/iri-gen';
 import {
   SUPPORTED_IMAGE_TYPES,
@@ -298,10 +303,10 @@ router.delete(
         throw new UnauthorizedError('only the project admin can delete posts');
       }
 
-      // Delete files from S3 and tracking of those in the upload table
+      // Add files to the S3 deletion queue table
       await Promise.all(
-        post.contents.files?.map(async file => {
-          await deleteFile({
+        post.contents.files?.map(file => {
+          return deleteFile({
             client,
             currentAccountId: req.user?.accountId,
             fileName: file.name,
