@@ -54,6 +54,30 @@ describe('/posts GET endpoint', () => {
       await client.query('delete from post where project_id = $1', [projectId]);
     }, commit);
   });
+  xit('returns the private post by IRI if token present', async () => {
+    const { authHeaders } = await createNewUserAndLogin();
+
+    // Create project and post administered by this account
+    const { projectId, iri } = await createProjectAndPost({
+      initAuthHeaders: authHeaders,
+      noFiles: true,
+    });
+
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    expect(resp.status).toBe(200);
+    const data = await resp.json();
+    // returned post contents based on privacy settings tested in unit test for getPostData function
+    expect(data.iri).toEqual(iri);
+
+    await withRootDb(async client => {
+      // Cleaning up
+      await client.query('delete from post where project_id = $1', [projectId]);
+    }, commit);
+  });
   it('returns a 404 error if the post does not exist', async () => {
     const fakeIri = '123';
     const resp = await fetch(`${getMarketplaceURL()}/posts/${fakeIri}`, {
