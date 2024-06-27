@@ -44,64 +44,13 @@ export type Post = {
   contents: PostContents;
 };
 
-router.post('/:iri/token', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null = null;
-  try {
-    client = await pgPool.connect();
-    const iri = req.params.iri;
-    const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
-      iri,
-    ]);
-    if (postRes.rowCount !== 1) {
-      throw new NotFoundError('post not found');
-    }
-    const post = postRes.rows[0];
-
-    if (post.privacy === 'public') {
-      // A token can only be generated for posts with private info
-      return res.sendStatus(204); // No Content
-    }
-
-    const isProjectAdmin = await getIsProjectAdmin({
-      client,
-      projectId: post.project_id,
-      accountId: req.user?.accountId,
-    });
-    if (!isProjectAdmin) {
-      throw new UnauthorizedError('only project admin can generate post token');
-    }
-
-    const tokenRes = await client.query(
-      `SELECT encode(token, 'hex') from private.post_token where post_iri = $1`,
-      [iri],
-    );
-    if (tokenRes.rowCount === 1) {
-      // return existing token (once created, token is persistent for now)
-      return res.json({ token: tokenRes.rows[0].encode });
-    } else {
-      // generate new token
-      const insRes = await client.query(
-        `INSERT INTO private.post_token (post_iri) VALUES ($1) returning encode(token, 'hex')`,
-        [iri],
-      );
-      if (insRes.rowCount === 1) {
-        return res.json({ token: insRes.rows[0].encode });
-      }
-    }
-  } catch (e) {
-    next(e);
-  } finally {
-    if (client) client.release();
-  }
-});
-
 // GET post by IRI
 router.get('/:iri', async (req: UserRequest, res, next) => {
   let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
     const iri = req.params.iri;
-    const token = req.query.iri;
+    const token = req.query.token;
     const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
       iri,
     ]);
@@ -117,10 +66,15 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
     });
 
     const tokenRes = await client.query(
-      'SELECT 1 FROM private.post_token WHERE post_iri = $1 AND token = $2',
+      `SELECT 1 FROM private.post_token WHERE post_iri = $1 AND token = decode($2, 'hex')`,
       [iri, token],
     );
     const hasToken = tokenRes?.rowCount === 1;
+
+    if (post.privacy === 'private' && !isProjectAdmin && !hasToken) {
+      throw new UnauthorizedError('private post');
+    }
+
     const reqProtocol = req.protocol;
     const reqHost = req.get('host');
     const postData = await getPostData({
@@ -131,9 +85,7 @@ router.get('/:iri', async (req: UserRequest, res, next) => {
       reqHost,
       hasToken,
     });
-    if (postData.privacy === 'private' && !isProjectAdmin) {
-      throw new UnauthorizedError('private post');
-    }
+
     return res.json(postData);
   } catch (e) {
     next(e);
@@ -270,6 +222,58 @@ router.post('/', doubleCsrfProtection, async (req: UserRequest, res, next) => {
     );
 
     res.json({ iri });
+  } catch (e) {
+    next(e);
+  } finally {
+    if (client) client.release();
+  }
+});
+
+// POST create secret token to share a non public post
+router.post('/:iri/token', async (req: UserRequest, res, next) => {
+  let client: PoolClient | null = null;
+  try {
+    client = await pgPool.connect();
+    const iri = req.params.iri;
+    const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
+      iri,
+    ]);
+    if (postRes.rowCount !== 1) {
+      throw new NotFoundError('post not found');
+    }
+    const post = postRes.rows[0];
+
+    const isProjectAdmin = await getIsProjectAdmin({
+      client,
+      projectId: post.project_id,
+      accountId: req.user?.accountId,
+    });
+    if (!isProjectAdmin) {
+      throw new UnauthorizedError('only project admin can generate post token');
+    }
+
+    if (post.privacy === 'public') {
+      // A token can only be generated for posts with private info
+      return res.sendStatus(204); // No Content
+    }
+
+    const tokenRes = await client.query(
+      `SELECT encode(token, 'hex') from private.post_token where post_iri = $1`,
+      [iri],
+    );
+    if (tokenRes.rowCount === 1) {
+      // return existing token (once created, token is persistent for now)
+      return res.json({ token: tokenRes.rows[0].encode });
+    } else {
+      // generate new token
+      const insRes = await client.query(
+        `INSERT INTO private.post_token (post_iri) VALUES ($1) returning encode(token, 'hex')`,
+        [iri],
+      );
+      if (insRes.rowCount === 1) {
+        return res.json({ token: insRes.rows[0].encode });
+      }
+    }
   } catch (e) {
     next(e);
   } finally {

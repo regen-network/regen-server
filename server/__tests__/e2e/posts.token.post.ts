@@ -7,43 +7,56 @@ import {
 import { withRootDb } from '../db/helpers';
 import { commit } from './post.mock';
 
-describe('/posts GET endpoint', () => {
-  it('returns the post by IRI', async () => {
+describe('/posts/:iri/token POST endpoint', () => {
+  it('returns a token if project admin', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and post administered by this account
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
       noFiles: true,
+      initPrivacy: 'private',
     });
 
-    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
-      method: 'GET',
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}/token`, {
+      method: 'POST',
       headers: authHeaders,
     });
 
     expect(resp.status).toBe(200);
     const data = await resp.json();
-    // returned post contents based on privacy settings tested in unit test for getPostData function
-    expect(data.iri).toEqual(iri);
+    const token = data.token;
+    expect(token).toHaveLength(15);
+
+    const resp2 = await fetch(`${getMarketplaceURL()}/posts/${iri}/token`, {
+      method: 'POST',
+      headers: authHeaders,
+    });
+
+    expect(resp2.status).toBe(200);
+    const data2 = await resp.json();
+    // Token is persistent
+    expect(data2.token).toHaveLength(token);
 
     await withRootDb(async client => {
       // Cleaning up
+      await client.query('delete from private.post_token where post_iri = $1', [
+        iri,
+      ]);
       await client.query('delete from post where project_id = $1', [projectId]);
     }, commit);
   });
-  it('returns unauthorized error if any user tries to get a private post', async () => {
+  it('returns unauthorized error if any user tries to generate a token', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and private post administered by this account
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
-      initPrivacy: 'private',
       noFiles: true,
     });
 
-    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}`, {
-      method: 'GET',
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}/token`, {
+      method: 'POST',
       // no authHeaders
     });
 
@@ -54,50 +67,31 @@ describe('/posts GET endpoint', () => {
       await client.query('delete from post where project_id = $1', [projectId]);
     }, commit);
   });
-  it('returns the private post by IRI if token present', async () => {
+  it('returns no content if post is public', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
     // Create project and post administered by this account
     const { projectId, iri } = await createProjectAndPost({
       initAuthHeaders: authHeaders,
-      initPrivacy: 'private',
       noFiles: true,
     });
 
-    const tokenResp = await fetch(`${getMarketplaceURL()}/posts/${iri}/token`, {
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${iri}/token`, {
       method: 'POST',
       headers: authHeaders,
     });
 
-    expect(tokenResp.status).toBe(200);
-    const tokenData = await tokenResp.json();
-    const token = tokenData.token;
-
-    // No auth headers but using the token
-    const resp = await fetch(
-      `${getMarketplaceURL()}/posts/${iri}?token=${token}`,
-      {
-        method: 'GET',
-      },
-    );
-
-    expect(resp.status).toBe(200);
-    const data = await resp.json();
-    // returned post contents based on privacy settings tested in unit test for getPostData function
-    expect(data.iri).toEqual(iri);
+    expect(resp.status).toBe(204);
 
     await withRootDb(async client => {
       // Cleaning up
-      await client.query('delete from private.post_token where post_iri = $1', [
-        iri,
-      ]);
       await client.query('delete from post where project_id = $1', [projectId]);
     }, commit);
   });
   it('returns a 404 error if the post does not exist', async () => {
     const fakeIri = '123';
-    const resp = await fetch(`${getMarketplaceURL()}/posts/${fakeIri}`, {
-      method: 'GET',
+    const resp = await fetch(`${getMarketplaceURL()}/posts/${fakeIri}/token`, {
+      method: 'POST',
     });
 
     expect(resp.status).toBe(404);
