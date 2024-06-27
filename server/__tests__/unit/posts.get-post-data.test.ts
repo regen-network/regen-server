@@ -114,6 +114,68 @@ describe('posts getPostData', () => {
       });
     });
   });
+  describe('if user is not project admin but has token', () => {
+    it('returns the whole post data if private', async () => {
+      await withRootDb(async (client: PoolClient) => {
+        const postData = await getPostData({
+          isProjectAdmin: false,
+          hasToken: true,
+          post: privatePost,
+          client,
+          reqProtocol,
+          reqHost,
+        });
+
+        checkPostData({ postData });
+        expect(postData.privacy).toEqual(privatePost.privacy);
+      });
+    });
+    it('returns the whole post data if private files', async () => {
+      await withRootDb(async (client: PoolClient) => {
+        const postData = await getPostData({
+          isProjectAdmin: false,
+          hasToken: true,
+          post: privateFilesPost,
+          client,
+          reqProtocol,
+          reqHost,
+        });
+
+        checkPostData({ postData });
+        expect(postData.privacy).toEqual(privateFilesPost.privacy);
+      });
+    });
+    it('returns the whole post data if private locations', async () => {
+      await withRootDb(async (client: PoolClient) => {
+        const postData = await getPostData({
+          isProjectAdmin: false,
+          hasToken: true,
+          post: privateLocationsPost,
+          client,
+          reqProtocol,
+          reqHost,
+        });
+
+        checkPostData({ postData });
+        expect(postData.privacy).toEqual(privateLocationsPost.privacy);
+      });
+    });
+    it('returns the whole post data if public', async () => {
+      await withRootDb(async (client: PoolClient) => {
+        const postData = await getPostData({
+          isProjectAdmin: false,
+          hasToken: true,
+          post: publicPost,
+          client,
+          reqProtocol,
+          reqHost,
+        });
+
+        checkPostData({ postData });
+        expect(postData.privacy).toEqual(publicPost.privacy);
+      });
+    });
+  });
   describe('if user is not project admin', () => {
     it('only returns post privacy if private', async () => {
       await withRootDb(async (client: PoolClient) => {

@@ -507,6 +507,25 @@ COMMENT ON TABLE private.passcode IS 'Passcodes for signing in with email';
 
 
 --
+-- Name: post_token; Type: TABLE; Schema: private; Owner: -
+--
+
+CREATE TABLE private.post_token (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    post_iri text NOT NULL,
+    token bytea DEFAULT public.gen_random_bytes(16) NOT NULL
+);
+
+
+--
+-- Name: TABLE post_token; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON TABLE private.post_token IS 'Table with cryptographically strong random tokens to share data post link';
+
+
+--
 -- Name: credit_batch; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -752,6 +771,14 @@ ALTER TABLE ONLY private.passcode
 
 
 --
+-- Name: post_token post_token_pkey; Type: CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.post_token
+    ADD CONSTRAINT post_token_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: account account_addr_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -885,6 +912,14 @@ ALTER TABLE ONLY public.project
 
 ALTER TABLE ONLY public.project
     ADD CONSTRAINT project_slug_key UNIQUE (slug);
+
+
+--
+-- Name: s3_deletion s3_deletion_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.s3_deletion
+    ADD CONSTRAINT s3_deletion_pkey PRIMARY KEY (id);
 
 
 --
@@ -1029,6 +1064,14 @@ CREATE TRIGGER delete_s3_file AFTER INSERT ON public.s3_deletion FOR EACH ROW EX
 
 ALTER TABLE ONLY graphile_migrate.migrations
     ADD CONSTRAINT migrations_previous_hash_fkey FOREIGN KEY (previous_hash) REFERENCES graphile_migrate.migrations(hash);
+
+
+--
+-- Name: post_token fk_post_iri; Type: FK CONSTRAINT; Schema: private; Owner: -
+--
+
+ALTER TABLE ONLY private.post_token
+    ADD CONSTRAINT fk_post_iri FOREIGN KEY (post_iri) REFERENCES public.post(iri);
 
 
 --
