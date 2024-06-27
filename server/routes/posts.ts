@@ -230,56 +230,62 @@ router.post('/', doubleCsrfProtection, async (req: UserRequest, res, next) => {
 });
 
 // POST create secret token to share a non public post
-router.post('/:iri/token', async (req: UserRequest, res, next) => {
-  let client: PoolClient | null = null;
-  try {
-    client = await pgPool.connect();
-    const iri = req.params.iri;
-    const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
-      iri,
-    ]);
-    if (postRes.rowCount !== 1) {
-      throw new NotFoundError('post not found');
-    }
-    const post = postRes.rows[0];
+router.post(
+  '/:iri/token',
+  doubleCsrfProtection,
+  async (req: UserRequest, res, next) => {
+    let client: PoolClient | null = null;
+    try {
+      client = await pgPool.connect();
+      const iri = req.params.iri;
+      const postRes = await client.query('SELECT * FROM post WHERE iri = $1', [
+        iri,
+      ]);
+      if (postRes.rowCount !== 1) {
+        throw new NotFoundError('post not found');
+      }
+      const post = postRes.rows[0];
 
-    const isProjectAdmin = await getIsProjectAdmin({
-      client,
-      projectId: post.project_id,
-      accountId: req.user?.accountId,
-    });
-    if (!isProjectAdmin) {
-      throw new UnauthorizedError('only project admin can generate post token');
-    }
+      const isProjectAdmin = await getIsProjectAdmin({
+        client,
+        projectId: post.project_id,
+        accountId: req.user?.accountId,
+      });
+      if (!isProjectAdmin) {
+        throw new UnauthorizedError(
+          'only project admin can generate post token',
+        );
+      }
 
-    if (post.privacy === 'public') {
-      // A token can only be generated for posts with private info
-      return res.sendStatus(204); // No Content
-    }
+      if (post.privacy === 'public') {
+        // A token can only be generated for posts with private info
+        return res.sendStatus(204); // No Content
+      }
 
-    const tokenRes = await client.query(
-      `SELECT encode(token, 'hex') from private.post_token where post_iri = $1`,
-      [iri],
-    );
-    if (tokenRes.rowCount === 1) {
-      // return existing token (once created, token is persistent for now)
-      return res.json({ token: tokenRes.rows[0].encode });
-    } else {
-      // generate new token
-      const insRes = await client.query(
-        `INSERT INTO private.post_token (post_iri) VALUES ($1) returning encode(token, 'hex')`,
+      const tokenRes = await client.query(
+        `SELECT encode(token, 'hex') from private.post_token where post_iri = $1`,
         [iri],
       );
-      if (insRes.rowCount === 1) {
-        return res.json({ token: insRes.rows[0].encode });
+      if (tokenRes.rowCount === 1) {
+        // return existing token (once created, token is persistent for now)
+        return res.json({ token: tokenRes.rows[0].encode });
+      } else {
+        // generate new token
+        const insRes = await client.query(
+          `INSERT INTO private.post_token (post_iri) VALUES ($1) returning encode(token, 'hex')`,
+          [iri],
+        );
+        if (insRes.rowCount === 1) {
+          return res.json({ token: insRes.rows[0].encode });
+        }
       }
+    } catch (e) {
+      next(e);
+    } finally {
+      if (client) client.release();
     }
-  } catch (e) {
-    next(e);
-  } finally {
-    if (client) client.release();
-  }
-});
+  },
+);
 
 // PUT is disabled for now, since it changes the primary key of the post and that is sub-optimal.
 // Ideally when editing, we keep a history but allow linking still to the original IRI somehow.
