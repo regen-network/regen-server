@@ -4,7 +4,7 @@ import { UserRequest } from '../types';
 import { PoolClient } from 'pg';
 import { pgPool } from 'common/pool';
 import { NotFoundError, UnauthorizedError, ForbiddenError } from '../errors';
-import { bucketName, deleteFile } from './files';
+import { bucketName } from './files';
 import { ensureLoggedIn } from '../middleware/passport';
 
 const router = express.Router();
@@ -41,7 +41,7 @@ router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
     }
 
     const creditBatchQuery = await client.query(
-      'SELECT id FROM  WHERE project_id = $1',
+      'SELECT id FROM credit_batch WHERE project_id = $1',
       [projectId],
     );
     if (creditBatchQuery.rowCount !== 0) {
@@ -49,7 +49,6 @@ router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
         'projects with credit batches cannot be deleted',
       );
     }
-
     // query files
     // Post files
     const postQuery = await client.query(

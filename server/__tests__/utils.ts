@@ -391,6 +391,36 @@ export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
   };
 }
 
+export async function createCreditBatch({ projectId, authHeaders }) {
+  const createCreditBatchQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation CreateCreditBatch($input: CreateCreditBatchInput!) { createCreditBatch(input: $input) { creditBatch { id } } }',
+      variables: `{"input":{"creditBatch":{"projectId":"${projectId}", "units":100}}}`,
+    }),
+  });
+  const {
+    data: {
+      createCreditBatch: { creditBatch },
+    },
+  } = await createCreditBatchQuery.json();
+  return creditBatch;
+}
+
+export async function deleteCreditBatch({ creditBatchId, authHeaders }) {
+  await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation DeleteCreditBatch($input: DeleteCreditBatchInput!) { deleteCreditBatch(input: $input) { creditBatch { id } } }',
+      variables: `{"input":{"creditBatchId":"${creditBatchId}"}}`,
+    }),
+  });
+}
+
 export function getServerBaseURL() {
   return 'http://localhost:5000';
 }
