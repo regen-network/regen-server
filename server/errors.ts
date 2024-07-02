@@ -30,6 +30,12 @@ export class UnauthorizedError extends BaseHTTPError {
   }
 }
 
+export class ForbiddenError extends BaseHTTPError {
+  constructor(message: string) {
+    super(message, 403);
+  }
+}
+
 export class Conflict extends BaseHTTPError {
   constructor(message: string) {
     super(message, 409);

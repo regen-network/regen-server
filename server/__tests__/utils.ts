@@ -232,6 +232,8 @@ export async function dummyFilesSetup(
 ): Promise<{ resp: Response }> {
   let dir: undefined | string = undefined;
   let fd: undefined | FileHandle = undefined;
+  // create copy of headers to prevent mutation
+  const authHeadersCopy = new Headers([...authHeaders.entries()]);
   try {
     const path = join(tmpdir(), 'projects-');
     dir = await mkdtemp(path);
@@ -244,10 +246,10 @@ export async function dummyFilesSetup(
     form.append('image', createReadStream(fpath));
     form.append('filePath', key);
 
-    authHeaders.delete('content-type');
+    authHeadersCopy.delete('content-type');
     const resp = await fetch(`${getMarketplaceURL()}/files`, {
       method: 'POST',
-      headers: authHeaders,
+      headers: authHeadersCopy,
       body: form,
     });
     return { resp };
@@ -312,7 +314,7 @@ export async function createProjectAndPost({
 }: CreateProjectAndPostParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
-  const { projectId, accountId } = await createProject({
+  const { projectId, accountId, key, fname } = await createProject({
     initAuthHeaders: authHeaders,
   });
   const resp = await fetch(`${getMarketplaceURL()}/posts`, {
@@ -325,7 +327,7 @@ export async function createProjectAndPost({
     }),
   });
   const { iri } = await resp.json();
-  return { accountId, projectId, iri };
+  return { accountId, projectId, iri, key, fname };
 }
 
 type CreateProjectAndPostsParams = { nbPosts: number } & OptionalAuthHeaders;
@@ -335,7 +337,7 @@ export async function createProjectAndPosts({
 }: CreateProjectAndPostsParams) {
   const authHeaders = await getAuthHeaders({ initAuthHeaders });
 
-  const { projectId, accountId } = await createProject({
+  const { projectId, accountId, key, fname } = await createProject({
     initAuthHeaders: authHeaders,
   });
   const iris: Array<string> = [];
@@ -352,7 +354,7 @@ export async function createProjectAndPosts({
     const { iri } = await resp.json();
     iris.push(iri);
   }
-  return { accountId, projectId, iris };
+  return { accountId, projectId, iris, key, fname };
 }
 
 export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
@@ -387,6 +389,36 @@ export async function createProject({ initAuthHeaders }: OptionalAuthHeaders) {
     accountId,
     projectId,
   };
+}
+
+export async function createCreditBatch({ projectId, authHeaders }) {
+  const createCreditBatchQuery = await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation CreateCreditBatch($input: CreateCreditBatchInput!) { createCreditBatch(input: $input) { creditBatch { id } } }',
+      variables: `{"input":{"creditBatch":{"projectId":"${projectId}", "units":100}}}`,
+    }),
+  });
+  const {
+    data: {
+      createCreditBatch: { creditBatch },
+    },
+  } = await createCreditBatchQuery.json();
+  return creditBatch;
+}
+
+export async function deleteCreditBatch({ creditBatchId, authHeaders }) {
+  await fetch(`${getMarketplaceURL()}/graphql`, {
+    method: 'POST',
+    headers: authHeaders,
+    body: JSON.stringify({
+      query:
+        'mutation DeleteCreditBatch($input: DeleteCreditBatchInput!) { deleteCreditBatch(input: $input) { creditBatch { id } } }',
+      variables: `{"input":{"creditBatchId":"${creditBatchId}"}}`,
+    }),
+  });
 }
 
 export function getServerBaseURL() {
