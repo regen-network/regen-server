@@ -33,7 +33,7 @@ describe('/projects DELETE endpoint', () => {
           [projectId, accountId],
         );
         expect(projectPartnerQuery.rowCount).toEqual(1);
-      }, true);
+      }, commit);
 
       // create document for the project
       await withRootDb(async client => {
@@ -81,12 +81,9 @@ describe('/projects DELETE endpoint', () => {
         await dummyFilesTeardown(key, fname);
       }
 
-      const resp = await fetch(`${getMarketplaceURL()}/projects`, {
+      const resp = await fetch(`${getMarketplaceURL()}/projects/${projectId}`, {
         method: 'DELETE',
         headers: authHeaders,
-        body: JSON.stringify({
-          id: projectId,
-        }),
       });
       expect(resp.status).toBe(200);
 
@@ -134,12 +131,10 @@ describe('/projects DELETE endpoint', () => {
   it('returns 404 Not Found for a non-existent project', async () => {
     const { authHeaders } = await createNewUserAndLogin();
 
-    const resp = await fetch(`${getMarketplaceURL()}/projects`, {
+    const id = '00000000-0000-0000-0000-000000000000';
+    const resp = await fetch(`${getMarketplaceURL()}/projects/${id}`, {
       method: 'DELETE',
       headers: authHeaders,
-      body: JSON.stringify({
-        id: '00000000-0000-0000-0000-000000000000',
-      }),
     });
 
     expect(resp.status).toBe(404);

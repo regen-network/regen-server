@@ -14,11 +14,11 @@ function getS3KeyFromUrl(url: string) {
 }
 
 // DELETE project and dependent resources by id
-router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
+router.delete('/:id', ensureLoggedIn(), async (req: UserRequest, res, next) => {
   let client: PoolClient | null = null;
   try {
     client = await pgPool.connect();
-    const { id: projectId } = req.body;
+    const projectId = req.params.id;
     const accountId = req.user?.accountId;
 
     const projectQuery = await client.query(
@@ -55,7 +55,6 @@ router.delete('/', ensureLoggedIn(), async (req: UserRequest, res, next) => {
       'SELECT contents FROM post WHERE project_id = $1',
       [projectId],
     );
-    // const postIris = postQuery.rows.map(({ iri }) => iri);
     const postFileKeys = postQuery.rows
       .flatMap(post => post.contents.files)
       // remove any undefineds (from posts that don't have 'x:files' field)
